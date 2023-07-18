@@ -1,0 +1,27 @@
+eval_variables:
+  # The first letters of these variables indicates the type.
+  # c = CelestialCoord
+  # a = Angle
+  # s = string
+  # f = float
+  # i = integer
+  # So to use one of these in an Eval string, you would write just boresight,
+  # not cboresight.
+
+  # Telescope boresight; i.e. the pointing.
+  cboresight:
+    type: RADec
+    ra: &ra 0.0 deg
+    dec: &dec 0.0 deg
+  sband: &band r
+  # Zenith angle of the boresight.  Note that we don't attempt to set this self consistently
+  # based on boresight+MJD; that's up to the user.  You can see down below which computations
+  # explicitly depend on the zenith angle.
+  azenith: &zenith 0.0 deg
+  # Camera rotator angle.  AKA RotTelPos
+  artp: &rtp 0.0 deg
+
+  fexptime: &exptime 30.0  # seconds
+  fmjd: &mjd 59580.0
+  iseqnum: &seqnum 1  # sequence number
+  sobsid: &obsid $f"IM_P_{astropy.time.Time(mjd, format='mjd').strftime('%Y%m%d')}_{seqnum:06d}"  # obsID

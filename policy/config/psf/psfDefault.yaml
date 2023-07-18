@@ -1,0 +1,11 @@
+psf:
+  type: Convolve
+  items:
+    -
+      type: AtmosphericPSF  # requires input type atm_psf.  All relevant params set there.
+    -
+      # Hack for contributions of not-otherwise-modeled physical effects.
+      # Should revisit this...
+      type: Gaussian
+      fwhm: 0.3
+      # Note that the optics PSF is included below under stamp.photon_ops.

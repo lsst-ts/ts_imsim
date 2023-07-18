@@ -1,0 +1,370 @@
+# Demo file for generating donut images and OPDs with ImSim.
+
+# This tells GalSim which modules to import to register extra config types.
+# Mostly we need the imsim repo.
+modules:
+  - imsim
+  - astropy.time  # Need this for an Eval.  Tell GalSim to have it loaded.
+  - astropy       # Don't understand why, but if you only import astropy.time,
+                  # you get an error.  This fixes it.
+
+# Anything set here can be used in any Eval (usually a string that starts with $);
+# (see https://galsim-developers.github.io/GalSim/_build/html/config_values.html#eval-type)
+# Also use yaml anchors here.  Set with &name and then use *name to refer to it later.
+# Mostly use this to set values once that we'll reuse throughout the rest of the config.
+eval_variables:
+  # The first letters of these variables indicates the type.
+  # c = CelestialCoord
+  # a = Angle
+  # s = string
+  # f = float
+  # i = integer
+  # So to use one of these in an Eval string, you would write just boresight,
+  # not cboresight.
+
+  # Telescope boresight; i.e. the pointing.
+  cboresight:
+    type: RADec
+    ra: &ra 0.0 deg
+    dec: &dec 0.0 deg
+  sband: &band r
+  # Zenith angle of the boresight.  Note that we don't attempt to set this self consistently
+  # based on boresight+MJD; that's up to the user.  You can see down below which computations
+  # explicitly depend on the zenith angle.
+  azenith: &zenith 0.0 deg
+  # Camera rotator angle.  AKA RotTelPos
+  artp: &rtp 0.0 deg
+
+  fexptime: &exptime 30.0  # seconds
+  fmjd: &mjd 59580.0
+  iseqnum: &seqnum 1  # sequence number
+  sobsid: &obsid $f"IM_P_{astropy.time.Time(mjd, format='mjd').strftime('%Y%m%d')}_{seqnum:06d}"  # obsID
+
+# Any input data is set here.  These are read in at the start of the program and potentially
+# updated for each output file.  Also includes things that need some set up at the start of an
+# exposure, like the atmosphereic PSF.
+input:
+  telescope:
+    file_name: LSST_r.yaml
+    rotTelPos: *rtp  # Set the camera rotator angle using the value defined above.
+    # Many kinds of perturbations are possible.
+    # See https://github.com/LSSTDESC/imSim/blob/main/imsim/telescope_loader.py for details
+    # Some examples below
+    perturbations:
+      # Perturb optics directly.  Note that some of these are degenerate with the
+      # fea.aos_dof.dof parameters below.  For the closed-loop feedback simulation, it
+      # probably makes more sense to use the dof parameters.
+      M2:  # Optic to perturb
+        shift: [1.0e-6, 0.0, 0.0]  # x,y,z Shift in meters
+        rotX: 4 arcsec # Rotation around x axis
+        Zernike:  # (annular by default; you can override R_inner or R_outer though)
+          idx: [4, 6]  # Zernike indices
+          val: [1.e-8, 0.1e-8]  # Zernike values in meters
+      M3:
+        Zernike:
+          coefs: $[0.0]*23  # You can also set Zernike coefs like this...
+    # There's a whole suite of FEA perturbations available (same as ts_phosim)
+    # Details in the telescope_loader.py file linked above.
+    fea:
+      m1m3_gravity:  # gravitational flexure of M1M3
+        zenith: *zenith
+      m1m3_temperature:
+        m1m3_TBulk: 0.1  # Celsius
+        m1m3_TxGrad: 0.01  # Kelvin/meter
+        m1m3_TyGrad: 0.01  # Kelvin/meter
+        m1m3_TzGrad: 0.01  # Kelvin/meter
+        m1m3_TrGrad: 0.01  # Kelvin/meter
+      # LUT correction to counteract m1m3_gravity
+      m1m3_lut:
+        # Note that you aren't _required_ to use the same zenith angle here as above, though
+        # it's usually a good idea.
+        zenith: *zenith
+        error: 0.01  # fractional actuator random error to apply to LUT correction.
+        seed: 11  # random seed for above error
+      m2_gravity:
+        zenith: *zenith
+      m2_temperature:
+        m2_TzGrad: 0.01  # Kelvin/meter
+        m2_TrGrad: 0.01  # Kelvin/meter
+      camera_gravity:
+        zenith: *zenith
+        rotation: *rtp
+      camera_temperature:
+        camera_TBulk: 0.1  # Celsius
+
+      # And finally, AOS degrees of freedom in standard order and units.
+      # which means:
+      # 0: M2 dz (mm)
+      # 1,2: M2 dx,dy (mm)
+      # 3,4: M2 rx,ry (arcsec)
+      # 5: camera dz (mm)
+      # 6,7: camera dx,dy (mm)
+      # 8,9: camera rx,ry (arcsec)
+      # 10-29: M1M3 bending modes (mm)
+      # 30-49: M2 bending modes (mm)
+
+      # For simulating the closed loop, you probably
+      # will use a 50-element list here.
+      aos_dof:
+        dof:
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        type: List
+
+  sky_model:
+    # Load rubin_sim.skybrightness model to compute the sky background level.
+    exptime: $exptime
+    mjd: $mjd
+
+  # Note that we currently don't have tree ring data for WF sensors, so commenting out this block.
+  # tree_rings:
+  #   # This enables TreeRingCenter and TreeRungFunc, which are stored as a dict here based
+  #   # on the detector name, so the right value can be accessed for each object.
+  #   # This file lives in the imsim repo.
+  #   file_name: "tree_ring_parameters_2018-04-26.txt"
+  #   # Can limit the detectors to read in.  This is handy while debugging, since it takes
+  #   # half a minute or so to read all 189 detectors (the default behavior).
+  #   only_dets: [R00_SW0]
+
+  atm_psf:
+    # first 4 are required
+    airmass: $1/np.cos(zenith)
+    rawSeeing: 0.6  # arcsec.  This is for 500 nm at zenith.
+    band: r
+    boresight: $boresight
+    # optional below
+    exptime: $exptime
+    # screen_size: 819.2  # in production
+    screen_size: 204.8  # for testing
+    screen_scale: 0.1
+    nproc: 6  # Generate screens in parallel with this many processes
+    doOpt: false
+    # save_file: "atm.fits"  # Cache atmospheric phase screens to this file
+
+
+image:
+  type: LSST_Image
+  camera: "@output.camera"
+  xsize: $xsize
+  ysize: $ysize
+  nobjects: 1
+  image_pos: $image_center  # Draw one donut at the center of each WFS CCD
+
+  bandpass:
+    file_name:
+      type: FormattedStr
+      format: LSST_%s.dat
+      items:
+        - *band
+    wave_type: nm
+
+  stamp_size: 500  # Force the stamp size to be at least as large as a donut
+
+  wcs:
+    type: Batoid
+    camera: "@output.camera"
+    boresight: $boresight
+    obstime: $astropy.time.Time(mjd, format='mjd')
+    det_name: $det_name
+
+  noise:
+      type: CCD
+      gain: 1
+      read_noise: 0  # The read noise is applied later.  Only sky noise here.
+
+  random_seed: 57721
+
+  # Compute sky level from rubin_sims model.  Note that this option uses the mjd+ra+dec as input
+  # so those parameters should be self-consistent for this to work right.  The mjd in particular
+  # is set up in the input yaml section.
+  sky_level: { type: SkyLevel }
+  # sky_level: 1000.0  # or just use this
+
+  apply_vignetting: True
+  vignetting_data_file: LSSTCam_vignetting_data.json
+  apply_sky_gradient: True
+
+  sensor:
+      type: Silicon
+      strength: 1.0
+      index_key: image_num    # This tells GalSim that this only changes with a new image num.
+      # treering_center: { type: TreeRingCenter, det_name: $det_name }
+      # treering_func: { type: TreeRingFunc, det_name: $det_name }
+
+
+# Even when simulating stars, we need to specify a "gal" profile.  Just use a delta function.
+# Flux ~reasonable for donut levels.
+gal:
+  type: DeltaFunction
+  sed:
+    file_name: vega.txt  # Every star gets a Vega SED for now.
+    wave_type: nm
+    flux_type: flambda
+    norm_flux_density: $1.65e3 if @output.det_num < 190 else 1.65e5
+    norm_wavelength: 500
+
+
+psf:
+  type: Convolve
+  items:
+    -
+      type: AtmosphericPSF  # requires input type atm_psf.  All relevant params set there.
+    -
+      # Hack for contributions of not-otherwise-modeled physical effects.
+      # Should revisit this...
+      type: Gaussian
+      fwhm: 0.3
+      # Note that the optics PSF is included below under stamp.photon_ops.
+
+
+stamp:
+  draw_method: phot
+  photon_ops:
+    -
+      type: PupilAnnulusSampler
+      R_inner: 2.55
+      R_outer: 4.18
+    -
+      type: TimeSampler
+    -
+      type: RubinOptics
+      camera: "@output.camera"
+      boresight: $boresight
+
+
+output:
+  type: LSST_CCD
+  nproc: 8    # Change this to work on multiple CCDs at once.
+  # nfiles: 1   # test
+  nfiles: 8   # WFS files
+  # nfiles: 29   # WFS + raft centers
+  # nfiles: 197  # WFS + all science
+
+  header:
+    airmass: 1.0
+    band: r
+    fieldDec: 0.0
+    fieldRA: 0.0
+    mjd: 59580.0
+    observationStartMJD: 59579.999826388895
+    rotTelPos: 0.0
+    seqnum: 1
+
+  camera: LsstCam
+
+  exptime: $exptime
+
+  cosmic_ray_rate: 0.0
+
+  det_num:
+    type: List
+    items: [191, 192, 195, 196, 199, 200, 203, 204]  # WF sensors
+    # items: [4, 13, 22, 31, 40, 49, 58, 67, 76, 85, 94, 103, 112, 121, 130, 139, 148, 157, 166, 175, 184, 191, 192, 195, 196, 199, 200, 203, 204]  # WF sensors + raft centers
+
+  file_name:
+    type: FormattedStr
+    format : raw_%s-%1d-%s-%s-det%03d.fits.fz
+    items:
+      - $f"IM_P_{astropy.time.Time(mjd, format='mjd').strftime('%Y%m%d')}_{seqnum:06d}"
+      - 0         # snap
+      - r
+      - $det_name   # A value stored in the dict by LSST_CCD
+      - "@output.det_num"
+
+  readout:
+    # Convert from e-image to realized amp images
+    readout_time: 2.
+    dark_current: 0.02
+    bias_level: 1000.
+    pcti: 1.e-6
+    scti: 1.e-6
+    file_name:
+      type: FormattedStr
+      format : amp_%s-%1d-%s-%s-det%03d.fits.fz
+      items:
+        - *obsid
+        - 0
+        - *band
+        - $det_name
+        - "@output.det_num"
+
+  dir: None
+
+  # Output a file with OPDs.
+  # You can specify field points, a wavelength, and the number of pixels in the output file.
+  # Note that the output file itself also has annular Zernike coefficients up to jmax
+  # (28 by default).
+  opd:
+    file_name: opd.fits
+    nx: 255
+    eps: 0.61
+    wavelength: 622.0  # nanometers
+    # rotTelPos is the only tricky parameter here.  If you leave this at zero, then when the camera rotator
+    # engages, the field points sampled will be the same on the sky and hence correspond to _new_ positions
+    # on the focal plane.  If you set rotTelPos to the camera rotator angle, then the sampled field points
+    # will track the same positions on the focal plane (but the sky positions will be different).  So if you
+    # want to know the OPD at the position of the WF sensors always, then set this to the camera rotator
+    # angle.
+    rotTelPos: *rtp
+    jmax: 28
+    projection: gnomonic  # map projection for field angle -> 3d vector.  Slightly different from Zemax.
+    fields:
+      # Coordinates are parallel to the OCS (https://sitcomtn-003.lsst.io/#the-optical-coordinate-system)
+      # when rotTelPos just above is set to zero, or parallel to the CCS when rotTelPos is set
+      # to the camera rotator angle.
+    - thx: 1.176 deg
+      thy: 1.176 deg
+    - thx: -1.176 deg
+      thy: 1.176 deg
+    - thx: -1.176 deg
+      thy: -1.176 deg
+    - thx: 1.176 deg
+      thy: -1.176 deg

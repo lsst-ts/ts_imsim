@@ -1,0 +1,48 @@
+image:
+  type: LSST_Image
+  camera: "@output.camera"
+  xsize: $xsize
+  ysize: $ysize
+  nobjects: 1
+  image_pos: $image_center  # Draw one donut at the center of each WFS CCD
+
+  bandpass:
+    file_name:
+      type: FormattedStr
+      format: LSST_%s.dat
+      items:
+        - *band
+    wave_type: nm
+
+  stamp_size: 500  # Force the stamp size to be at least as large as a donut
+
+  wcs:
+    type: Batoid
+    camera: "@output.camera"
+    boresight: $boresight
+    obstime: $astropy.time.Time(mjd, format='mjd')
+    det_name: $det_name
+
+  noise:
+      type: CCD
+      gain: 1
+      read_noise: 0  # The read noise is applied later.  Only sky noise here.
+
+  random_seed: 57721
+
+  # Compute sky level from rubin_sims model.  Note that this option uses the mjd+ra+dec as input
+  # so those parameters should be self-consistent for this to work right.  The mjd in particular
+  # is set up in the input yaml section.
+  sky_level: { type: SkyLevel }
+  # sky_level: 1000.0  # or just use this
+
+  apply_vignetting: True
+  vignetting_data_file: LSSTCam_vignetting_data.json
+  apply_sky_gradient: True
+
+  sensor:
+      type: Silicon
+      strength: 1.0
+      index_key: image_num    # This tells GalSim that this only changes with a new image num.
+      # treering_center: { type: TreeRingCenter, det_name: $det_name }
+      # treering_func: { type: TreeRingFunc, det_name: $det_name }

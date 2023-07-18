@@ -1,0 +1,49 @@
+output:
+  type: LSST_CCD
+  nproc: 8    # Change this to work on multiple CCDs at once.
+  # nfiles: 1   # test
+  nfiles: 8   # WFS files
+  # nfiles: 29   # WFS + raft centers
+  # nfiles: 197  # WFS + all science
+
+  header:
+    mjd: *mjd
+    seqnum: *seqnum
+
+  camera: LsstCam
+
+  exptime: $exptime
+
+  cosmic_ray_rate: 0.0
+
+  det_num:
+    type: List
+    items: [191, 192, 195, 196, 199, 200, 203, 204]  # WF sensors
+    # items: [4, 13, 22, 31, 40, 49, 58, 67, 76, 85, 94, 103, 112, 121, 130, 139, 148, 157, 166, 175, 184, 191, 192, 195, 196, 199, 200, 203, 204]  # WF sensors + raft centers
+
+  file_name:
+    type: FormattedStr
+    format : raw_%s-%1d-%s-%s-det%03d.fits.fz
+    items:
+      - *obsid
+      - 0         # snap
+      - *band
+      - $det_name   # A value stored in the dict by LSST_CCD
+      - "@output.det_num"
+
+  readout:
+    # Convert from e-image to realized amp images
+    readout_time: 2.
+    dark_current: 0.02
+    bias_level: 1000.
+    pcti: 1.e-6
+    scti: 1.e-6
+    file_name:
+      type: FormattedStr
+      format : amp_%s-%1d-%s-%s-det%03d.fits.fz
+      items:
+        - *obsid
+        - 0
+        - *band
+        - $det_name
+        - "@output.det_num"

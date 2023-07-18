@@ -1,0 +1,30 @@
+  # Output a file with OPDs.
+  # You can specify field points, a wavelength, and the number of pixels in the output file.
+  # Note that the output file itself also has annular Zernike coefficients up to jmax
+  # (28 by default).
+  opd:
+    file_name: opd.fits
+    nx: 255
+    wavelength: 694.0  # nanometers
+    # rotTelPos is the only tricky parameter here.  If you leave this at zero, then when the camera rotator
+    # engages, the field points sampled will be the same on the sky and hence correspond to _new_ positions
+    # on the focal plane.  If you set rotTelPos to the camera rotator angle, then the sampled field points
+    # will track the same positions on the focal plane (but the sky positions will be different).  So if you
+    # want to know the OPD at the position of the WF sensors always, then set this to the camera rotator
+    # angle.
+    rotTelPos: *rtp
+    jmax: 28
+    eps: 0.61
+    projection: gnomonic  # map projection for field angle -> 3d vector.  Slightly different from Zemax.
+    fields:
+      # Coordinates are parallel to the OCS (https://sitcomtn-003.lsst.io/#the-optical-coordinate-system)
+      # when rotTelPos just above is set to zero, or parallel to the CCS when rotTelPos is set
+      # to the camera rotator angle.
+      - {thx: -1.12577572 deg, thy: -1.19120715 deg}  # ~center of R00_SW0 (extra focal)
+      - {thx: -1.25357293 deg, thy: -1.18988057 deg}  # R00_SW1 (intra)
+      - {thx: -1.19038202 deg, thy:  1.12492200 deg}  # R04_SW0 (extra)
+      - {thx: -1.18905484 deg, thy:  1.25272444 deg}  # R04_SW1 (intra)
+      - {thx:  1.19039273 deg, thy: -1.12660117 deg}  # R40_SW0 (extra)
+      - {thx:  1.18906599 deg, thy: -1.25440208 deg}  # R40_SW1 (intra)
+      - {thx:  1.12679257 deg, thy:  1.18952535 deg}  # R44_SW0 (extra)
+      - {thx:  1.25358884 deg, thy:  1.18820007 deg}  # R44_SW1 (intra)

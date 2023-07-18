@@ -1,0 +1,7 @@
+# This tells GalSim which modules to import to register extra config types.
+# Mostly we need the imsim repo.
+modules:
+  - imsim
+  - astropy.time  # Need this for an Eval.  Tell GalSim to have it loaded.
+  - astropy       # Don't understand why, but if you only import astropy.time,
+                  # you get an error.  This fixes it.

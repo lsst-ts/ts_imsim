@@ -1,0 +1,14 @@
+atm_psf:
+  # first 4 are required
+  airmass: $1/np.cos(zenith)
+  rawSeeing: 0.6  # arcsec.  This is for 500 nm at zenith.
+  band: *band
+  boresight: $boresight
+  # optional below
+  exptime: $exptime
+  doOpt: False # Turn off additional random optical perturbations from DC2 era
+  # screen_size: 819.2  # in production
+  screen_size: 204.8  # for testing
+  screen_scale: 0.1
+  nproc: 6  # Generate screens in parallel with this many processes
+  # save_file: "atm.fits"  # Cache atmospheric phase screens to this file

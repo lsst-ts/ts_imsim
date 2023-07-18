@@ -1,0 +1,10 @@
+# Even when simulating stars, we need to specify a "gal" profile.  Just use a delta function.
+# Flux ~reasonable for donut levels.
+gal:
+  type: DeltaFunction
+  sed:
+    file_name: vega.txt  # Every star gets a Vega SED for now.
+    wave_type: nm
+    flux_type: flambda
+    norm_flux_density: $1.65e3 if @output.det_num < 190 else 1.65e5
+    norm_wavelength: 500

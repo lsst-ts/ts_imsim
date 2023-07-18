@@ -1,0 +1,4 @@
+sky_model:
+  # Load rubin_sim.skybrightness model to compute the sky background level.
+  exptime: $exptime
+  mjd: $mjd
