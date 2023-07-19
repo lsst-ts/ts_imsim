@@ -110,7 +110,7 @@ class OpdMetrology:
 
         # Set the weighting ratio
         pathWgtFile = instrumentPath / "imgQualWgt.yaml"
-        with open(pathWgtFile, 'r') as file:
+        with open(pathWgtFile, "r") as file:
             wgt = yaml.safe_load(file)
         wgtValues = np.array(list(wgt.values()), dtype=float)
         # Normalize weights
@@ -124,7 +124,7 @@ class OpdMetrology:
         if not os.path.exists(pathFieldXyFile):
             raise RuntimeError(f"Field xy file does not exists: {pathFieldXyFile}.")
 
-        with open(pathFieldXyFile, 'r') as file:
+        with open(pathFieldXyFile, "r") as file:
             fieldXY = yaml.safe_load(file)
         fieldXY = np.array(fieldXY, dtype=float)
         self.fieldX, self.fieldY = (fieldXY[:, 0], fieldXY[:, 1])

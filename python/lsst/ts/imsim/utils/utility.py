@@ -60,6 +60,7 @@ def getConfigDir():
 
     return os.path.join(getPolicyPath(), "config")
 
+
 def getCamera(instName):
     """Returns a lsst instrument for a given instrument name.
 
