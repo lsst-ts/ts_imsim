@@ -22,11 +22,42 @@
 import os
 import unittest
 
-from lsst.ts.imsim.utils.utility import getConfigDir
+from lsst.obs.lsst import LsstComCam, LsstCam
+from lsst.afw import cameraGeom
+from lsst.ts.imsim.utils.utility import (
+    getModulePath,
+    getPolicyPath,
+    getConfigDir,
+    getCamera,
+)
 
 
 class TestUtility(unittest.TestCase):
+    def testGetModulePath(self):
+        self.assertEqual(os.environ["TS_IMSIM_DIR"], getModulePath())
+
+    def testGetPolicyPath(self):
+        self.assertEqual(
+            os.path.join(os.environ["TS_IMSIM_DIR"], "policy"), getPolicyPath()
+        )
+
     def testGetConfigDir(self):
         self.assertEqual(
-            os.path.join(os.environ["TS_IMSIM_DIR"], "policy"), getConfigDir()
+            os.path.join(os.environ["TS_IMSIM_DIR"], "policy", "config"), getConfigDir()
         )
+
+    def testGetCamera(self):
+        lsstComCam = getCamera("comcam")
+        self.assertIsInstance(lsstComCam, cameraGeom.Camera)
+        self.assertEqual(lsstComCam.getName(), LsstComCam.getCamera().getName())
+
+        lsstFamCam = getCamera("lsstfam")
+        self.assertIsInstance(lsstFamCam, cameraGeom.Camera)
+        self.assertEqual(lsstFamCam.getName(), LsstCam.getCamera().getName())
+
+        lsstCam = getCamera("lsst")
+        self.assertIsInstance(lsstCam, cameraGeom.Camera)
+        self.assertEqual(lsstCam.getName(), LsstCam.getCamera().getName())
+
+        with self.assertRaises(ValueError):
+            getCamera("invalid")

@@ -20,7 +20,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-import warnings
 
 from lsst.utils import getPackageDir
 from lsst.obs.lsst import LsstComCam, LsstCam
