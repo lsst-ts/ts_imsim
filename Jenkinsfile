@@ -68,7 +68,7 @@ pipeline {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
                         source ${env.LSST_STACK}/loadLSST.bash
-                        cd ../ts_wep/
+                        cd ts_wep/
                         setup -k -r .
                         scons python
                     """
@@ -86,7 +86,7 @@ pipeline {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
                         source ${env.LSST_STACK}/loadLSST.bash
-                        cd ../ts_wep/
+                        cd ts_wep/
                         setup -k -r .
                         cd ../ts_ofc/
                         setup -k -r .
@@ -125,7 +125,7 @@ pipeline {
 
                   pip install sphinxcontrib-plantuml
 
-                  cd ../ts_wep/
+                  cd ts_wep/
                   setup -k -r .
 
                   cd ../ts_ofc/
