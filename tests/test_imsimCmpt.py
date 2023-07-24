@@ -38,7 +38,11 @@ class TestImsimCmpt(unittest.TestCase):
         )
         with open(
             os.path.join(
-                getModulePath(), "tests", "testData", "imsimConfigLsstCam.yaml"
+                getModulePath(),
+                "tests",
+                "testData",
+                "imsimConfig",
+                "imsimConfigLsstCam.yaml",
             ),
             "r",
         ) as testFile:
