@@ -87,3 +87,23 @@ def getCamera(instName):
         raise ValueError(
             f"This instrument name ({instName}) is not supported. Must be 'comcam' or 'lsstfam' or 'lsst'."
         )
+
+
+def makeDir(newDir, exist_ok=True):
+    """Make the new directory.
+
+    Super-mkdir; create a leaf directory and all intermediate ones. Works
+    like mkdir, except that any intermediate path segment (not just the
+    rightmost) will be created if it does not exist.
+
+    Parameters
+    ----------
+    newDir : str
+        New directory.
+    exist_ok : bool, optional
+        If the target directory already exists, raise an OSError if
+        exist_ok is False. Otherwise no exception is raised. (the default
+        is True.)
+    """
+
+    os.makedirs(newDir, exist_ok=exist_ok)
