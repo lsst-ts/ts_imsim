@@ -510,11 +510,11 @@ class ClosedLoopTask:
 
             # Calculate the DOF
             wfe = np.array(
-                [sensor_wfe.getAnnularZernikePoly() for sensor_wfe in listOfWfErr]
+                [sensor_wfe.annularZernikePoly for sensor_wfe in listOfWfErr]
             )
 
             sensor_names = np.array(
-                [sensor_wfe.getSensorName() for sensor_wfe in listOfWfErr]
+                [sensor_wfe.sensorName for sensor_wfe in listOfWfErr]
             )
             field_idx = np.array(
                 [
@@ -544,7 +544,7 @@ class ClosedLoopTask:
 
             # Save the DOF file
             self.imsimCmpt.saveDofInUmFileForNextIter(
-                dofInUm, dofInUmFileName=dofInUmFileName
+                dofInUmFileName=dofInUmFileName
             )
 
         # Summarize the FWHM
@@ -767,9 +767,9 @@ class ClosedLoopTask:
             )
 
             sensorWavefrontData = SensorWavefrontError()
-            sensorWavefrontData.setSensorId(dataset.dataId["detector"])
-            sensorWavefrontData.setSensorName(detMap[dataId["detector"]].getName())
-            sensorWavefrontData.setAnnularZernikePoly(zerCoeff)
+            sensorWavefrontData.sensorId = dataset.dataId["detector"]
+            sensorWavefrontData.sensorName = detMap[dataId["detector"]].getName()
+            sensorWavefrontData.annularZernikePoly = zerCoeff
 
             listOfWfErr.append(sensorWavefrontData)
 
