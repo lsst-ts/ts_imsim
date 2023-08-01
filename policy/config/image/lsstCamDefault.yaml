@@ -36,8 +36,6 @@ image:
   sky_level: { type: SkyLevel }
   # sky_level: 1000.0  # or just use this
 
-  apply_vignetting: True
-  vignetting_data_file: LSSTCam_vignetting_data.json
   apply_sky_gradient: True
 
   sensor:

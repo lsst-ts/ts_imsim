@@ -1055,8 +1055,7 @@ config.dataset_config.ref_dataset_name='ref_cat'
         outputImgDir = self.imsimCmpt.outputImgDir
 
         if instName == "lsst":
-            wfsExpDir = os.path.join(outputImgDir, self.imsimCmpt.outputImgDir)
-            runProgram(f"butler ingest-raws {butlerRootPath} {wfsExpDir}/amp*")
+            runProgram(f"butler ingest-raws {butlerRootPath} {outputImgDir}/amp*")
 
         if instName == "comcam":
             runProgram(

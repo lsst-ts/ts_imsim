@@ -160,7 +160,7 @@ class ImsimCmpt:
 
         # Treat input section first differently since it has multiple parts
         inputSectionText = "input:\n"
-        for subsection in ["atm_psf", "sky_model", "telescope"]:
+        for subsection in ["atm_psf", "sky_model", "telescope", "vignetting"]:
             with open(
                 filePointerInfo["input"][subsection].format(**os.environ), "r"
             ) as subFile:
