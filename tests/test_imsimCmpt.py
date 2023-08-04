@@ -20,20 +20,22 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-import yaml
-import unittest
 import shutil
-import numpy as np
+import unittest
 
-from lsst.ts.imsim.obsMetadata import ObsMetadata
-from lsst.ts.imsim.utils.utility import getConfigDir, getModulePath, getCamera
+import numpy as np
+import yaml
 from lsst.ts.imsim.imsimCmpt import ImsimCmpt
+from lsst.ts.imsim.obsMetadata import ObsMetadata
 from lsst.ts.imsim.skySim import SkySim
 from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
+from lsst.ts.imsim.utils.utility import getCamera, getConfigDir, getModulePath
 
 
 class TestImsimCmpt(unittest.TestCase):
     """Test the imsim configuration module."""
+
+    maxDiff = None
 
     def setUp(self):
         self.obsMetadataTest = ObsMetadata(ra=0.0, dec=0.0, band="r", mjd=59580.0)

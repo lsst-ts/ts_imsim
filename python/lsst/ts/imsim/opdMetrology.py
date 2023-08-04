@@ -20,14 +20,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-import yaml
-import numpy as np
-from astropy.io import fits
 
-from lsst.ts.wep.cwfs.tool import ZernikeAnnularFit, ZernikeEval
-from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
-from lsst.ts.imsim.utils.utility import getCamera, getPolicyPath
+import numpy as np
+import yaml
+from astropy.io import fits
 from lsst.ts.imsim.utils.metroTool import calc_pssn
+from lsst.ts.imsim.utils.utility import getCamera, getPolicyPath
+from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
+from lsst.ts.wep.cwfs.tool import ZernikeAnnularFit, ZernikeEval
 
 
 class OpdMetrology:

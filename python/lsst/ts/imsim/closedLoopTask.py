@@ -19,29 +19,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
 import logging
-import astropy
-import yaml
+import os
 import shutil
-import numpy as np
-from lsst.afw.cameraGeom import DetectorType, FIELD_ANGLE
-from lsst.daf import butler as dafButler
-from lsst.ts.wep.utility import FilterType, CamType, runProgram, rotMatrix
-from lsst.ts.wep.utility import getConfigDir as getWepConfigDir
-from lsst.ts.ofc import OFC, OFCData
 
+import astropy
+import numpy as np
+import yaml
+from lsst.afw.cameraGeom import FIELD_ANGLE, DetectorType
+from lsst.daf import butler as dafButler
 from lsst.ts.imsim.imsimCmpt import ImsimCmpt
-from lsst.ts.imsim.opdMetrology import OpdMetrology
 from lsst.ts.imsim.obsMetadata import ObsMetadata
+from lsst.ts.imsim.opdMetrology import OpdMetrology
 from lsst.ts.imsim.skySim import SkySim
-from lsst.ts.imsim.utils.utility import (
-    getConfigDir,
-    getCamera,
-    makeDir,
-)
 from lsst.ts.imsim.utils.plotUtil import plotFwhmOfIters
 from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
+from lsst.ts.imsim.utils.utility import getCamera, getConfigDir, makeDir
+from lsst.ts.ofc import OFC, OFCData
+from lsst.ts.wep.utility import CamType, FilterType
+from lsst.ts.wep.utility import getConfigDir as getWepConfigDir
+from lsst.ts.wep.utility import rotMatrix, runProgram
 
 
 class ClosedLoopTask:
@@ -522,11 +519,18 @@ class ClosedLoopTask:
                     for sensor_name in sensor_names
                 ]
             )
+
+            # TODO: Check the order of arrays in the section below
+            fwhmDict = {x: y for x, y in zip(sensor_id, fwhm)}
+            ofc_fwhm = np.array(
+                [fwhmDict[sensor_wfe.sensorId] for sensor_wfe in listOfWfErr]
+            )
+
             if camType == CamType.LsstCam:
                 # For the wavefront sensors the sensor ids
                 # are different than the corresponding field row
                 # index in the sensitivity matrix.
-                self.ofcCalc.set_fwhm_data(fwhm, field_idx)
+                self.ofcCalc.set_fwhm_data(ofc_fwhm, field_idx)
             else:
                 self.ofcCalc.set_fwhm_data(fwhm, sensor_id)
 
@@ -540,12 +544,10 @@ class ClosedLoopTask:
 
             # Set the new aggregated DOF to phosimCmpt
             dofInUm = self.ofcCalc.ofc_controller.aggregated_state
-            self.imsimCmpt.dofInUm += dofInUm
+            self.imsimCmpt.dofInUm = dofInUm
 
             # Save the DOF file
-            self.imsimCmpt.saveDofInUmFileForNextIter(
-                dofInUmFileName=dofInUmFileName
-            )
+            self.imsimCmpt.saveDofInUmFileForNextIter(dofInUmFileName=dofInUmFileName)
 
         # Summarize the FWHM
         pssnFiles = [
@@ -926,7 +928,7 @@ tasks:
             self.log.info(f"Wrote new sky file to {pathSkyFile}.")
 
         # generate butler gen3 repo if needed
-        butlerRootPath = os.path.join(baseOutputDir, "phosimData")
+        butlerRootPath = os.path.join(baseOutputDir, "imsimData")
 
         self.generateButler(butlerRootPath, instName)
         self.generateRefCatalog(

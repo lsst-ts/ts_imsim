@@ -19,11 +19,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
 import warnings
-import scipy.special as sp
 
-from lsst.ts.wep.cwfs.tool import padArray, extractArray
+import numpy as np
+import scipy.special as sp
+from lsst.ts.wep.cwfs.tool import extractArray, padArray
 
 
 def calc_pssn(

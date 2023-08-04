@@ -21,8 +21,8 @@
 
 import os
 
+from lsst.obs.lsst import LsstCam, LsstComCam
 from lsst.utils import getPackageDir
-from lsst.obs.lsst import LsstComCam, LsstCam
 
 
 def getModulePath():

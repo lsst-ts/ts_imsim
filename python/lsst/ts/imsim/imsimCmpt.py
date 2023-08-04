@@ -20,16 +20,16 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-import yaml
-import numpy as np
-from scipy.ndimage import rotate
-from astropy.io import fits
 
-from lsst.ts.wep.utility import runProgram
-from lsst.ts.ofc.ofc_data.base_ofc_data import BaseOFCData
+import numpy as np
+import yaml
+from astropy.io import fits
 from lsst.ts.imsim.opdMetrology import OpdMetrology
-from lsst.ts.imsim.utils.utility import getConfigDir, makeDir
 from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
+from lsst.ts.imsim.utils.utility import getConfigDir, makeDir
+from lsst.ts.ofc.ofc_data.base_ofc_data import BaseOFCData
+from lsst.ts.wep.utility import runProgram
+from scipy.ndimage import rotate
 
 
 class ImsimCmpt:
@@ -670,10 +670,10 @@ class ImsimCmpt:
             zk matrix. The colunm is z4-z22. The raw is each data point.
         """
 
-        with open(zkFilePath, 'r') as file:
+        with open(zkFilePath, "r") as file:
             zk = yaml.safe_load(file)
         for key, val in zk.items():
-            zk[key] = np.fromstring(val[0], sep=' ')
+            zk[key] = np.fromstring(val[0], sep=" ")
 
         return zk
 

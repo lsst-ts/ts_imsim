@@ -9,6 +9,12 @@ config.log
 *_wrap.cc
 *Lib.py
 
+# Pre-commit configs
+.pre-commit-config.yaml
+.flake8
+.isort.cfg
+.mypy.ini
+
 # Built by sconsUtils
 version.py
 bin/

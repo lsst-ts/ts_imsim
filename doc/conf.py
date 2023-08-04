@@ -4,8 +4,9 @@ This configuration only affects single-package Sphinx documentation builds.
 """
 
 import os
-from documenteer.conf.pipelinespkg import *
+
 import lsst.ts.imsim
+from documenteer.conf.pipelinespkg import *
 
 project = "ts_imsim"
 html_theme_options["logotext"] = project

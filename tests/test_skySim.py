@@ -21,9 +21,9 @@
 
 import os
 import unittest
+
 from astroplan import FixedTarget, Observer
 from astropy.time import Time
-
 from lsst.ts.imsim.obsMetadata import ObsMetadata
 from lsst.ts.imsim.skySim import SkySim
 from lsst.ts.imsim.utils.utility import getModulePath

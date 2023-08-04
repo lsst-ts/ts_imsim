@@ -22,13 +22,13 @@
 import os
 import unittest
 
-from lsst.obs.lsst import LsstComCam, LsstCam
 from lsst.afw import cameraGeom
+from lsst.obs.lsst import LsstCam, LsstComCam
 from lsst.ts.imsim.utils.utility import (
+    getCamera,
+    getConfigDir,
     getModulePath,
     getPolicyPath,
-    getConfigDir,
-    getCamera,
 )
 
 

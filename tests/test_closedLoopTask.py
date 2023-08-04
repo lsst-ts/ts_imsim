@@ -19,16 +19,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
 import argparse
+import os
 import tempfile
 import unittest
 
-from lsst.ts.wep.utility import CamType, FilterType
-
+from lsst.ts.imsim.closedLoopTask import ClosedLoopTask
 from lsst.ts.imsim.obsMetadata import ObsMetadata
 from lsst.ts.imsim.utils.utility import getModulePath
-from lsst.ts.imsim.closedLoopTask import ClosedLoopTask
+from lsst.ts.wep.utility import CamType, FilterType
 
 
 class TestclosedLoopTask(unittest.TestCase):
