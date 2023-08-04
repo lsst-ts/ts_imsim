@@ -1,5 +1,9 @@
 telescope:
-  file_name: LSST_r.yaml
+  file_name:
+    type: FormattedStr
+    format: LSST_%s.yaml
+    items:
+      - *band
   rotTelPos: *rtp  # Set the camera rotator angle using the value defined above.
   # Many kinds of perturbations are possible.
   # See https://github.com/LSSTDESC/imSim/blob/main/imsim/telescope_loader.py for details

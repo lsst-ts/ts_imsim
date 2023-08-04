@@ -29,6 +29,7 @@ from lsst.ts.wep.utility import runProgram
 from lsst.ts.ofc.ofc_data.base_ofc_data import BaseOFCData
 from lsst.ts.imsim.opdMetrology import OpdMetrology
 from lsst.ts.imsim.utils.utility import getConfigDir, makeDir
+from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
 
 
 class ImsimCmpt:
@@ -187,11 +188,10 @@ class ImsimCmpt:
         # Assemble as yaml
         fullConfigYaml = yaml.safe_load(fullConfigText)
 
-        # Add in OFC corrections in mm
-        dofInMm = self.dofInUm * 1e-3
-        dofInMm[[3, 4, 8, 9]] /= 1e-3  # Undo unit change for items in arcseconds
+        # Add in OFC corrections in um and arcsec
+        dofInUm = self.dofInUm
         fullConfigYaml["input"]["telescope"]["fea"]["aos_dof"] = {
-            "dof": self.dofInUm.tolist(),
+            "dof": (dofInUm).tolist(),
             "type": "List",
         }
         return fullConfigYaml
@@ -288,23 +288,49 @@ class ImsimCmpt:
         return headerText
 
     def runImsim(self, configFilePath):
+        """
+        Run imSim with the given configuration file.
+
+        Parameters
+        ----------
+        configFilePath : str
+            Path to the imSim configuration yaml file.
+        """
         runProgram(f"galsim {configFilePath}")
 
     def genInstanceCatalog(self, skySim):
-        """Generate the instance catalog."""
-        # bandDict = {x[1]: x[0] for x in list(enumerate(['u', 'g', 'r', 'i', 'z', 'y']))}
+        """
+        Generate the instance catalog.
+
+        Parameters
+        ----------
+        skySim : lsst.ts.imsim.skySim.SkySim
+            The SkySim object with the stars to simulate.
+
+        Returns
+        -------
+        str
+            Text to write to instance catalog file.
+        """
 
         content = ""
-        # content += f"mjd {obsMetadata.mjd}\n"
-        # content += f"filter {bandDict[obsMetadata.band]}\n"
-        # content += f"rightascension {obsMetadata.ra}\n"
-        # content += f"declination {obsMetadata.dec}\n"
-        # content += f"rotTelPos {obsMetadata.rotatorAngle}\n"
-        # content += f"vistime 30.0\n"
         content += self.genInstCatStars(skySim)
         return content
 
     def genInstCatStars(self, skySim):
+        """
+        Add stars to the instance catalog.
+
+        Parameters
+        ----------
+        skySim : lsst.ts.imsim.skySim.SkySim
+            The SkySim object with the stars to simulate.
+
+        Returns
+        -------
+        str
+            Instance catalog text for the stars in the SkySim catalog.
+        """
         content = ""
         for id, ra, dec, mag in zip(skySim.starId, skySim.ra, skySim.dec, skySim.mag):
             content += self.generateStar(id, ra, dec, mag)
@@ -374,7 +400,7 @@ class ImsimCmpt:
         Returns
         -------
         str
-            Perturbation command used in PhoSim.
+            Instance catalog entry for star.
         """
 
         content = "object %2d\t%9.6f\t%9.6f %9.6f %s " % (
@@ -429,7 +455,7 @@ class ImsimCmpt:
 
         self.opdFilePath = os.path.join(self.outputImgDir, "opd.fits")
         self._writeOpdZkFile(zkFileName, rotOpdInDeg, numOpd)
-        self._writeOpdPssnFile(instName, pssnFileName, numOpd)
+        self._writeOpdPssnFile(pssnFileName, numOpd)
 
     def _writeOpdZkFile(self, zkFileName, rotOpdInDeg, numOpd):
         """Write the OPD in zk file.
@@ -500,7 +526,7 @@ class ImsimCmpt:
 
         return opdData
 
-    def _writeOpdPssnFile(self, instName, pssnFileName, numOpd):
+    def _writeOpdPssnFile(self, pssnFileName, numOpd):
         """Write the OPD PSSN in file.
 
         OPD: Optical path difference.
@@ -508,8 +534,6 @@ class ImsimCmpt:
 
         Parameters
         ----------
-        instName : `str`
-            Instrument name.
         pssnFileName : str
             PSSN file name.
         numOpd : int
@@ -619,26 +643,26 @@ class ImsimCmpt:
             List of SensorWavefrontError object.
         """
 
-        opdZk = self._getZkFromFile(opdZkFileName)
+        opdZk = self._getZkFromFile(os.path.join(self.outputImgDir, opdZkFileName))
 
         listOfWfErr = []
-        for sensorId, sensorName, zk in zip(sensorIdList, sensorNameList, opdZk):
-            sensorWavefrontData = SensorWavefrontError(numOfZk=self.getNumOfZk())
-            sensorWavefrontData.setSensorId(sensorId)
-            sensorWavefrontData.setSensorName(sensorName)
-            sensorWavefrontData.setAnnularZernikePoly(zk)
+        for sensorId, sensorName in zip(sensorIdList, sensorNameList):
+            sensorWavefrontData = SensorWavefrontError(numOfZk=self.numOfZk)
+            sensorWavefrontData.sensorId = sensorId
+            sensorWavefrontData.sensorName = sensorName
+            sensorWavefrontData.annularZernikePoly = opdZk[sensorId]
 
             listOfWfErr.append(sensorWavefrontData)
 
         return listOfWfErr
 
-    def _getZkFromFile(self, zkFileName):
+    def _getZkFromFile(self, zkFilePath):
         """Get the zk (z4-z22) from file.
 
         Parameters
         ----------
-        zkFileName : str
-            Zk file name.
+        zkFilePath : str
+            Zk file path.
 
         Returns
         -------
@@ -646,8 +670,10 @@ class ImsimCmpt:
             zk matrix. The colunm is z4-z22. The raw is each data point.
         """
 
-        filePath = os.path.join(self.outputImgDir, zkFileName)
-        zk = np.loadtxt(filePath)
+        with open(zkFilePath, 'r') as file:
+            zk = yaml.safe_load(file)
+        for key, val in zk.items():
+            zk[key] = np.fromstring(val[0], sep=' ')
 
         return zk
 
