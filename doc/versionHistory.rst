@@ -6,6 +6,16 @@
 Version History
 ##################
 
+.. _lsst.ts.imsim-0.3.0:
+
+-------------
+0.3.0
+-------------
+
+* Add closed loop infrastructure.
+* Update README.
+* Update Jenkinsfile to work with latest Jenkins environment changes.
+
 .. _lsst.ts.imsim-0.2.0:
 
 -------------

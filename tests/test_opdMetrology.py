@@ -19,10 +19,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 import unittest
 
 import numpy as np
+from astropy.io import fits
 from lsst.ts.imsim.opdMetrology import OpdMetrology
+from lsst.ts.imsim.utils.utility import getModulePath, getZkFromFile
 
 
 class TestOpdMetrology(unittest.TestCase):
@@ -30,6 +33,7 @@ class TestOpdMetrology(unittest.TestCase):
 
     def setUp(self):
         self.metr = OpdMetrology()
+        self.testDataDir = os.path.join(getModulePath(), "tests", "testData")
 
     def testSetCamera(self):
         self.metr.setCamera("lsstfam")
@@ -143,3 +147,61 @@ class TestOpdMetrology(unittest.TestCase):
         fieldWFSx, fieldWFSy, detIds = self.metr.getDefaultLsstWfsGQ()
         self.assertEqual(len(fieldWFSx), 4)
         self.assertEqual(len(detIds), 4)
+
+    def _getOpdDir(self):
+        opdFileDir = os.path.join(self.testDataDir, "opd")
+        return opdFileDir
+
+    def testGetZkFromOpd(self):
+        opdDir = self._getOpdDir()
+        zk = self.metr.getZkFromOpd(opdFitsFile=os.path.join(opdDir, "opd.fits"))[0]
+
+        ansOpdFileName = "opd.zer"
+        ansOpdFilePath = os.path.join(opdDir, ansOpdFileName)
+        allOpdAns = getZkFromFile(ansOpdFilePath)
+        print(zk, allOpdAns)
+        self.assertLess(np.sum(np.abs(zk[3:] - allOpdAns[203])), 1e-5)
+
+    def testRmPTTfromOPD(self):
+        opdDir = self._getOpdDir()
+        opdFilePath = os.path.join(opdDir, "opd.fits")
+        opdRmPTT, opdx, opdy = self.metr.rmPTTfromOPD(opdFitsFile=opdFilePath)
+
+        zkRmPTT = self.metr.getZkFromOpd(opdMap=opdRmPTT)[0]
+        zkRmPTTInUm = np.sum(np.abs(zkRmPTT[0:3]))/1e3
+        self.assertLess(zkRmPTTInUm, 9e-2)
+
+    def testCalcPSSN(self):
+        pssn = self._calcPssn()
+        allData = self._getMetroAllAnsData()
+        self.assertAlmostEqual(pssn, allData[0, 0])
+
+    def _calcPssn(self):
+        wavelengthInUm = 0.48
+        opdFilePath = os.path.join(self._getOpdDir(), "opd.fits")
+        opdMap = fits.getdata(opdFilePath, 0) * 1e-3
+        pssn = self.metr.calcPSSN(wavelengthInUm, opdMap=opdMap)
+
+        return pssn
+
+    def _getMetroAllAnsData(self):
+        ansAllDataFileName = "PSSN.txt"
+        ansAllDataFilePath = os.path.join(self._getOpdDir(), ansAllDataFileName)
+        allData = np.loadtxt(ansAllDataFilePath)
+
+        return allData
+
+    def testCalcFWHMeff(self):
+        pssn = self._calcPssn()
+        fwhm = self.metr.calcFWHMeff(pssn)
+
+        allData = self._getMetroAllAnsData()
+        self.assertAlmostEqual(fwhm, allData[1, 0])
+
+    def testCalcGQvalue(self):
+        self.metr.setDefaultLsstWfsGQ()
+        allData = self._getMetroAllAnsData()
+        valueList = allData[0, 0:4]
+
+        GQvalue = self.metr.calcGQvalue(valueList)
+        self.assertAlmostEqual(GQvalue, allData[0, -1])

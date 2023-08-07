@@ -154,7 +154,7 @@ class OpdMetrology:
         Returns
         -------
         numpy.ndarray
-            Annular Zernike polynomials. For PhoSim OPD, the unit is um.
+            Annular Zernike polynomials. For imSim OPD, the unit is nm.
         numpy.ndarray
             OPD map.
         numpy.ndarray
@@ -168,7 +168,7 @@ class OpdMetrology:
             The x, y dimensions of OPD are different.
         """
 
-        # Get the OPD data (PhoSim OPD unit: um)
+        # Get the OPD data (imSim OPD unit: nm)
         if opdFitsFile is not None:
             opd = fits.getdata(opdFitsFile)
         elif opdMap is not None:
@@ -184,7 +184,7 @@ class OpdMetrology:
         opdx, opdy = np.meshgrid(opdGrid1d, opdGrid1d)
 
         # Fit the OPD map with Zk and write into the file
-        idx = opd != 0
+        idx = ~np.isnan(opd)
         zk = ZernikeAnnularFit(opd[idx], opdx[idx], opdy[idx], znTerms, obscuration)
 
         return zk, opd, opdx, opdy
@@ -219,7 +219,7 @@ class OpdMetrology:
         )
 
         # Find the index that the value of OPD is not 0
-        idx = opd != 0
+        idx = ~np.isnan(opd)
 
         # Remove the PTT
         opd[idx] -= ZernikeEval(zk, opdx[idx], opdy[idx])
@@ -239,9 +239,9 @@ class OpdMetrology:
         wavelengthInUm : float
             Wavelength in microns.
         opdFitsFile : str, optional
-            OPD FITS file. (the default is None.)
+            OPD FITS file. Units need to be microns. (the default is None.)
         opdMap : numpy.ndarray, optional
-            OPD map data. (the default is None.)
+            OPD map data. Units need to be microns. (the default is None.)
         zen : float, optional
             elescope zenith angle in degree. (the default is 0.)
         debugLevel : int, optional

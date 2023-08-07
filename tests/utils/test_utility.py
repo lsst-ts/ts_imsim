@@ -29,6 +29,7 @@ from lsst.ts.imsim.utils.utility import (
     getConfigDir,
     getModulePath,
     getPolicyPath,
+    getZkFromFile,
 )
 
 
@@ -61,3 +62,9 @@ class TestUtility(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             getCamera("invalid")
+
+    def testGetZkFromFile(self):
+        zkFromFile = getZkFromFile(
+            os.path.join(getModulePath(), "tests", "testData", "opd", "opd.zer")
+        )
+        self.assertCountEqual(zkFromFile.keys(), [191, 195, 199, 203])

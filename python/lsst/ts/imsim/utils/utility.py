@@ -20,6 +20,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
+import yaml
+import numpy as np
 
 from lsst.obs.lsst import LsstCam, LsstComCam
 from lsst.utils import getPackageDir
@@ -107,3 +109,25 @@ def makeDir(newDir, exist_ok=True):
     """
 
     os.makedirs(newDir, exist_ok=exist_ok)
+
+
+def getZkFromFile(zkFilePath):
+    """Get the zk (z4-z22) from file.
+
+    Parameters
+    ----------
+    zkFilePath : str
+        Zk file path.
+
+    Returns
+    -------
+    numpy.ndarray
+        zk matrix. The colunm is z4-z22. The raw is each data point.
+    """
+
+    with open(zkFilePath, "r") as file:
+        zk = yaml.safe_load(file)
+    for key, val in zk.items():
+        zk[key] = np.fromstring(val[0], sep=" ")
+
+    return zk

@@ -29,7 +29,12 @@ from lsst.ts.imsim.imsimCmpt import ImsimCmpt
 from lsst.ts.imsim.obsMetadata import ObsMetadata
 from lsst.ts.imsim.skySim import SkySim
 from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
-from lsst.ts.imsim.utils.utility import getCamera, getConfigDir, getModulePath
+from lsst.ts.imsim.utils.utility import (
+    getCamera,
+    getConfigDir,
+    getModulePath,
+    getZkFromFile,
+)
 
 
 class TestImsimCmpt(unittest.TestCase):
@@ -100,7 +105,7 @@ class TestImsimCmpt(unittest.TestCase):
         fullConfigYaml = self.imsimCmpt.assembleConfigYaml(
             self.obsMetadataTest, self.configPointerDefaultLsstCam, "lsst"
         )
-        self.fullTestYaml['output']['dir'] = self.imsimCmpt.outputImgDir
+        self.fullTestYaml["output"]["dir"] = self.imsimCmpt.outputImgDir
         self.assertDictEqual(fullConfigYaml, self.fullTestYaml)
 
     def testConvertObsMetadataToText(self):
@@ -166,9 +171,9 @@ class TestImsimCmpt(unittest.TestCase):
         self.assertTrue(os.path.exists(zkFilePath))
         self.assertTrue(os.path.exists(pssnFilePath))
 
-        zk = self.imsimCmpt._getZkFromFile(zkFilePath)
+        zk = getZkFromFile(zkFilePath)
         ansZkFilePath = os.path.join(self._getOpdFileDirOfLsstCam(), "opd.zer")
-        ansZk = self.imsimCmpt._getZkFromFile(ansZkFilePath)
+        ansZk = getZkFromFile(ansZkFilePath)
 
         for det in [191, 195, 199, 203]:
             delta = np.sum(np.abs(zk[det] - ansZk[det]))
@@ -232,7 +237,7 @@ class TestImsimCmpt(unittest.TestCase):
 
         self.assertEqual(len(listOfWfErr), len(refSensorNameList))
 
-        opdZk = self.imsimCmpt._getZkFromFile(
+        opdZk = getZkFromFile(
             os.path.join(self.imsimCmpt.outputImgDir, self.zkFileName)
         )
         mapSensorNameAndId = self._mapSensorNameAndId(refSensorNameList)
@@ -289,7 +294,7 @@ class TestImsimCmpt(unittest.TestCase):
         )
 
         zkFilePath = os.path.join(self.imsimCmpt.outputImgDir, zkFileName)
-        zkInFile = self.imsimCmpt._getZkFromFile(zkFilePath)
+        zkInFile = getZkFromFile(zkFilePath)
 
         numOfZk = self.imsimCmpt.numOfZk
         self.assertEqual(len(zkInFile), len(refSensorNameList))
