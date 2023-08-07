@@ -29,6 +29,7 @@ from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
 from lsst.ts.imsim.utils.utility import getConfigDir, makeDir
 from lsst.ts.ofc.ofc_data.base_ofc_data import BaseOFCData
 from lsst.ts.wep.utility import runProgram
+from lsst.ts.imsim.utils.utility import getZkFromFile
 from scipy.ndimage import rotate
 
 
@@ -643,7 +644,7 @@ class ImsimCmpt:
             List of SensorWavefrontError object.
         """
 
-        opdZk = self._getZkFromFile(os.path.join(self.outputImgDir, opdZkFileName))
+        opdZk = getZkFromFile(os.path.join(self.outputImgDir, opdZkFileName))
 
         listOfWfErr = []
         for sensorId, sensorName in zip(sensorIdList, sensorNameList):
@@ -655,27 +656,6 @@ class ImsimCmpt:
             listOfWfErr.append(sensorWavefrontData)
 
         return listOfWfErr
-
-    def _getZkFromFile(self, zkFilePath):
-        """Get the zk (z4-z22) from file.
-
-        Parameters
-        ----------
-        zkFilePath : str
-            Zk file path.
-
-        Returns
-        -------
-        numpy.ndarray
-            zk matrix. The colunm is z4-z22. The raw is each data point.
-        """
-
-        with open(zkFilePath, "r") as file:
-            zk = yaml.safe_load(file)
-        for key, val in zk.items():
-            zk[key] = np.fromstring(val[0], sep=" ")
-
-        return zk
 
     def getOpdGqEffFwhmFromFile(self, pssnFileName):
         """Get the OPD GQ effective FWHM from file.
