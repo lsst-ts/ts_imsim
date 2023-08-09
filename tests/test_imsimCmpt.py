@@ -248,7 +248,7 @@ class TestImsimCmpt(unittest.TestCase):
             self.assertEqual(sensorId, mapSensorNameAndId[refSensorName])
 
             zkInWfErr = wfErr.annularZernikePoly
-            delta = np.sum(np.abs(zkInWfErr - opdZk[sensorId]))
+            delta = np.sum(np.abs(zkInWfErr - opdZk[sensorId] / 1e3))
             self.assertEqual(delta, 0)
 
     def testGetListOfFwhmSensorData(self):

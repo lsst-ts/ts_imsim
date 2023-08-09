@@ -65,6 +65,9 @@ class ClosedLoopTask:
         self.boresightDec = None
         self.boresightRotAng = None
 
+        # Use CCD image
+        self.useCcdImg = True
+
     def configSkySim(self, instName, obsMetadata, pathSkyFile="", starMag=15):
         """Configure the sky simulator.
 
@@ -462,14 +465,12 @@ class ClosedLoopTask:
 
             # Generate the sky images and calculate the wavefront error
             if camType == CamType.LsstCam:
-                listOfWfErr = self._calcWfsWfErrFromImg(
+                self._generateImages(
                     obsMetadata,
-                    butlerRootPath=butlerRootPath,
                     instName=instName,
                     skySeed=skySeed,
                     pertSeed=pertSeed,
                     numPro=1,
-                    pipelineFile=pipelineFile,
                     imsimConfigPointerFile=imsimConfigPointerFile,
                     turnOffSkyBackground=turnOffSkyBackground,
                     turnOffAtmosphere=turnOffAtmosphere,
@@ -484,6 +485,19 @@ class ClosedLoopTask:
                 rotOpdInDeg=-obsMetadata.rotatorAngle,
                 pssnFileName=opdPssnFileName,
             )
+
+            if self.useCcdImg:
+                listOfWfErr = self._calcWfsWfErrFromImg(
+                    obsMetadata,
+                    butlerRootPath=butlerRootPath,
+                    instName=instName,
+                    numPro=1,
+                    pipelineFile=pipelineFile,
+                )
+            else:
+                listOfWfErr = self.imsimCmpt.mapOpdDataToListOfWfErr(
+                    opdZkFileName, refSensorIdList, refSensorNameList
+                )
 
             # Get the PSSN from file
             pssn = self.imsimCmpt.getOpdPssnFromFile(opdPssnFileName)
@@ -534,6 +548,10 @@ class ClosedLoopTask:
             else:
                 self.ofcCalc.set_fwhm_data(fwhm, sensor_id)
 
+            # Flip zernikes that are not symmetric across the y-axis
+            # based upon flip in batoid coordinate system.
+            wfe[:, [1, 4, 6, 9, 11, 12, 14, 16]] *= -1.0
+
             self.ofcCalc.calculate_corrections(
                 wfe=wfe,
                 field_idx=field_idx,
@@ -562,17 +580,14 @@ class ClosedLoopTask:
         saveToFilePath = os.path.join(baseOutputDir, fwhmItersFileName)
         plotFwhmOfIters(pssnFiles, saveToFilePath=saveToFilePath)
 
-    def _calcWfsWfErrFromImg(
+    def _generateImages(
         self,
         obsMetadata,
-        butlerRootPath,
         instName,
         skySeed=42,
         pertSeed=11,
         numPro=1,
-        pipelineFile=None,
         imsimConfigPointerFile=None,
-        filterTypeName="",
         turnOffSkyBackground=False,
         turnOffAtmosphere=False,
     ):
@@ -582,8 +597,6 @@ class ClosedLoopTask:
         ----------
         obsMetadata : lsst.ts.imsim.ObsMetadata object
             Observation metadata.
-        butlerRootPath : str
-            Path to the butler repository.
         instName : str
             Instrument name.
         skySeed : int, optional
@@ -594,16 +607,10 @@ class ClosedLoopTask:
             (The default is 11.)
         numPro : int, optional
             Number of processor to run DM pipeline. (the default is 1.)
-        pipelineFile : str or None, optional
-            Path to existing pipeline yaml file to use.
-            If None then the code will write its own default pipeline yaml.
-            (The default is None.)
         imsimConfigPointerFile : str or None, optional
             Path to imsim config pointer file.
             If None then the code will use the default in policy directory.
             (The default is None.)
-        filterTypeName : str, optional
-            Filter type name: ref (or ''), u, g, r, i, z, or y.
         turnOffSkyBackground : bool, optional
             If set to True then the closed loop will simulate images
             without sky background. (The default is False.)
@@ -633,16 +640,22 @@ class ClosedLoopTask:
             file.write(instCat)
 
         # Override imsim config defaults with instance catalog info
-        imsimConfigYaml["gal"] = {"type": "InstCatObj"}
         imsimConfigYaml["image"].pop("image_pos")
-        imsimConfigYaml["image"].pop("nobjects")
-        imsimConfigYaml["image"]["world_pos"] = {"type": "InstCatWorldPos"}
+        if self.useCcdImg:
+            imsimConfigYaml["image"].pop("nobjects")
+            imsimConfigYaml["image"]["world_pos"] = {"type": "InstCatWorldPos"}
+            imsimConfigYaml["gal"] = {"type": "InstCatObj"}
+            imsimConfigYaml["input"]["instance_catalog"] = {
+                "file_name": instCatPath,
+                "sed_dir": "$os.environ.get('SIMS_SED_LIBRARY_DIR')",
+            }
+        else:
+            imsimConfigYaml["image"]["nobjects"] = 0
+            # Only create one empty amplifier file and one OPD.fits file
+            # when running OPD only
+            imsimConfigYaml["output"]["nfiles"] = 1
         imsimConfigYaml["image"]["random_seed"] = skySeed
         imsimConfigYaml["input"]["telescope"]["fea"]["m1m3_lut"]["seed"] = pertSeed
-        imsimConfigYaml["input"]["instance_catalog"] = {
-            "file_name": instCatPath,
-            "sed_dir": "$os.environ.get('SIMS_SED_LIBRARY_DIR')",
-        }
         if turnOffSkyBackground:
             imsimConfigYaml["image"]["sky_level"] = 0
         if turnOffAtmosphere:
@@ -659,6 +672,40 @@ class ClosedLoopTask:
 
         self.log.info(f"Writing Imsim Configuration file to {imsimConfigPath}")
         self.imsimCmpt.runImsim(imsimConfigPath)
+
+    def _calcWfsWfErrFromImg(
+        self,
+        obsMetadata,
+        butlerRootPath,
+        instName,
+        numPro=1,
+        pipelineFile=None,
+        filterTypeName="",
+    ):
+        """Calculate the wavefront error from the images generated by PhoSim.
+
+        Parameters
+        ----------
+        obsMetadata : lsst.ts.imsim.ObsMetadata object
+            Observation metadata.
+        butlerRootPath : str
+            Path to the butler repository.
+        instName : str
+            Instrument name.
+        numPro : int, optional
+            Number of processor to run DM pipeline. (the default is 1.)
+        pipelineFile : str or None, optional
+            Path to existing pipeline yaml file to use.
+            If None then the code will write its own default pipeline yaml.
+            (The default is None.)
+        filterTypeName : str, optional
+            Filter type name: ref (or ''), u, g, r, i, z, or y.
+
+        Returns
+        -------
+        list[lsst.ts.wep.ctrlIntf.SensorWavefrontError]
+            List of SensorWavefrontError object.
+        """
 
         # Ingest images into butler gen3
         self.ingestData(butlerRootPath=butlerRootPath, instName=instName)
@@ -854,6 +901,7 @@ tasks:
         imsimConfigPointerFile,
         turnOffSkyBackground,
         turnOffAtmosphere,
+        opdOnly,
     ):
         """Run the simulation of images.
 
@@ -893,6 +941,9 @@ tasks:
             without sky background.
         turnOffAtmosphere : bool
             If set to True then will turn off the imsim atmosphere.
+        opdOnly : bool
+            If set to True then will run the closed loop only with
+            the OPD and not the actual simulated images.
         """
         camType, instName = self.getCamTypeAndInstName(inst)
         baseOutputDir = self.checkAndCreateBaseOutputDir(baseOutputDir)
@@ -904,6 +955,9 @@ tasks:
         self.boresightRotAng = rotCamInDeg
         # Remap the reference filter to g
         filterTypeName = self.mapFilterRefToG(filterTypeName)
+
+        if opdOnly is True:
+            self.useCcdImg = False
 
         obsMetadata = ObsMetadata(
             ra=self.boresightRa,
@@ -930,13 +984,14 @@ tasks:
         # generate butler gen3 repo if needed
         butlerRootPath = os.path.join(baseOutputDir, "imsimData")
 
-        self.generateButler(butlerRootPath, instName)
-        self.generateRefCatalog(
-            instName=instName,
-            butlerRootPath=butlerRootPath,
-            pathSkyFile=pathSkyFile,
-            filterTypeName=filterTypeName,
-        )
+        if self.useCcdImg:
+            self.generateButler(butlerRootPath, instName)
+            self.generateRefCatalog(
+                instName=instName,
+                butlerRootPath=butlerRootPath,
+                pathSkyFile=pathSkyFile,
+                filterTypeName=filterTypeName,
+            )
 
         if instName == "lsst":
             # Append equal weights for CWFS fields to OFC data
@@ -1220,6 +1275,10 @@ config.dataset_config.ref_dataset_name='ref_cat'
 
         parser.add_argument(
             "--turnOffAtmosphere", action="store_true", help="Turn atmosphere off."
+        )
+
+        parser.add_argument(
+            "--opdOnly", action="store_true", help="Turn atmosphere off."
         )
 
         return parser

@@ -37,7 +37,7 @@ class OpdMetrology:
         OPD: Optical path difference.
         """
 
-        self.wt = np.array([])
+        self._wt = np.array([])
         self.fieldX = np.array([])
         self.fieldY = np.array([])
         self.sensorIds = []
@@ -54,6 +54,31 @@ class OpdMetrology:
 
         self._camera = getCamera(instName)
 
+    @property
+    def wt(self):
+        return self._wt
+
+    @wt.setter
+    def wt(self, newWt):
+        """Set the weighting ratio used in Gaussian quadrature.
+
+        Parameters
+        ----------
+        wt : list or numpy.ndarray
+            Weighting ratio.
+
+        Raises
+        ------
+        ValueError
+            All weighting ratios should be >=0.
+        """
+
+        wtArray = np.array(newWt, dtype=float)
+        if np.all(wtArray >= 0):
+            self._wt = wtArray / np.sum(wtArray)
+        else:
+            raise ValueError("All weighting ratios should be >= 0.")
+
     def setDefaultLsstWfsGQ(self):
         """Set default values for LSST WFS field X, Y
         and weighting ratio.
@@ -61,7 +86,7 @@ class OpdMetrology:
 
         # Set equal full weights for each of the
         # four corner wavefront sensor pairs.
-        self.wt = np.array([0.25, 0.25, 0.25, 0.25])
+        self.wt = np.array([1.0, 1.0, 1.0, 1.0])
         wfsFieldX, wfsFieldY, sensorIds = self.getDefaultLsstWfsGQ()
         self.fieldX, self.fieldY = (wfsFieldX, wfsFieldY)
         self.sensorIds = sensorIds

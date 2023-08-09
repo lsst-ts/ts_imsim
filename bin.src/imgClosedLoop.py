@@ -57,4 +57,5 @@ if __name__ == "__main__":
         args.configPointerFile,
         args.turnOffSkyBackground,
         args.turnOffAtmosphere,
+        args.opdOnly,
     )

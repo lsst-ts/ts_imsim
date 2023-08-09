@@ -41,6 +41,18 @@ class TestOpdMetrology(unittest.TestCase):
         self.metr.setCamera("comcam")
         self.assertEqual(self.metr._camera.getName(), "LSSTComCam")
 
+    def testSetWeightingRatio(self):
+        wt = [1, 2]
+        self.metr.wt = wt
+
+        wtInMetr = self.metr.wt
+        self.assertEqual(len(wtInMetr), len(wt))
+        self.assertEqual(np.sum(wtInMetr), 1)
+        self.assertAlmostEqual(wtInMetr[1] / wtInMetr[0], 2)
+        with self.assertRaises(ValueError) as context:
+            self.metr.wt = [-1, 1]
+        self.assertEqual(str(context.exception), "All weighting ratios should be >= 0.")
+
     def testSetWgtAndFieldXyOfGQLsst(self):
         self.metr.setWgtAndFieldXyOfGQ("lsst")
 
@@ -168,7 +180,7 @@ class TestOpdMetrology(unittest.TestCase):
         opdRmPTT, opdx, opdy = self.metr.rmPTTfromOPD(opdFitsFile=opdFilePath)
 
         zkRmPTT = self.metr.getZkFromOpd(opdMap=opdRmPTT)[0]
-        zkRmPTTInUm = np.sum(np.abs(zkRmPTT[0:3]))/1e3
+        zkRmPTTInUm = np.sum(np.abs(zkRmPTT[0:3])) / 1e3
         self.assertLess(zkRmPTTInUm, 9e-2)
 
     def testCalcPSSN(self):
