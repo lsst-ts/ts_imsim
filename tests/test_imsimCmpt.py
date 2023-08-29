@@ -248,7 +248,9 @@ class TestImsimCmpt(unittest.TestCase):
             self.assertEqual(sensorId, mapSensorNameAndId[refSensorName])
 
             zkInWfErr = wfErr.annularZernikePoly
-            delta = np.sum(np.abs(zkInWfErr - opdZk[sensorId]))
+            # imSim outputs OPD in nanometers so need to change to microns
+            # to be consistent with what WEP expects.
+            delta = np.sum(np.abs(zkInWfErr - opdZk[sensorId] / 1e3))
             self.assertEqual(delta, 0)
 
     def testGetListOfFwhmSensorData(self):

@@ -651,7 +651,9 @@ class ImsimCmpt:
             sensorWavefrontData = SensorWavefrontError(numOfZk=self.numOfZk)
             sensorWavefrontData.sensorId = sensorId
             sensorWavefrontData.sensorName = sensorName
-            sensorWavefrontData.annularZernikePoly = opdZk[sensorId]
+            # imSim outputs OPD in nanometers so need to change to microns
+            # to be consistent with what WEP expects.
+            sensorWavefrontData.annularZernikePoly = opdZk[sensorId] / 1e3
 
             listOfWfErr.append(sensorWavefrontData)
 

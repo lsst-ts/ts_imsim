@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.imsim-0.4.0:
+
+-------------
+0.4.0
+-------------
+
+* Add closed loop OPD only mode.
+
 .. _lsst.ts.imsim-0.3.0:
 
 -------------
