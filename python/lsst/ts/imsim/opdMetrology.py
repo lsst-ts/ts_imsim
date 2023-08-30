@@ -156,7 +156,9 @@ class OpdMetrology:
         with open(pathFieldXyFile, "r") as file:
             fieldXY = yaml.safe_load(file)
         fieldXY = np.array(fieldXY, dtype=float)
-        self.fieldX, self.fieldY = (fieldXY[:, 0], fieldXY[:, 1])
+        if instName == "lsstfam":
+            self.fieldX, self.fieldY = (fieldXY[:, 1], fieldXY[:, 0])
+            self.sensorIds = np.arange(189)
 
     def getZkFromOpd(self, opdFitsFile=None, opdMap=None, znTerms=22, obscuration=0.61):
         """Get the wavefront error of OPD in the basis of annular Zernike

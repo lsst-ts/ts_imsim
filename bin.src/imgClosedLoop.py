@@ -58,4 +58,5 @@ if __name__ == "__main__":
         args.turnOffSkyBackground,
         args.turnOffAtmosphere,
         args.opdOnly,
+        args.numProc,
     )

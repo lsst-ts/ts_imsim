@@ -277,14 +277,15 @@ class ImsimCmpt:
             Header information for ImSim config
         """
         headerText = "  header:\n"
-        headerText += f"    mjd: {obsMetadata.mjd}\n"
+        headerText += f"    mjd: *mjd\n"
         headerText += f"    observationStartMJD: {obsMetadata.mjd - (15/(60*60*24))}\n"
-        headerText += f"    seqnum: {obsMetadata.seqNum}\n"
-        headerText += f"    band: {obsMetadata.band}\n"
+        headerText += f"    seqnum: *seqnum\n"
+        headerText += f"    band: *band\n"
         headerText += f"    fieldRA: {obsMetadata.ra}\n"
         headerText += f"    fieldDec: {obsMetadata.dec}\n"
         headerText += f"    rotTelPos: {obsMetadata.rotatorAngle}\n"
         headerText += f"    airmass: {1.0/np.cos(obsMetadata.zenith)}\n"
+        headerText += f"    focusZ: {obsMetadata.focusZ}\n"
 
         return headerText
 
@@ -298,6 +299,60 @@ class ImsimCmpt:
             Path to the imSim configuration yaml file.
         """
         runProgram(f"galsim {configFilePath}")
+
+    def writeYamlAndRunImsim(self, configPath, configYaml):
+        """Write yaml config file and run Imsim.
+
+        Parameters
+        ----------
+        configPath : str
+            Path to write config yaml file.
+        configYaml : dict
+            Dictionary that contains imsim config details to write to yaml.
+        """
+
+        with open(configPath, "w") as file:
+            yaml.safe_dump(configYaml, file)
+        self.runImsim(configPath)
+
+    def addSourcesToConfig(self, configYaml, instCatPath, useCcdImg=True):
+        """Add source information to config. If using CCD it will add
+        the instance catalog details. If only using OPD it will remove
+        the instance catalog info so that we are not generating
+        unnecessary images.
+
+        Parameters
+        ----------
+        configYaml : dict
+            Dictionary that contains imsim config details to write to yaml.
+        instCatPath : str
+            Path to instance catalog file.
+        useCcdImg : bool, optional
+            When outputting CCD images this is set to True so that the instance
+            catalog information is included in the configuration. For OPD only
+            this should be set to False. (The default is True.)
+
+        Returns
+        -------
+        dict
+            Updated yaml configuration.
+        """
+
+        if useCcdImg:
+            configYaml["image"].pop("nobjects")
+            configYaml["image"]["world_pos"] = {"type": "InstCatWorldPos"}
+            configYaml["gal"] = {"type": "InstCatObj"}
+            configYaml["input"]["instance_catalog"] = {
+                "file_name": instCatPath,
+                "sed_dir": "$os.environ.get('SIMS_SED_LIBRARY_DIR')",
+            }
+        else:
+            configYaml["image"]["nobjects"] = 0
+            # Only create one empty amplifier file and one OPD.fits file
+            # when running OPD only
+            configYaml["output"]["nfiles"] = 1
+
+        return configYaml
 
     def genInstanceCatalog(self, skySim):
         """

@@ -35,3 +35,4 @@ class ObsMetadata:
     mjd: float = 59580.0
     seqNum: int = 1
     obsId: str = """$f"IM_P_{astropy.time.Time(mjd, format='mjd').strftime('%Y%m%d')}_{seqnum:06d}" """
+    focusZ: float = 0.0
