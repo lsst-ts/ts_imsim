@@ -89,6 +89,11 @@ class OpdMetrology:
         self.wt = np.array([1.0, 1.0, 1.0, 1.0])
         wfsFieldX, wfsFieldY, sensorIds = self.getDefaultLsstWfsGQ()
         self.fieldX, self.fieldY = (wfsFieldX, wfsFieldY)
+        # Rotate focal plane coordinates by 90 degrees for convergence.
+        # TODO: WHY?
+        self.fieldX, self.fieldY = np.dot(
+            np.array([self.fieldX, self.fieldY]).T, rotMatrix(-90)
+        ).T
         self.sensorIds = sensorIds
 
     def getDefaultLsstWfsGQ(self):
@@ -157,7 +162,12 @@ class OpdMetrology:
             fieldXY = yaml.safe_load(file)
         fieldXY = np.array(fieldXY, dtype=float)
         if instName == "lsstfam":
-            self.fieldX, self.fieldY = (fieldXY[:, 1], fieldXY[:, 0])
+            self.fieldX, self.fieldY = (fieldXY[:, 0], fieldXY[:, 1])
+            # Rotate focal plane coordinates by 90 degrees for convergence.
+            # TODO: WHY?
+            self.fieldX, self.fieldY = np.dot(
+                np.array([self.fieldX, self.fieldY]).T, rotMatrix(-90)
+            ).T
             self.sensorIds = np.arange(189)
 
     def getZkFromOpd(self, opdFitsFile=None, opdMap=None, znTerms=22, obscuration=0.61):

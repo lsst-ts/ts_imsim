@@ -482,7 +482,7 @@ class ClosedLoopTask:
                     turnOffAtmosphere=turnOffAtmosphere,
                 )
             elif camType == CamType.LsstFamCam:
-                for focusZ in [-1500.0, 1500.0]:
+                for focusZ in [-1.5, 1.5]:
                     obsMetadata.seqNum += 1
                     obsMetadata.focusZ = focusZ
                     self._generateImages(
@@ -664,7 +664,7 @@ class ClosedLoopTask:
         baseConfigYaml["image"].pop("image_pos")
         baseConfigYaml["output"]["nproc"] = numPro
         baseConfigYaml["image"]["random_seed"] = skySeed
-        # baseConfigYaml["input"]["telescope"]["fea"]["m1m3_lut"]["seed"] = pertSeed
+        baseConfigYaml["input"]["telescope"]["fea"]["m1m3_lut"]["seed"] = pertSeed
         if turnOffSkyBackground:
             baseConfigYaml["image"]["sky_level"] = 0
         if turnOffAtmosphere:
@@ -680,7 +680,7 @@ class ClosedLoopTask:
                 baseConfigYaml, instCatPath, useCcdImg=self.useCcdImg
             )
             imsimConfigPath = os.path.join(
-                self.imsimCmpt.outputDir, "imsimConfig_{obsMetadata.seqNum}.yaml"
+                self.imsimCmpt.outputDir, f"imsimConfig_{obsMetadata.seqNum}.yaml"
             )
             self.log.info(f"Writing Imsim Configuration file to {imsimConfigPath}")
             self.imsimCmpt.writeYamlAndRunImsim(imsimConfigPath, imsimConfigYaml)
@@ -706,10 +706,9 @@ class ClosedLoopTask:
                 imsimConfigYaml = self.imsimCmpt.addSourcesToConfig(
                     baseConfigYaml, instCatPath, useCcdImg=self.useCcdImg
                 )
-                # Add header focusZ info
-                imsimConfigYaml["output"]["header"]["focusZ"] = obsMetadata.focusZ
+
                 # Add defocus
-                imsimConfigYaml["input"]["telescope"]["fea"]["aos_dof"]["dof"][5] += obsMetadata.focusZ
+                imsimConfigYaml["input"]["telescope"]["focusZ"] = obsMetadata.focusZ * 1e-3
                 # Remove OPD since we already created it
                 imsimConfigYaml["output"].pop("opd")
                 imsimConfigPath = os.path.join(
@@ -725,8 +724,19 @@ class ClosedLoopTask:
                 imsimConfigPath = os.path.join(
                     self.imsimCmpt.outputDir, "imsimConfig.yaml"
                 )
-                self.log.info(f"Writing Imsim Configuration file to {imsimConfigPath}")
-                self.imsimCmpt.writeYamlAndRunImsim(imsimConfigPath, imsimConfigYaml)
+                imsimOpdPath = os.path.join(
+                    self.imsimCmpt.outputImgDir,
+                    imsimConfigYaml["output"]["opd"]["file_name"],
+                )
+                if os.path.exists(imsimOpdPath):
+                    self.log.info(f"OPD already created, moving to analysis.")
+                else:
+                    self.log.info(
+                        f"Writing Imsim Configuration file to {imsimConfigPath}"
+                    )
+                    self.imsimCmpt.writeYamlAndRunImsim(
+                        imsimConfigPath, imsimConfigYaml
+                    )
 
     def _calcWfErrFromImg(
         self,
@@ -1029,7 +1039,7 @@ tasks:
         obsMetadata = ObsMetadata(
             ra=self.boresightRa,
             dec=self.boresightDec,
-            band=filterTypeName,
+            band=filterTypeName.lower(),
             rotatorAngle=self.boresightRotAng,
             mjd=mjd,
         )
