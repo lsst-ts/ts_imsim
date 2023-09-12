@@ -89,6 +89,12 @@ class OpdMetrology:
         self.wt = np.array([1.0, 1.0, 1.0, 1.0])
         wfsFieldX, wfsFieldY, sensorIds = self.getDefaultLsstWfsGQ()
         self.fieldX, self.fieldY = (wfsFieldX, wfsFieldY)
+        # Rotate focal plane coordinates by 90 degrees for convergence.
+        # TODO: WHY?
+        # self.fieldX, self.fieldY = np.dot(
+        #     np.array([self.fieldX, self.fieldY]).T, rotMatrix(-90)
+        # ).T
+        self.fieldX = -1.*np.array(self.fieldX)
         self.sensorIds = sensorIds
 
     def getDefaultLsstWfsGQ(self):
@@ -107,10 +113,10 @@ class OpdMetrology:
             Detector IDs of extra-focal sensor in raft.
         """
 
-        # Field x, y for 4 WFS
+        # Field x, y for 4 WFS in the Camera Coordinate System (CCS)
         fieldWFSx = [1.176, -1.176, -1.176, 1.176]
         fieldWFSy = [1.176, 1.176, -1.176, -1.176]
-        detIds = [203, 199, 191, 195]
+        detIds = [203, 195, 191, 199]
 
         return fieldWFSx, fieldWFSy, detIds
 
@@ -157,7 +163,10 @@ class OpdMetrology:
             fieldXY = yaml.safe_load(file)
         fieldXY = np.array(fieldXY, dtype=float)
         if instName == "lsstfam":
-            self.fieldX, self.fieldY = (fieldXY[:, 1], fieldXY[:, 0])
+            self.fieldX, self.fieldY = (fieldXY[:, 0], fieldXY[:, 1])
+            # Rotate focal plane coordinates by 90 degrees for convergence.
+            # TODO: WHY?
+            self.fieldX = -1.*np.array(self.fieldX)
             self.sensorIds = np.arange(189)
 
     def getZkFromOpd(self, opdFitsFile=None, opdMap=None, znTerms=22, obscuration=0.61):
@@ -200,6 +209,7 @@ class OpdMetrology:
             opd = fits.getdata(opdFitsFile)
         elif opdMap is not None:
             opd = opdMap.copy()
+        opd = np.fliplr(opd)
 
         # Check the x, y dimensions of OPD are the same
         if np.unique(opd.shape).size != 1:

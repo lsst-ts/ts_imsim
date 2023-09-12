@@ -568,8 +568,10 @@ class ImsimCmpt:
 
             # Rotate OPD if needed
             if rotOpdInDeg != 0:
-                opdRot = rotate(opd, rotOpdInDeg, reshape=False)
-                opdRot[opd == 0] = 0
+                opdRot = opd
+                opdRot[np.isnan(opdRot)] = 0.0
+                opdRot = rotate(opdRot, rotOpdInDeg, reshape=False)
+                opdRot[opdRot == 0] = np.nan
             else:
                 opdRot = opd
 
@@ -709,6 +711,7 @@ class ImsimCmpt:
             # imSim outputs OPD in nanometers so need to change to microns
             # to be consistent with what WEP expects.
             sensorWavefrontData.annularZernikePoly = opdZk[sensorId] / 1e3
+            print(sensorWavefrontData.annularZernikePoly[:5], sensorId)
 
             listOfWfErr.append(sensorWavefrontData)
 
