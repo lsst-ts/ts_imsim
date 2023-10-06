@@ -139,7 +139,7 @@ class ClosedLoopTask:
                 detector = camera.get(name)
                 xRad, yRad = detector.getCenter(FIELD_ANGLE)
                 xDeg, yDeg = np.rad2deg(xRad), np.rad2deg(yRad)
-                fieldY.append(xDeg)  # transpose for phoSim
+                fieldY.append(xDeg)  # transpose for imSim
                 fieldX.append(yDeg)
             opdMetr.fieldX = fieldX
             opdMetr.fieldY = fieldY
@@ -555,7 +555,6 @@ class ClosedLoopTask:
                 ]
             )
 
-            # TODO: Check the order of arrays in the section below
             fwhmDict = {x: y for x, y in zip(sensor_id, fwhm)}
             ofc_fwhm = np.array(
                 [fwhmDict[sensor_wfe.sensorId] for sensor_wfe in listOfWfErr]
@@ -571,7 +570,7 @@ class ClosedLoopTask:
 
             # Flip zernikes that are not symmetric across the y-axis
             # based upon flip in batoid coordinate system.
-            wfe[:, [1, 4, 6, 9, 11, 12, 14, 16]] *= -1.0
+            # wfe[:, [1, 4, 6, 9, 11, 12, 14, 16]] *= -1.0
 
             self.ofcCalc.calculate_corrections(
                 wfe=wfe,
@@ -872,7 +871,8 @@ class ClosedLoopTask:
             {"instrument": f"LSST{butlerInstName}"},
             collections=[f"LSST{butlerInstName}/calib/unbounded"],
         )
-        detMap = camera.getIdMap()
+        detIdMap = camera.getIdMap()
+        detNameMap = camera.getNameMap()
 
         listOfWfErr = []
 
@@ -890,13 +890,51 @@ class ClosedLoopTask:
             )
 
             sensorWavefrontData = SensorWavefrontError()
-            sensorWavefrontData.sensorId = dataset.dataId["detector"]
-            sensorWavefrontData.sensorName = detMap[dataId["detector"]].getName()
+            # Rotate from CCS to ZCS/PCS (Phosim Coordinate System)
+            rotatedName = self.rotateDetNameCcsToZcs(
+                detIdMap[dataset.dataId["detector"]].getName()
+            )
+            sensorWavefrontData.sensorName = rotatedName
+            sensorWavefrontData.sensorId = detNameMap[rotatedName].getId()
             sensorWavefrontData.annularZernikePoly = zerCoeff
 
             listOfWfErr.append(sensorWavefrontData)
 
         return listOfWfErr
+
+    def rotateDetNameCcsToZcs(self, detName):
+        """Rotate the sensor name from CCS (Camera Coordinate System)
+        to the ZCS (Zemax Coordinate System) that OFC expects.
+
+        Parameters
+        ----------
+        detName : str
+            Detector name in CCS.
+
+        Returns
+        -------
+        str
+            Detector expected at that location in ZCS.
+        """
+        raft, sensor = detName.split('_')
+        camRX = int(raft[1]) - 2
+        camRY = int(raft[2]) - 2
+
+        zcsRX = -camRX
+        zcsRY = camRY
+
+        zcsRaft = f'R{zcsRX + 2}{zcsRY + 2}'
+
+        if sensor.startswith('SW'):
+            zcsSensor = sensor
+        else:
+            camSX = int(sensor[1]) - 1
+            camSY = int(sensor[2]) - 1
+            zcsSX = -camSX
+            zcsSY = camSY
+            zcsSensor = f'S{zcsSX + 1}{zcsSY + 1}'
+
+        return f'{zcsRaft}_{zcsSensor}'
 
     def writeWepConfiguration(self, instName, pipelineYamlPath, filterTypeName):
         """Write wavefront estimation pipeline task configuration.
