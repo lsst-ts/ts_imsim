@@ -35,12 +35,6 @@ class TestOpdMetrology(unittest.TestCase):
         self.metr = OpdMetrology()
         self.testDataDir = os.path.join(getModulePath(), "tests", "testData")
 
-    def testSetCamera(self):
-        self.metr.setCamera("lsstfam")
-        self.assertEqual(self.metr._camera.getName(), "LSSTCam")
-        self.metr.setCamera("comcam")
-        self.assertEqual(self.metr._camera.getName(), "LSSTComCam")
-
     def testSetWeightingRatio(self):
         wt = [1, 2]
         self.metr.wt = wt

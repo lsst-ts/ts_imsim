@@ -56,9 +56,6 @@ class ClosedLoopTask:
         # imSim Component
         self.imsimCmpt = None
 
-        # OPD Metrology
-        self.opdMetr = None
-
         # Ra/Dec/RotAng coordinates used in the simulation.
         self.boresightRa = None
         self.boresightDec = None
@@ -1083,8 +1080,6 @@ tasks:
         )
 
         # Configure the components
-        self.opdMetr = OpdMetrology()
-        self.opdMetr.setCamera(instName)
         self.configSkySim(instName, obsMetadata, pathSkyFile=pathSkyFile, starMag=15)
         self.configOfcCalc(instName)
         self.imsimCmpt = ImsimCmpt()

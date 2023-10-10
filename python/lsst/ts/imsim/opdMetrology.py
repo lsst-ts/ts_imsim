@@ -28,6 +28,7 @@ from lsst.ts.imsim.utils.metroTool import calc_pssn
 from lsst.ts.imsim.utils.utility import getCamera, getPolicyPath
 from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
 from lsst.ts.wep.utils import ZernikeAnnularFit, ZernikeEval
+from lsst.afw.cameraGeom import FIELD_ANGLE
 
 
 class OpdMetrology:
@@ -41,18 +42,6 @@ class OpdMetrology:
         self.fieldX = np.array([])
         self.fieldY = np.array([])
         self.sensorIds = []
-        self._camera = None
-
-    def setCamera(self, instName):
-        """Set the camera.
-
-        Parameters
-        ----------
-        instName : `str`
-            Instrument name. Valid options are 'comcam or 'lsstfam'.
-        """
-
-        self._camera = getCamera(instName)
 
     @property
     def wt(self):
@@ -129,14 +118,18 @@ class OpdMetrology:
         ----------
         instName : `str`
             Instrument name.
+            Valid options are 'lsst', 'lsstfam', and 'comcam'.
 
         Raises
         ------
-        RuntimeError
-            If the instrument path does not exists.
-            If fieldXy.yaml file does not exists in the instrument
-            configuration directory.
+        ValueError
+            The instrument is not supported.
         """
+
+        # Set camera and field ids for given instrument
+        if instName == 'lsst':
+            self.setDefaultLsstWfsGQ()
+            return
 
         instrumentPath = getConfigDirOfc() / instName
 
@@ -151,23 +144,27 @@ class OpdMetrology:
         # Normalize weights
         self.wt = wgtValues / np.sum(wgtValues)
 
-        # Set the field (x, y)
-        pathFieldXyFile = os.path.join(
-            getPolicyPath(), "instrument", instName, "fieldXy.yaml"
-        )
-
-        if not os.path.exists(pathFieldXyFile):
-            raise RuntimeError(f"Field xy file does not exists: {pathFieldXyFile}.")
-
-        with open(pathFieldXyFile, "r") as file:
-            fieldXY = yaml.safe_load(file)
-        fieldXY = np.array(fieldXY, dtype=float)
         if instName == "lsstfam":
-            self.fieldX, self.fieldY = (fieldXY[:, 0], fieldXY[:, 1])
-            # Rotate focal plane coordinates by 90 degrees for convergence.
-            # TODO: WHY?
-            self.fieldX = -1.*np.array(self.fieldX)
+            camera = getCamera(instName)
             self.sensorIds = np.arange(189)
+        elif instName == "comcam":
+            camera = getCamera(instName)
+            self.sensorIds = np.arange(9)
+        else:
+            raise ValueError(f"Instrument {instName} is not supported in OPD mode.")
+
+        fieldX = []
+        fieldY = []
+        detMap = camera.getIdMap()
+        for detId in self.sensorIds:
+            detCenter = detMap[detId].getCenter(FIELD_ANGLE)
+            # Switch X,Y coordinates to convert from DVCS to CCS coords
+            fieldY.append(np.degrees(detCenter[0]))
+            fieldX.append(np.degrees(detCenter[1]))
+        self.fieldX = np.array(fieldX)
+        self.fieldY = np.array(fieldY)
+        # Convert from CCS to ZCS for current OFC
+        self.fieldX = -1.*self.fieldX
 
     def getZkFromOpd(self, opdFitsFile=None, opdMap=None, znTerms=22, obscuration=0.61):
         """Get the wavefront error of OPD in the basis of annular Zernike
