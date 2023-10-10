@@ -11,3 +11,4 @@ stamp:
       type: RubinOptics
       camera: "@output.camera"
       boresight: $boresight
+      det_name: $det_name

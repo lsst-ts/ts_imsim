@@ -1,8 +1,7 @@
 image:
   type: LSST_Image
   camera: "@output.camera"
-  xsize: $xsize
-  ysize: $ysize
+  det_name: $det_name
   nobjects: 1
   image_pos: $image_center  # Draw one donut at the center of each WFS CCD
 
