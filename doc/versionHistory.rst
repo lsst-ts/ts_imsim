@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.imsim-0.4.1:
+
+-------------
+0.4.1
+-------------
+
+* Update to use ts_wep v7.0.
+
 .. _lsst.ts.imsim-0.4.0:
 
 -------------

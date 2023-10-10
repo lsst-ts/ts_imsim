@@ -36,9 +36,8 @@ from lsst.ts.imsim.utils.plotUtil import plotFwhmOfIters
 from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
 from lsst.ts.imsim.utils.utility import getCamera, getConfigDir, makeDir
 from lsst.ts.ofc import OFC, OFCData
-from lsst.ts.wep.utility import CamType, FilterType
-from lsst.ts.wep.utility import getConfigDir as getWepConfigDir
-from lsst.ts.wep.utility import rotMatrix, runProgram
+from lsst.ts.wep.utils import CamType, FilterType, rotMatrix, runProgram
+from lsst.ts.wep.utils import getConfigDir as getWepConfigDir
 
 
 class ClosedLoopTask:

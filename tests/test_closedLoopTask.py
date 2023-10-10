@@ -27,7 +27,7 @@ import unittest
 from lsst.ts.imsim.closedLoopTask import ClosedLoopTask
 from lsst.ts.imsim.obsMetadata import ObsMetadata
 from lsst.ts.imsim.utils.utility import getModulePath
-from lsst.ts.wep.utility import CamType, FilterType
+from lsst.ts.wep.utils import CamType, FilterType
 
 
 class TestclosedLoopTask(unittest.TestCase):

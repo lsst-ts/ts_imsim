@@ -28,7 +28,7 @@ from lsst.ts.imsim.opdMetrology import OpdMetrology
 from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
 from lsst.ts.imsim.utils.utility import getConfigDir, makeDir
 from lsst.ts.ofc.ofc_data.base_ofc_data import BaseOFCData
-from lsst.ts.wep.utility import runProgram
+from lsst.ts.wep.utils import runProgram
 from lsst.ts.imsim.utils.utility import getZkFromFile
 from scipy.ndimage import rotate
 
