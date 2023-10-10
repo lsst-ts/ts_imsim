@@ -253,10 +253,7 @@ class ImsimCmpt:
         opdSectionText += "    fields:\n"
 
         # Get the locations for the OPD from OPD Metrology
-        if instName == "lsst":
-            self.opdMetr.setDefaultLsstWfsGQ()
-        else:
-            self.opdMetr.setWgtAndFieldXyOfGQ(instName)
+        self.opdMetr.setWgtAndFieldXyOfGQ(instName)
         for thx, thy in zip(self.opdMetr.fieldX, self.opdMetr.fieldY):
             opdSectionText += f"      - {{thx: {thx} deg, thy: {thy} deg}}\n"
 
