@@ -1,0 +1,68 @@
+telescope:
+  file_name:
+    type: FormattedStr
+    format: LSST_%s.yaml
+    items:
+      - *band
+  rotTelPos: *rtp  # Set the camera rotator angle using the value defined above.
+  # Many kinds of perturbations are possible.
+  # See https://github.com/LSSTDESC/imSim/blob/main/imsim/telescope_loader.py for details
+  # Some examples below
+  perturbations:
+    # Perturb optics directly.  Note that some of these are degenerate with the
+    # fea.aos_dof.dof parameters below.  For the closed-loop feedback simulation, it
+    # probably makes more sense to use the dof parameters.
+    M2:  # Optics to perturb
+      shift: [1.0e-6, 0.0, 0.0]  # x,y,z Shift in meters
+      rotX: 4 arcsec # Rotation around x axis
+      Zernike:  # (annular by default; you can override R_inner or R_outer though)
+        idx: [4, 5, 6, 7, 8]  # Zernike indices
+        val: [4.e-7, -2.e-7, 1.0e-7, 0.4e-7, -0.9e-7]  # Zernike values in meters
+    M3:
+      Zernike:  # (annular by default; you can override R_inner or R_outer though)
+        idx: [4, 5, 6, 7, 8]  # Zernike indices
+        val: [3.1e-7, -3.6e-7, -0.3e-7, 1.7e-7, 0.3e-7]  # Zernike values in meters
+  # There's a whole suite of FEA perturbations available (same as ts_phosim)
+  # Details in the telescope_loader.py file linked above.
+  fea:
+    m1m3_gravity:  # gravitational flexure of M1M3
+      zenith: *zenith
+    m1m3_temperature:
+      m1m3_TBulk: 0.1  # Celsius
+      m1m3_TxGrad: 0.01  # Kelvin/meter
+      m1m3_TyGrad: 0.01  # Kelvin/meter
+      m1m3_TzGrad: 0.01  # Kelvin/meter
+      m1m3_TrGrad: 0.01  # Kelvin/meter
+    # LUT correction to counteract m1m3_gravity
+    m1m3_lut:
+      # Note that you aren't _required_ to use the same zenith angle here as above, though
+      # it's usually a good idea.
+      zenith: *zenith
+      error: 0.05  # fractional actuator random error to apply to LUT correction.
+      seed: 11  # random seed for above error
+    m2_gravity:
+      zenith: *zenith
+    m2_temperature:
+      m2_TzGrad: 0.01  # Kelvin/meter
+      m2_TrGrad: 0.01  # Kelvin/meter
+    camera_gravity:
+      zenith: *zenith
+      rotation: *rtp
+    camera_temperature:
+      camera_TBulk: 0.1  # Celsius
+
+    # And finally, AOS degrees of freedom in standard order and units.
+    # which means:
+    # 0: M2 dz (mm)
+    # 1,2: M2 dx,dy (mm)
+    # 3,4: M2 rx,ry (arcsec)
+    # 5: camera dz (mm)
+    # 6,7: camera dx,dy (mm)
+    # 8,9: camera rx,ry (arcsec)
+    # 10-29: M1M3 bending modes (mm)
+    # 30-49: M2 bending modes (mm)
+
+    # Eval string here is compact for the demo.  For simulating the closed loop, you probably
+    # will use a 50-element list here.
+    aos_dof:
+      dof: $[0.0]*50

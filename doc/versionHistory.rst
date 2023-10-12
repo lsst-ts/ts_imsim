@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.imsim-0.4.2:
+
+-------------
+0.4.2
+-------------
+
+* Add config files for testing convergence with and without perturbations and fam testing files.
+
 .. _lsst.ts.imsim-0.4.1:
 
 -------------

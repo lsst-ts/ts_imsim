@@ -1,0 +1,12 @@
+# Default LSSTCam configuration files
+input:
+  atm_psf: '{TS_IMSIM_DIR}/policy/config/input/atm_psf/atmPsfDefault.yaml'
+  sky_model: '{TS_IMSIM_DIR}/policy/config/input/sky_model/skyModelDefault.yaml'
+  telescope: '{TS_IMSIM_DIR}/policy/config/input/telescope/lsstCamLargePert.yaml'
+  vignetting: '{TS_IMSIM_DIR}/policy/config/input/vignetting/lsstCamDefault.yaml'
+gal: '{TS_IMSIM_DIR}/policy/config/gal/starDefault.yaml'
+image: '{TS_IMSIM_DIR}/policy/config/image/lsstCamDefault.yaml'
+psf: '{TS_IMSIM_DIR}/policy/config/psf/psfDefault.yaml'
+stamp: '{TS_IMSIM_DIR}/policy/config/stamp/lsstCamDefault.yaml'
+output: '{TS_IMSIM_DIR}/policy/config/output/lsstCamDefault.yaml'
+opd: '{TS_IMSIM_DIR}/policy/config/opd/lsstCamDefault.yaml'
