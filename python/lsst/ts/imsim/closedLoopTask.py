@@ -22,10 +22,10 @@
 import logging
 import os
 import shutil
+from copy import deepcopy
 
 import astropy
 import numpy as np
-from copy import deepcopy
 from lsst.afw.cameraGeom import FIELD_ANGLE, DetectorType
 from lsst.daf import butler as dafButler
 from lsst.ts.imsim.imsimCmpt import ImsimCmpt
@@ -36,8 +36,9 @@ from lsst.ts.imsim.utils.plotUtil import plotFwhmOfIters
 from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
 from lsst.ts.imsim.utils.utility import getCamera, getConfigDir, makeDir
 from lsst.ts.ofc import OFC, OFCData
-from lsst.ts.wep.utils import CamType, FilterType, rotMatrix, runProgram
+from lsst.ts.wep.utils import CamType, FilterType
 from lsst.ts.wep.utils import getConfigDir as getWepConfigDir
+from lsst.ts.wep.utils import rotMatrix, runProgram
 
 
 class ClosedLoopTask:
@@ -136,7 +137,7 @@ class ClosedLoopTask:
                 detector = camera.get(name)
                 xRad, yRad = detector.getCenter(FIELD_ANGLE)
                 xDeg, yDeg = np.rad2deg(xRad), np.rad2deg(yRad)
-                fieldY.append(xDeg)  # transpose for imSim
+                fieldY.append(xDeg)  # transpose to convert from DVCS to CCS
                 fieldX.append(yDeg)
             opdMetr.fieldX = fieldX
             opdMetr.fieldY = fieldY
@@ -169,9 +170,7 @@ class ClosedLoopTask:
             Instrument name.
         """
 
-        ofc_data = OFCData(instName)
-        ofc_data.xref = "x00"
-        self.ofcCalc = OFC(ofc_data)
+        self.ofcCalc = OFC(OFCData(instName))
 
     def mapFilterRefToG(self, filterTypeName):
         """Map the reference filter to the G filter.
@@ -565,10 +564,6 @@ class ClosedLoopTask:
             else:
                 self.ofcCalc.set_fwhm_data(fwhm, sensor_id)
 
-            # Flip zernikes that are not symmetric across the y-axis
-            # based upon flip in batoid coordinate system.
-            # wfe[:, [1, 4, 6, 9, 11, 12, 14, 16]] *= -1.0
-
             self.ofcCalc.calculate_corrections(
                 wfe=wfe,
                 field_idx=field_idx,
@@ -704,8 +699,10 @@ class ClosedLoopTask:
                 )
 
                 # Add defocus
-                imsimConfigYaml["input"]["telescope"]["focusZ"] = obsMetadata.focusZ * 1e-3
-                # Remove OPD since we already created it
+                imsimConfigYaml["input"]["telescope"]["focusZ"] = (
+                    obsMetadata.focusZ * 1e-3
+                )
+                # Remove OPD from config since we already created it
                 imsimConfigYaml["output"].pop("opd")
                 imsimConfigPath = os.path.join(
                     self.imsimCmpt.outputDir, f"imsimConfig_{obsMetadata.seqNum}.yaml"
@@ -913,25 +910,25 @@ class ClosedLoopTask:
         str
             Detector expected at that location in ZCS.
         """
-        raft, sensor = detName.split('_')
+        raft, sensor = detName.split("_")
         camRX = int(raft[1]) - 2
         camRY = int(raft[2]) - 2
 
         zcsRX = -camRX
         zcsRY = camRY
 
-        zcsRaft = f'R{zcsRX + 2}{zcsRY + 2}'
+        zcsRaft = f"R{zcsRX + 2}{zcsRY + 2}"
 
-        if sensor.startswith('SW'):
+        if sensor.startswith("SW"):
             zcsSensor = sensor
         else:
             camSX = int(sensor[1]) - 1
             camSY = int(sensor[2]) - 1
             zcsSX = -camSX
             zcsSY = camSY
-            zcsSensor = f'S{zcsSX + 1}{zcsSY + 1}'
+            zcsSensor = f"S{zcsSX + 1}{zcsSY + 1}"
 
-        return f'{zcsRaft}_{zcsSensor}'
+        return f"{zcsRaft}_{zcsSensor}"
 
     def writeWepConfiguration(self, instName, pipelineYamlPath, filterTypeName):
         """Write wavefront estimation pipeline task configuration.
@@ -947,7 +944,7 @@ class ClosedLoopTask:
             Filter type name: ref (or ''), u, g, r, i, z, or y.
         """
 
-        butlerInstName = "ComCam" if instName == "comcam" else "Cam"
+        butlerInstName = "Cam"
 
         # Remap reference filter
         filterTypeName = self.mapFilterRefToG(filterTypeName)
@@ -1143,16 +1140,8 @@ tasks:
 
         runProgram(f"butler create {butlerRootPath}")
 
-        if instName == "comcam":
-            self.log.debug("Registering LsstComCam")
-            runProgram(
-                f"butler register-instrument {butlerRootPath} lsst.obs.lsst.LsstComCam"
-            )
-        else:
-            self.log.debug("Registering LsstCam")
-            runProgram(
-                f"butler register-instrument {butlerRootPath} lsst.obs.lsst.LsstCam"
-            )
+        self.log.debug("Registering LsstCam")
+        runProgram(f"butler register-instrument {butlerRootPath} lsst.obs.lsst.LsstCam")
 
     def generateRefCatalog(self, instName, butlerRootPath, pathSkyFile, filterTypeName):
         """Generate reference star catalog.

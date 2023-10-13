@@ -47,83 +47,6 @@ class TestOpdMetrology(unittest.TestCase):
             self.metr.wt = [-1, 1]
         self.assertEqual(str(context.exception), "All weighting ratios should be >= 0.")
 
-    def testSetWgtAndFieldXyOfGQLsst(self):
-        self.metr.setWgtAndFieldXyOfGQ("lsst")
-
-        fieldXAns, fieldYAns, wgtAns = self._calcFieldXyAndWgtLsst()
-
-        fieldX = self.metr.fieldX
-        fieldY = self.metr.fieldY
-        self.assertEqual(len(fieldX), 31)
-        self.assertLess(np.sum(np.abs(fieldX - fieldXAns)), 1e-10)
-        self.assertLess(np.sum(np.abs(fieldY - fieldYAns)), 1e-10)
-
-        wgt = self.metr.wt
-        self.assertEqual(len(wgt), 31)
-        self.assertLess(np.sum(np.abs(wgt - wgtAns)), 1e-10)
-
-    def _calcFieldXyAndWgtLsst(self):
-        # The distance of point xi (used in Gaussian quadrature plane) to the
-        # origin
-        # This value is in [-1.75, 1.75]
-        armLen = [0.379, 0.841, 1.237, 1.535, 1.708]
-
-        # Weighting of point xi (used in Gaussian quadrature plane) for each
-        # ring
-        armW = [0.2369, 0.4786, 0.5689, 0.4786, 0.2369]
-
-        # Number of points on each ring
-        nArm = 6
-
-        # Get the weighting for all field points (31 for lsst camera)
-        # Consider the first element is center (0)
-        wgt = np.concatenate([np.zeros(1), np.kron(armW, np.ones(nArm))])
-
-        # Generate the fields point x, y coordinates
-        pointAngle = np.arange(nArm) * (2 * np.pi) / nArm
-        fieldX = np.concatenate([np.zeros(1), np.kron(armLen, np.cos(pointAngle))])
-        fieldY = np.concatenate([np.zeros(1), np.kron(armLen, np.sin(pointAngle))])
-
-        return fieldX, fieldY, wgt / np.sum(wgt)
-
-    def testSetWgtAndFieldXyOfGQComCam(self):
-        self.metr.setWgtAndFieldXyOfGQ("comcam")
-
-        fieldXAns, fieldYAns, wgtAns = self._calcFieldXyAndWgtComCam()
-
-        fieldX = self.metr.fieldX
-        fieldY = self.metr.fieldY
-        self.assertEqual(len(fieldX), 9)
-        self.assertLess(np.sum(np.abs(fieldX - fieldXAns)), 1e-10)
-        self.assertLess(np.sum(np.abs(fieldY - fieldYAns)), 1e-10)
-
-        wgt = self.metr.wt
-        self.assertEqual(len(wgt), 9)
-        self.assertLess(np.sum(np.abs(wgt - wgtAns)), 1e-10)
-
-    def _calcFieldXyAndWgtComCam(self):
-        # ComCam is the cetral raft of LSST cam, which is composed of 3 x 3
-        # CCDs.
-        nRow = 3
-        nCol = 3
-
-        # Number of field points
-        nField = nRow * nCol
-
-        # Get the weighting for all field points (9 for comcam)
-        wgt = np.ones(nField)
-
-        # Distance to raft center in degree along x/y direction and the
-        # related relative position
-        sensorD = 0.2347
-        coorComcam = sensorD * np.array([-1, 0, 1])
-
-        # Generate the fields point x, y coordinates
-        fieldX = np.kron(coorComcam, np.ones(nRow))
-        fieldY = np.kron(np.ones(nCol), coorComcam)
-
-        return fieldX, fieldY, wgt / np.sum(wgt)
-
     def testSetWgtAndFieldXyOfGQLsstFam(self):
         self.metr.setWgtAndFieldXyOfGQ("lsstfam")
 
@@ -143,8 +66,24 @@ class TestOpdMetrology(unittest.TestCase):
 
         fieldX = self.metr.fieldX
         fieldY = self.metr.fieldY
-        self.assertCountEqual(fieldX, [1.176, -1.176, -1.176, 1.176])
-        self.assertCountEqual(fieldY, [1.176, -1.176, -1.176, 1.176])
+        self.assertCountEqual(
+            fieldX,
+            [
+                1.1902777777777778,
+                1.1902777777777778,
+                -1.1902777777777778,
+                -1.1902777777777778,
+            ],
+        )
+        self.assertCountEqual(
+            fieldY,
+            [
+                -1.1902777777777778,
+                1.1902777777777778,
+                1.1902777777777778,
+                -1.1902777777777778,
+            ],
+        )
 
         wgt = self.metr.wt
         self.assertCountEqual(wgt, [0.25, 0.25, 0.25, 0.25])
@@ -165,14 +104,15 @@ class TestOpdMetrology(unittest.TestCase):
         ansOpdFileName = "opd.zer"
         ansOpdFilePath = os.path.join(opdDir, ansOpdFileName)
         allOpdAns = getZkFromFile(ansOpdFilePath)
-        print(zk, allOpdAns)
-        self.assertLess(np.sum(np.abs(zk[3:] - allOpdAns[203])), 1e-5)
+        self.assertLess(np.sum(np.abs(zk[3:] - allOpdAns[191])), 1e-5)
 
     def testRmPTTfromOPD(self):
         opdDir = self._getOpdDir()
         opdFilePath = os.path.join(opdDir, "opd.fits")
-        opdRmPTT, opdx, opdy = self.metr.rmPTTfromOPD(opdFitsFile=opdFilePath)
+        opdMap = fits.getdata(opdFilePath, 1)
+        opdRmPTT, opdx, opdy = self.metr.rmPTTfromOPD(opdMap=opdMap)
 
+        # Flip OPD because it will be flipped inside getZkFromOpd
         zkRmPTT = self.metr.getZkFromOpd(opdMap=opdRmPTT)[0]
         zkRmPTTInUm = np.sum(np.abs(zkRmPTT[0:3])) / 1e3
         self.assertLess(zkRmPTTInUm, 9e-2)

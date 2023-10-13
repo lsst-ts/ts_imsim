@@ -24,11 +24,11 @@ import os
 import numpy as np
 import yaml
 from astropy.io import fits
+from lsst.afw.cameraGeom import FIELD_ANGLE
 from lsst.ts.imsim.utils.metroTool import calc_pssn
 from lsst.ts.imsim.utils.utility import getCamera, getPolicyPath
 from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
 from lsst.ts.wep.utils import ZernikeAnnularFit, ZernikeEval
-from lsst.afw.cameraGeom import FIELD_ANGLE
 
 
 class OpdMetrology:
@@ -78,12 +78,8 @@ class OpdMetrology:
         self.wt = np.array([1.0, 1.0, 1.0, 1.0])
         wfsFieldX, wfsFieldY, sensorIds = self.getDefaultLsstWfsGQ()
         self.fieldX, self.fieldY = (wfsFieldX, wfsFieldY)
-        # Rotate focal plane coordinates by 90 degrees for convergence.
-        # TODO: WHY?
-        # self.fieldX, self.fieldY = np.dot(
-        #     np.array([self.fieldX, self.fieldY]).T, rotMatrix(-90)
-        # ).T
-        self.fieldX = -1.*np.array(self.fieldX)
+        # Convert from CCS to ZCS for current OFC
+        self.fieldX = -1.0 * np.array(self.fieldX)
         self.sensorIds = sensorIds
 
     def getDefaultLsstWfsGQ(self):
@@ -103,11 +99,22 @@ class OpdMetrology:
         """
 
         # Field x, y for 4 WFS in the Camera Coordinate System (CCS)
-        fieldWFSx = [1.176, -1.176, -1.176, 1.176]
-        fieldWFSy = [1.176, 1.176, -1.176, -1.176]
-        detIds = [203, 195, 191, 199]
+        # These will be chosen at the center of the extra-intra
+        # focal pairs of wavefront sensors.
+        detIds = [191, 195, 199, 203]
+        camera = getCamera("lsst")
+        fieldX = []
+        fieldY = []
+        detMap = camera.getIdMap()
+        for detId in detIds:
+            detExtraCenter = np.degrees(detMap[detId].getCenter(FIELD_ANGLE))
+            detIntraCenter = np.degrees(detMap[detId + 1].getCenter(FIELD_ANGLE))
+            # Switch X,Y coordinates to convert from DVCS to CCS coords
+            detCenter = np.mean([detExtraCenter, detIntraCenter], axis=0)
+            fieldY.append(detCenter[0])
+            fieldX.append(detCenter[1])
 
-        return fieldWFSx, fieldWFSy, detIds
+        return fieldX, fieldY, detIds
 
     def setWgtAndFieldXyOfGQ(self, instName):
         """Set the GQ weighting ratio and field X, Y.
@@ -118,7 +125,7 @@ class OpdMetrology:
         ----------
         instName : `str`
             Instrument name.
-            Valid options are 'lsst', 'lsstfam', and 'comcam'.
+            Valid options are 'lsst' or 'lsstfam.
 
         Raises
         ------
@@ -127,7 +134,7 @@ class OpdMetrology:
         """
 
         # Set camera and field ids for given instrument
-        if instName == 'lsst':
+        if instName == "lsst":
             self.setDefaultLsstWfsGQ()
             return
 
@@ -147,9 +154,6 @@ class OpdMetrology:
         if instName == "lsstfam":
             camera = getCamera(instName)
             self.sensorIds = np.arange(189)
-        elif instName == "comcam":
-            camera = getCamera(instName)
-            self.sensorIds = np.arange(9)
         else:
             raise ValueError(f"Instrument {instName} is not supported in OPD mode.")
 
@@ -164,9 +168,11 @@ class OpdMetrology:
         self.fieldX = np.array(fieldX)
         self.fieldY = np.array(fieldY)
         # Convert from CCS to ZCS for current OFC
-        self.fieldX = -1.*self.fieldX
+        self.fieldX = -1.0 * self.fieldX
 
-    def getZkFromOpd(self, opdFitsFile=None, opdMap=None, znTerms=22, obscuration=0.61):
+    def getZkFromOpd(
+        self, opdFitsFile=None, opdMap=None, znTerms=22, obscuration=0.61, flipLR=True
+    ):
         """Get the wavefront error of OPD in the basis of annular Zernike
         polynomials.
 
@@ -183,6 +189,12 @@ class OpdMetrology:
             is 22.)
         obscuration : float, optional
             Obscuration of annular Zernike polynomial. (the default is 0.61.)
+        flipLR : bool, optional
+            Flip the opd image in the left-right direction. Currently
+            this flip is needed in the closed loop because ts_ofc
+            has a sensitivity matrix in the Zemax Coordinate System
+            instead of the Camera Coordinate System. This will be removed
+            when ts_ofc changes to use the CCS. (the default is True.)
 
         Returns
         -------
@@ -206,7 +218,9 @@ class OpdMetrology:
             opd = fits.getdata(opdFitsFile)
         elif opdMap is not None:
             opd = opdMap.copy()
-        opd = np.fliplr(opd)
+        # TODO: Remove when OFC moves to CCS instead of ZCS
+        if flipLR is True:
+            opd = np.fliplr(opd)
 
         # Check the x, y dimensions of OPD are the same
         if np.unique(opd.shape).size != 1:

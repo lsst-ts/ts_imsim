@@ -26,10 +26,9 @@ import yaml
 from astropy.io import fits
 from lsst.ts.imsim.opdMetrology import OpdMetrology
 from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
-from lsst.ts.imsim.utils.utility import getConfigDir, makeDir
+from lsst.ts.imsim.utils.utility import getConfigDir, getZkFromFile, makeDir
 from lsst.ts.ofc.ofc_data.base_ofc_data import BaseOFCData
 from lsst.ts.wep.utils import runProgram
-from lsst.ts.imsim.utils.utility import getZkFromFile
 from scipy.ndimage import rotate
 
 
@@ -708,8 +707,6 @@ class ImsimCmpt:
             # imSim outputs OPD in nanometers so need to change to microns
             # to be consistent with what WEP expects.
             sensorWavefrontData.annularZernikePoly = opdZk[sensorId] / 1e3
-            print(sensorWavefrontData.annularZernikePoly[:5], sensorId)
-
             listOfWfErr.append(sensorWavefrontData)
 
         return listOfWfErr

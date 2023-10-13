@@ -23,7 +23,7 @@ import os
 import unittest
 
 from lsst.afw import cameraGeom
-from lsst.obs.lsst import LsstCam, LsstComCam
+from lsst.obs.lsst import LsstCam
 from lsst.ts.imsim.utils.utility import (
     getCamera,
     getConfigDir,
@@ -48,10 +48,6 @@ class TestUtility(unittest.TestCase):
         )
 
     def testGetCamera(self):
-        lsstComCam = getCamera("comcam")
-        self.assertIsInstance(lsstComCam, cameraGeom.Camera)
-        self.assertEqual(lsstComCam.getName(), LsstComCam.getCamera().getName())
-
         lsstFamCam = getCamera("lsstfam")
         self.assertIsInstance(lsstFamCam, cameraGeom.Camera)
         self.assertEqual(lsstFamCam.getName(), LsstCam.getCamera().getName())
