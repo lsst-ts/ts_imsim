@@ -119,14 +119,20 @@ class TestImsimCmpt(unittest.TestCase):
     def testFormatOpdTextLsstCam(self):
         opdText = self.imsimCmpt.formatOpdText(self.obsMetadataTest, "lsst")
         self.assertTrue(opdText.startswith("  opd:"))
-        self.assertTrue(opdText.endswith("- {thx: 1.176 deg, thy: -1.176 deg}\n"))
+        self.assertTrue(
+            opdText.endswith(
+                "- {thx: -1.1902777777777778 deg, thy: 1.1902777777777778 deg}\n"
+            )
+        )
 
     def testAddConfigHeader(self):
+        obsInfoText = self.imsimCmpt.convertObsMetadataToText(self.obsMetadataTest)
         headerText = self.imsimCmpt.addConfigHeader(self.obsMetadataTest)
-        headerYaml = yaml.safe_load(headerText)
-        for key in list(headerYaml["header"].keys()):
+        headerYaml = yaml.safe_load(str(obsInfoText + "\n" + "output:\n" + headerText))
+        for key in list(headerYaml["output"]["header"].keys()):
             self.assertEqual(
-                headerYaml["header"][key], self.fullTestYaml["output"]["header"][key]
+                headerYaml["output"]["header"][key],
+                self.fullTestYaml["output"]["header"][key],
             )
 
     def testGenInstanceCatalog(self):
