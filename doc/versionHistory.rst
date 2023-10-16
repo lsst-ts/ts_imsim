@@ -6,6 +6,15 @@
 Version History
 ##################
 
+.. _lsst.ts.imsim-0.5.0:
+
+-------------
+0.5.0
+-------------
+
+* Add FAM support.
+* Debug rotation problems.
+
 .. _lsst.ts.imsim-0.4.2:
 
 -------------

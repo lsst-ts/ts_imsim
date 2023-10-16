@@ -24,6 +24,7 @@ import os
 import numpy as np
 import yaml
 from astropy.io import fits
+from lsst.afw.cameraGeom import FIELD_ANGLE
 from lsst.ts.imsim.utils.metroTool import calc_pssn
 from lsst.ts.imsim.utils.utility import getCamera, getPolicyPath
 from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
@@ -41,18 +42,6 @@ class OpdMetrology:
         self.fieldX = np.array([])
         self.fieldY = np.array([])
         self.sensorIds = []
-        self._camera = None
-
-    def setCamera(self, instName):
-        """Set the camera.
-
-        Parameters
-        ----------
-        instName : `str`
-            Instrument name. Valid options are 'comcam or 'lsstfam'.
-        """
-
-        self._camera = getCamera(instName)
 
     @property
     def wt(self):
@@ -89,6 +78,10 @@ class OpdMetrology:
         self.wt = np.array([1.0, 1.0, 1.0, 1.0])
         wfsFieldX, wfsFieldY, sensorIds = self.getDefaultLsstWfsGQ()
         self.fieldX, self.fieldY = (wfsFieldX, wfsFieldY)
+        # Convert from CCS to ZCS for current OFC
+        # TODO: Remove this conversion when ts_ofc
+        # sensitivity matrix is updated.
+        self.fieldX = -1.0 * np.array(self.fieldX)
         self.sensorIds = sensorIds
 
     def getDefaultLsstWfsGQ(self):
@@ -107,12 +100,23 @@ class OpdMetrology:
             Detector IDs of extra-focal sensor in raft.
         """
 
-        # Field x, y for 4 WFS
-        fieldWFSx = [1.176, -1.176, -1.176, 1.176]
-        fieldWFSy = [1.176, 1.176, -1.176, -1.176]
-        detIds = [203, 199, 191, 195]
+        # Field x, y for 4 WFS in the Camera Coordinate System (CCS)
+        # These will be chosen at the center of the extra-intra
+        # focal pairs of wavefront sensors.
+        detIds = [191, 195, 199, 203]
+        camera = getCamera("lsst")
+        fieldX = []
+        fieldY = []
+        detMap = camera.getIdMap()
+        for detId in detIds:
+            detExtraCenter = np.degrees(detMap[detId].getCenter(FIELD_ANGLE))
+            detIntraCenter = np.degrees(detMap[detId + 1].getCenter(FIELD_ANGLE))
+            # Switch X,Y coordinates to convert from DVCS to CCS coords
+            detCenter = np.mean([detExtraCenter, detIntraCenter], axis=0)
+            fieldY.append(detCenter[0])
+            fieldX.append(detCenter[1])
 
-        return fieldWFSx, fieldWFSy, detIds
+        return fieldX, fieldY, detIds
 
     def setWgtAndFieldXyOfGQ(self, instName):
         """Set the GQ weighting ratio and field X, Y.
@@ -123,14 +127,18 @@ class OpdMetrology:
         ----------
         instName : `str`
             Instrument name.
+            Valid options are 'lsst' or 'lsstfam.
 
         Raises
         ------
-        RuntimeError
-            If the instrument path does not exists.
-            If fieldXy.yaml file does not exists in the instrument
-            configuration directory.
+        ValueError
+            The instrument is not supported.
         """
+
+        # Set camera and field ids for given instrument
+        if instName == "lsst":
+            self.setDefaultLsstWfsGQ()
+            return
 
         instrumentPath = getConfigDirOfc() / instName
 
@@ -145,20 +153,30 @@ class OpdMetrology:
         # Normalize weights
         self.wt = wgtValues / np.sum(wgtValues)
 
-        # Set the field (x, y)
-        pathFieldXyFile = os.path.join(
-            getPolicyPath(), "instrument", instName, "fieldXy.yaml"
-        )
+        if instName == "lsstfam":
+            camera = getCamera(instName)
+            self.sensorIds = np.arange(189)
+        else:
+            raise ValueError(f"Instrument {instName} is not supported in OPD mode.")
 
-        if not os.path.exists(pathFieldXyFile):
-            raise RuntimeError(f"Field xy file does not exists: {pathFieldXyFile}.")
+        fieldX = []
+        fieldY = []
+        detMap = camera.getIdMap()
+        for detId in self.sensorIds:
+            detCenter = detMap[detId].getCenter(FIELD_ANGLE)
+            # Switch X,Y coordinates to convert from DVCS to CCS coords
+            fieldY.append(np.degrees(detCenter[0]))
+            fieldX.append(np.degrees(detCenter[1]))
+        self.fieldX = np.array(fieldX)
+        self.fieldY = np.array(fieldY)
+        # Convert from CCS to ZCS for current OFC
+        # TODO: Remove this conversion when ts_ofc
+        # sensitivity matrix is updated.
+        self.fieldX = -1.0 * self.fieldX
 
-        with open(pathFieldXyFile, "r") as file:
-            fieldXY = yaml.safe_load(file)
-        fieldXY = np.array(fieldXY, dtype=float)
-        self.fieldX, self.fieldY = (fieldXY[:, 0], fieldXY[:, 1])
-
-    def getZkFromOpd(self, opdFitsFile=None, opdMap=None, znTerms=22, obscuration=0.61):
+    def getZkFromOpd(
+        self, opdFitsFile=None, opdMap=None, znTerms=22, obscuration=0.61, flipLR=True
+    ):
         """Get the wavefront error of OPD in the basis of annular Zernike
         polynomials.
 
@@ -175,6 +193,12 @@ class OpdMetrology:
             is 22.)
         obscuration : float, optional
             Obscuration of annular Zernike polynomial. (the default is 0.61.)
+        flipLR : bool, optional
+            Flip the opd image in the left-right direction. Currently
+            this flip is needed in the closed loop because ts_ofc
+            has a sensitivity matrix in the Zemax Coordinate System
+            instead of the Camera Coordinate System. This will be removed
+            when ts_ofc changes to use the CCS. (the default is True.)
 
         Returns
         -------
@@ -198,6 +222,9 @@ class OpdMetrology:
             opd = fits.getdata(opdFitsFile)
         elif opdMap is not None:
             opd = opdMap.copy()
+        # TODO: Remove when OFC moves to CCS instead of ZCS
+        if flipLR is True:
+            opd = np.fliplr(opd)
 
         # Check the x, y dimensions of OPD are the same
         if np.unique(opd.shape).size != 1:
@@ -215,7 +242,7 @@ class OpdMetrology:
         return zk, opd, opdx, opdy
 
     def rmPTTfromOPD(self, opdFitsFile=None, opdMap=None):
-        """Remove the afftection of piston (z1), x-tilt (z2), and y-tilt (z3)
+        """Remove the piston (z1), x-tilt (z2), and y-tilt (z3)
         from the OPD map.
 
         OPD: Optical path difference.

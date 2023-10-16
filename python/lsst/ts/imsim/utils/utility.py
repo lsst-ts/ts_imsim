@@ -20,10 +20,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-import yaml
-import numpy as np
 
-from lsst.obs.lsst import LsstCam, LsstComCam
+import numpy as np
+import yaml
+from lsst.obs.lsst import LsstCam
 from lsst.utils import getPackageDir
 
 
@@ -69,7 +69,7 @@ def getCamera(instName):
     Parameters
     ----------
     instName : `str`
-        Instrument name. Valid options are 'comcam or 'lsstfam'.
+        Instrument name. Valid options are 'lsstfam' or 'lsst'.
 
     Returns
     -------
@@ -83,11 +83,9 @@ def getCamera(instName):
     # Check the input
     if (instName == "lsstfam") or (instName == "lsst"):
         return LsstCam().getCamera()
-    elif instName == "comcam":
-        return LsstComCam().getCamera()
     else:
         raise ValueError(
-            f"This instrument name ({instName}) is not supported. Must be 'comcam' or 'lsstfam' or 'lsst'."
+            f"This instrument name ({instName}) is not supported. Must be 'lsstfam' or 'lsst'."
         )
 
 

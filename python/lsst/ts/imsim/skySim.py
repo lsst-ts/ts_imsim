@@ -50,7 +50,7 @@ class SkySim:
         Parameters
         ----------
         instName : `str`
-            Instrument name. Valid options are 'comcam or 'lsstfam'.
+            Instrument name. Valid options are 'lsstfam' or 'lsst'.
         """
 
         self._camera = getCamera(instName)

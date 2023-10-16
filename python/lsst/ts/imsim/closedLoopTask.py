@@ -22,10 +22,10 @@
 import logging
 import os
 import shutil
+from copy import deepcopy
 
 import astropy
 import numpy as np
-import yaml
 from lsst.afw.cameraGeom import FIELD_ANGLE, DetectorType
 from lsst.daf import butler as dafButler
 from lsst.ts.imsim.imsimCmpt import ImsimCmpt
@@ -36,8 +36,9 @@ from lsst.ts.imsim.utils.plotUtil import plotFwhmOfIters
 from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
 from lsst.ts.imsim.utils.utility import getCamera, getConfigDir, makeDir
 from lsst.ts.ofc import OFC, OFCData
-from lsst.ts.wep.utils import CamType, FilterType, rotMatrix, runProgram
+from lsst.ts.wep.utils import CamType, FilterType
 from lsst.ts.wep.utils import getConfigDir as getWepConfigDir
+from lsst.ts.wep.utils import rotMatrix, runProgram
 
 
 class ClosedLoopTask:
@@ -55,9 +56,6 @@ class ClosedLoopTask:
 
         # imSim Component
         self.imsimCmpt = None
-
-        # OPD Metrology
-        self.opdMetr = None
 
         # Ra/Dec/RotAng coordinates used in the simulation.
         self.boresightRa = None
@@ -132,14 +130,14 @@ class ClosedLoopTask:
         )
 
         opdMetr = OpdMetrology()
-        if instName == "lsst":
+        if instName in ["lsst", "lsstfam"]:
             fieldX, fieldY = list(), list()
             camera = getCamera(instName)
             for name in self.getSensorNameListOfFields(instName):
                 detector = camera.get(name)
                 xRad, yRad = detector.getCenter(FIELD_ANGLE)
                 xDeg, yDeg = np.rad2deg(xRad), np.rad2deg(yRad)
-                fieldY.append(xDeg)  # transpose for phoSim
+                fieldY.append(xDeg)  # transpose to convert from DVCS to CCS
                 fieldX.append(yDeg)
             opdMetr.fieldX = fieldX
             opdMetr.fieldY = fieldY
@@ -318,6 +316,8 @@ class ClosedLoopTask:
 
         if inst == "lsst":
             return CamType.LsstCam, "lsst"
+        elif inst == "lsstfam":
+            return CamType.LsstFamCam, "lsstfam"
         else:
             raise ValueError(f"This instrument ({inst}) is not supported.")
 
@@ -367,6 +367,7 @@ class ClosedLoopTask:
         skySeed,
         pertSeed,
         iterNum,
+        numPro=1,
         pipelineFile="",
         imsimConfigPointerFile="",
         turnOffSkyBackground=False,
@@ -392,6 +393,8 @@ class ClosedLoopTask:
             Random seed for the perturbations.
         iterNum : int
             Number of closed-loop iteration.
+        numPro : int, optional
+            Number of processors to use. (The default is 1.)
         pipelineFile : str, optional
             Path to existing pipeline yaml file to use. If empty string
             then the code will write its own default pipeline yaml.
@@ -469,11 +472,25 @@ class ClosedLoopTask:
                     instName=instName,
                     skySeed=skySeed,
                     pertSeed=pertSeed,
-                    numPro=1,
+                    numPro=numPro,
                     imsimConfigPointerFile=imsimConfigPointerFile,
                     turnOffSkyBackground=turnOffSkyBackground,
                     turnOffAtmosphere=turnOffAtmosphere,
                 )
+            elif camType == CamType.LsstFamCam:
+                for focusZ in [-1.5, 1.5]:
+                    obsMetadata.seqNum += 1
+                    obsMetadata.focusZ = focusZ
+                    self._generateImages(
+                        obsMetadata,
+                        instName=instName,
+                        skySeed=skySeed,
+                        pertSeed=pertSeed,
+                        numPro=numPro,
+                        imsimConfigPointerFile=imsimConfigPointerFile,
+                        turnOffSkyBackground=turnOffSkyBackground,
+                        turnOffAtmosphere=turnOffAtmosphere,
+                    )
 
             # Analyze the OPD data
             # Rotate OPD in the reversed direction of camera
@@ -486,13 +503,14 @@ class ClosedLoopTask:
             )
 
             if self.useCcdImg:
-                listOfWfErr = self._calcWfsWfErrFromImg(
-                    obsMetadata,
-                    butlerRootPath=butlerRootPath,
-                    instName=instName,
-                    numPro=1,
-                    pipelineFile=pipelineFile,
-                )
+                if camType in [CamType.LsstCam, CamType.LsstFamCam]:
+                    listOfWfErr = self._calcWfErrFromImg(
+                        obsMetadata,
+                        butlerRootPath=butlerRootPath,
+                        instName=instName,
+                        numPro=numPro,
+                        pipelineFile=pipelineFile,
+                    )
             else:
                 listOfWfErr = self.imsimCmpt.mapOpdDataToListOfWfErr(
                     opdZkFileName, refSensorIdList, refSensorNameList
@@ -533,7 +551,6 @@ class ClosedLoopTask:
                 ]
             )
 
-            # TODO: Check the order of arrays in the section below
             fwhmDict = {x: y for x, y in zip(sensor_id, fwhm)}
             ofc_fwhm = np.array(
                 [fwhmDict[sensor_wfe.sensorId] for sensor_wfe in listOfWfErr]
@@ -546,10 +563,6 @@ class ClosedLoopTask:
                 self.ofcCalc.set_fwhm_data(ofc_fwhm, field_idx)
             else:
                 self.ofcCalc.set_fwhm_data(fwhm, sensor_id)
-
-            # Flip zernikes that are not symmetric across the y-axis
-            # based upon flip in batoid coordinate system.
-            wfe[:, [1, 4, 6, 9, 11, 12, 14, 16]] *= -1.0
 
             self.ofcCalc.calculate_corrections(
                 wfe=wfe,
@@ -605,7 +618,7 @@ class ClosedLoopTask:
             Random seed for the perturbations.
             (The default is 11.)
         numPro : int, optional
-            Number of processor to run DM pipeline. (the default is 1.)
+            Number of processor to run imSim. (the default is 1.)
         imsimConfigPointerFile : str or None, optional
             Path to imsim config pointer file.
             If None then the code will use the default in policy directory.
@@ -629,7 +642,7 @@ class ClosedLoopTask:
                 imsimConfigPointerFile = os.path.join(
                     getConfigDir(), "lsstCamDefaultPointer.yaml"
                 )
-        imsimConfigYaml = self.imsimCmpt.assembleConfigYaml(
+        baseConfigYaml = self.imsimCmpt.assembleConfigYaml(
             obsMetadata, imsimConfigPointerFile, instName
         )
 
@@ -639,40 +652,86 @@ class ClosedLoopTask:
             file.write(instCat)
 
         # Override imsim config defaults with instance catalog info
-        imsimConfigYaml["image"].pop("image_pos")
-        if self.useCcdImg:
-            imsimConfigYaml["image"].pop("nobjects")
-            imsimConfigYaml["image"]["world_pos"] = {"type": "InstCatWorldPos"}
-            imsimConfigYaml["gal"] = {"type": "InstCatObj"}
-            imsimConfigYaml["input"]["instance_catalog"] = {
-                "file_name": instCatPath,
-                "sed_dir": "$os.environ.get('SIMS_SED_LIBRARY_DIR')",
-            }
-        else:
-            imsimConfigYaml["image"]["nobjects"] = 0
-            # Only create one empty amplifier file and one OPD.fits file
-            # when running OPD only
-            imsimConfigYaml["output"]["nfiles"] = 1
-        imsimConfigYaml["image"]["random_seed"] = skySeed
-        imsimConfigYaml["input"]["telescope"]["fea"]["m1m3_lut"]["seed"] = pertSeed
+        baseConfigYaml["image"].pop("image_pos")
+        baseConfigYaml["output"]["nproc"] = numPro
+        baseConfigYaml["image"]["random_seed"] = skySeed
+        baseConfigYaml["input"]["telescope"]["fea"]["m1m3_lut"]["seed"] = pertSeed
         if turnOffSkyBackground:
-            imsimConfigYaml["image"]["sky_level"] = 0
+            baseConfigYaml["image"]["sky_level"] = 0
         if turnOffAtmosphere:
-            imsimConfigYaml["input"].pop("atm_psf")
-            if {"type": "AtmosphericPSF"} in imsimConfigYaml["psf"]["items"]:
-                imsimConfigYaml["psf"]["items"].remove({"type": "AtmosphericPSF"})
-                imsimConfigYaml["psf"]["items"].append(
+            baseConfigYaml["input"].pop("atm_psf")
+            if {"type": "AtmosphericPSF"} in baseConfigYaml["psf"]["items"]:
+                baseConfigYaml["psf"]["items"].remove({"type": "AtmosphericPSF"})
+                baseConfigYaml["psf"]["items"].append(
                     {"type": "Kolmogorov", "fwhm": 0.7}
                 )
 
-        imsimConfigPath = os.path.join(self.imsimCmpt.outputDir, "imsimConfig.yaml")
-        with open(imsimConfigPath, "w") as file:
-            yaml.safe_dump(imsimConfigYaml, file)
+        if instName == "lsst":
+            imsimConfigYaml = self.imsimCmpt.addSourcesToConfig(
+                baseConfigYaml, instCatPath, useCcdImg=self.useCcdImg
+            )
+            imsimConfigPath = os.path.join(
+                self.imsimCmpt.outputDir, f"imsimConfig_{obsMetadata.seqNum}.yaml"
+            )
+            self.log.info(f"Writing Imsim Configuration file to {imsimConfigPath}")
+            self.imsimCmpt.writeYamlAndRunImsim(imsimConfigPath, imsimConfigYaml)
+        elif instName == "lsstfam":
+            if self.useCcdImg:
+                # Run once for OPD
+                imsimOpdConfigPath = os.path.join(
+                    self.imsimCmpt.outputDir, "imsimConfig_opd.yaml"
+                )
+                if not os.path.exists(imsimOpdConfigPath):
+                    imsimConfigYaml = deepcopy(baseConfigYaml)
+                    imsimConfigYaml = self.imsimCmpt.addSourcesToConfig(
+                        imsimConfigYaml, instCatPath, useCcdImg=False
+                    )
+                    self.log.info(
+                        f"Writing Imsim Configuration file to {imsimOpdConfigPath}"
+                    )
+                    self.imsimCmpt.writeYamlAndRunImsim(
+                        imsimOpdConfigPath, imsimConfigYaml
+                    )
 
-        self.log.info(f"Writing Imsim Configuration file to {imsimConfigPath}")
-        self.imsimCmpt.runImsim(imsimConfigPath)
+                # Run CCD images
+                imsimConfigYaml = self.imsimCmpt.addSourcesToConfig(
+                    baseConfigYaml, instCatPath, useCcdImg=self.useCcdImg
+                )
 
-    def _calcWfsWfErrFromImg(
+                # Add defocus
+                imsimConfigYaml["input"]["telescope"]["focusZ"] = (
+                    obsMetadata.focusZ * 1e-3
+                )
+                # Remove OPD from config since we already created it
+                imsimConfigYaml["output"].pop("opd")
+                imsimConfigPath = os.path.join(
+                    self.imsimCmpt.outputDir, f"imsimConfig_{obsMetadata.seqNum}.yaml"
+                )
+                self.log.info(f"Writing Imsim Configuration file to {imsimConfigPath}")
+                self.imsimCmpt.writeYamlAndRunImsim(imsimConfigPath, imsimConfigYaml)
+            else:
+                # Run OPD only mode
+                imsimConfigYaml = self.imsimCmpt.addSourcesToConfig(
+                    baseConfigYaml, instCatPath, useCcdImg=False
+                )
+                imsimConfigPath = os.path.join(
+                    self.imsimCmpt.outputDir, "imsimConfig.yaml"
+                )
+                imsimOpdPath = os.path.join(
+                    self.imsimCmpt.outputImgDir,
+                    imsimConfigYaml["output"]["opd"]["file_name"],
+                )
+                if os.path.exists(imsimOpdPath):
+                    self.log.info(f"OPD already created, moving to analysis.")
+                else:
+                    self.log.info(
+                        f"Writing Imsim Configuration file to {imsimConfigPath}"
+                    )
+                    self.imsimCmpt.writeYamlAndRunImsim(
+                        imsimConfigPath, imsimConfigYaml
+                    )
+
+    def _calcWfErrFromImg(
         self,
         obsMetadata,
         butlerRootPath,
@@ -709,7 +768,7 @@ class ClosedLoopTask:
         # Ingest images into butler gen3
         self.ingestData(butlerRootPath=butlerRootPath, instName=instName)
 
-        listOfWfErr = self.runWfsWep(
+        listOfWfErr = self.runWep(
             obsMetadata.seqNum,
             butlerRootPath,
             instName,
@@ -720,7 +779,7 @@ class ClosedLoopTask:
 
         return listOfWfErr
 
-    def runWfsWep(
+    def runWep(
         self,
         seqNum,
         butlerRootPath,
@@ -733,7 +792,7 @@ class ClosedLoopTask:
 
         Parameters
         ----------
-        obsId : int
+        seqNum : int
             Observation id.
         butlerRootPath : str
             Path to the butler gen3 repos.
@@ -776,13 +835,22 @@ class ClosedLoopTask:
         # The limit for seqNum is 5 digits,
         # set by the expectation that no more than 100K images
         # could be taken in a single day (i.e. no more than 1/sec).
-        runProgram(
-            f"pipetask run -b {butlerRootPath} "
-            f"-i refcats,LSST{butlerInstName}/raw/all,LSST{butlerInstName}/calib/unbounded "
-            f"--instrument lsst.obs.lsst.Lsst{butlerInstName} "
-            f"--register-dataset-types --output-run ts_imsim_{seqNum} -p {pipelineYamlPath} -d "
-            f'"visit.seq_num IN ({seqNum})" -j {numPro}'
-        )
+        if instName == "lsst":
+            runProgram(
+                f"pipetask run -b {butlerRootPath} "
+                f"-i refcats,LSST{butlerInstName}/raw/all,LSST{butlerInstName}/calib/unbounded "
+                f"--instrument lsst.obs.lsst.Lsst{butlerInstName} "
+                f"--register-dataset-types --output-run ts_imsim_{seqNum} -p {pipelineYamlPath} -d "
+                f'"visit.seq_num IN ({seqNum})" -j {numPro}'
+            )
+        elif instName == "lsstfam":
+            runProgram(
+                f"pipetask run -b {butlerRootPath} "
+                f"-i refcats,LSST{butlerInstName}/raw/all,LSST{butlerInstName}/calib/unbounded "
+                f"--instrument lsst.obs.lsst.Lsst{butlerInstName} "
+                f"--register-dataset-types --output-run ts_imsim_{seqNum} -p {pipelineYamlPath} -d "
+                f'"visit.seq_num IN ({seqNum-1}, {seqNum})" -j {numPro}'
+            )
 
         # Need to redefine butler because the database changed.
         butler = dafButler.Butler(butlerRootPath)
@@ -797,7 +865,8 @@ class ClosedLoopTask:
             {"instrument": f"LSST{butlerInstName}"},
             collections=[f"LSST{butlerInstName}/calib/unbounded"],
         )
-        detMap = camera.getIdMap()
+        detIdMap = camera.getIdMap()
+        detNameMap = camera.getNameMap()
 
         listOfWfErr = []
 
@@ -815,13 +884,51 @@ class ClosedLoopTask:
             )
 
             sensorWavefrontData = SensorWavefrontError()
-            sensorWavefrontData.sensorId = dataset.dataId["detector"]
-            sensorWavefrontData.sensorName = detMap[dataId["detector"]].getName()
+            # Rotate from CCS to ZCS/PCS (Phosim Coordinate System)
+            rotatedName = self.rotateDetNameCcsToZcs(
+                detIdMap[dataset.dataId["detector"]].getName()
+            )
+            sensorWavefrontData.sensorName = rotatedName
+            sensorWavefrontData.sensorId = detNameMap[rotatedName].getId()
             sensorWavefrontData.annularZernikePoly = zerCoeff
 
             listOfWfErr.append(sensorWavefrontData)
 
         return listOfWfErr
+
+    def rotateDetNameCcsToZcs(self, detName):
+        """Rotate the sensor name from CCS (Camera Coordinate System)
+        to the ZCS (Zemax Coordinate System) that OFC expects.
+
+        Parameters
+        ----------
+        detName : str
+            Detector name in CCS.
+
+        Returns
+        -------
+        str
+            Detector expected at that location in ZCS.
+        """
+        raft, sensor = detName.split("_")
+        camRX = int(raft[1]) - 2
+        camRY = int(raft[2]) - 2
+
+        zcsRX = -camRX
+        zcsRY = camRY
+
+        zcsRaft = f"R{zcsRX + 2}{zcsRY + 2}"
+
+        if sensor.startswith("SW"):
+            zcsSensor = sensor
+        else:
+            camSX = int(sensor[1]) - 1
+            camSY = int(sensor[2]) - 1
+            zcsSX = -camSX
+            zcsSY = camSY
+            zcsSensor = f"S{zcsSX + 1}{zcsSY + 1}"
+
+        return f"{zcsRaft}_{zcsSensor}"
 
     def writeWepConfiguration(self, instName, pipelineYamlPath, filterTypeName):
         """Write wavefront estimation pipeline task configuration.
@@ -837,7 +944,7 @@ class ClosedLoopTask:
             Filter type name: ref (or ''), u, g, r, i, z, or y.
         """
 
-        butlerInstName = "ComCam" if instName == "comcam" else "Cam"
+        butlerInstName = "Cam"
 
         # Remap reference filter
         filterTypeName = self.mapFilterRefToG(filterTypeName)
@@ -901,6 +1008,7 @@ tasks:
         turnOffSkyBackground,
         turnOffAtmosphere,
         opdOnly,
+        numPro,
     ):
         """Run the simulation of images.
 
@@ -943,6 +1051,8 @@ tasks:
         opdOnly : bool
             If set to True then will run the closed loop only with
             the OPD and not the actual simulated images.
+        numPro : int
+            Number of processors to use.
         """
         camType, instName = self.getCamTypeAndInstName(inst)
         baseOutputDir = self.checkAndCreateBaseOutputDir(baseOutputDir)
@@ -961,14 +1071,12 @@ tasks:
         obsMetadata = ObsMetadata(
             ra=self.boresightRa,
             dec=self.boresightDec,
-            band=filterTypeName,
+            band=filterTypeName.lower(),
             rotatorAngle=self.boresightRotAng,
             mjd=mjd,
         )
 
         # Configure the components
-        self.opdMetr = OpdMetrology()
-        self.opdMetr.setCamera(instName)
         self.configSkySim(instName, obsMetadata, pathSkyFile=pathSkyFile, starMag=15)
         self.configOfcCalc(instName)
         self.imsimCmpt = ImsimCmpt()
@@ -1010,6 +1118,7 @@ tasks:
             skySeed,
             pertSeed,
             iterNum,
+            numPro=numPro,
             pipelineFile=pipelineFile,
             imsimConfigPointerFile=imsimConfigPointerFile,
             turnOffSkyBackground=turnOffSkyBackground,
@@ -1031,16 +1140,8 @@ tasks:
 
         runProgram(f"butler create {butlerRootPath}")
 
-        if instName == "comcam":
-            self.log.debug("Registering LsstComCam")
-            runProgram(
-                f"butler register-instrument {butlerRootPath} lsst.obs.lsst.LsstComCam"
-            )
-        else:
-            self.log.debug("Registering LsstCam")
-            runProgram(
-                f"butler register-instrument {butlerRootPath} lsst.obs.lsst.LsstCam"
-            )
+        self.log.debug("Registering LsstCam")
+        runProgram(f"butler register-instrument {butlerRootPath} lsst.obs.lsst.LsstCam")
 
     def generateRefCatalog(self, instName, butlerRootPath, pathSkyFile, filterTypeName):
         """Generate reference star catalog.
@@ -1110,15 +1211,10 @@ config.dataset_config.ref_dataset_name='ref_cat'
         """
         outputImgDir = self.imsimCmpt.outputImgDir
 
-        if instName == "lsst":
+        if instName in ["lsst", "lsstfam"]:
             runProgram(f"butler ingest-raws {butlerRootPath} {outputImgDir}/amp*")
 
-        if instName == "comcam":
-            runProgram(
-                f"butler define-visits {butlerRootPath} lsst.obs.lsst.LsstComCam"
-            )
-        else:
-            runProgram(f"butler define-visits {butlerRootPath} lsst.obs.lsst.LsstCam")
+        runProgram(f"butler define-visits {butlerRootPath} lsst.obs.lsst.LsstCam")
 
     def eraseDirectoryContent(self, targetDir):
         """Erase the directory content.
@@ -1224,6 +1320,13 @@ config.dataset_config.ref_dataset_name='ref_cat'
             If left as empty string the code will create a default file.
             (default: '')
             """,
+        )
+
+        parser.add_argument(
+            "--numProc",
+            type=int,
+            default=1,
+            help="Number of processor to run imSim and DM pipeline. (default: 1)",
         )
 
         return parser

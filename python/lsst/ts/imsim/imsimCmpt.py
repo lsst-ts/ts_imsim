@@ -26,10 +26,9 @@ import yaml
 from astropy.io import fits
 from lsst.ts.imsim.opdMetrology import OpdMetrology
 from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
-from lsst.ts.imsim.utils.utility import getConfigDir, makeDir
+from lsst.ts.imsim.utils.utility import getConfigDir, getZkFromFile, makeDir
 from lsst.ts.ofc.ofc_data.base_ofc_data import BaseOFCData
 from lsst.ts.wep.utils import runProgram
-from lsst.ts.imsim.utils.utility import getZkFromFile
 from scipy.ndimage import rotate
 
 
@@ -253,10 +252,7 @@ class ImsimCmpt:
         opdSectionText += "    fields:\n"
 
         # Get the locations for the OPD from OPD Metrology
-        if instName == "lsst":
-            self.opdMetr.setDefaultLsstWfsGQ()
-        else:
-            self.opdMetr.setWgtAndFieldXyOfGQ(instName)
+        self.opdMetr.setWgtAndFieldXyOfGQ(instName)
         for thx, thy in zip(self.opdMetr.fieldX, self.opdMetr.fieldY):
             opdSectionText += f"      - {{thx: {thx} deg, thy: {thy} deg}}\n"
 
@@ -277,14 +273,15 @@ class ImsimCmpt:
             Header information for ImSim config
         """
         headerText = "  header:\n"
-        headerText += f"    mjd: {obsMetadata.mjd}\n"
+        headerText += f"    mjd: *mjd\n"
         headerText += f"    observationStartMJD: {obsMetadata.mjd - (15/(60*60*24))}\n"
-        headerText += f"    seqnum: {obsMetadata.seqNum}\n"
-        headerText += f"    band: {obsMetadata.band}\n"
+        headerText += f"    seqnum: *seqnum\n"
+        headerText += f"    band: *band\n"
         headerText += f"    fieldRA: {obsMetadata.ra}\n"
         headerText += f"    fieldDec: {obsMetadata.dec}\n"
         headerText += f"    rotTelPos: {obsMetadata.rotatorAngle}\n"
         headerText += f"    airmass: {1.0/np.cos(obsMetadata.zenith)}\n"
+        headerText += f"    focusZ: {obsMetadata.focusZ}\n"
 
         return headerText
 
@@ -298,6 +295,60 @@ class ImsimCmpt:
             Path to the imSim configuration yaml file.
         """
         runProgram(f"galsim {configFilePath}")
+
+    def writeYamlAndRunImsim(self, configPath, configYaml):
+        """Write yaml config file and run Imsim.
+
+        Parameters
+        ----------
+        configPath : str
+            Path to write config yaml file.
+        configYaml : dict
+            Dictionary that contains imsim config details to write to yaml.
+        """
+
+        with open(configPath, "w") as file:
+            yaml.safe_dump(configYaml, file)
+        self.runImsim(configPath)
+
+    def addSourcesToConfig(self, configYaml, instCatPath, useCcdImg=True):
+        """Add source information to config. If using CCD it will add
+        the instance catalog details. If only using OPD it will remove
+        the instance catalog info so that we are not generating
+        unnecessary images.
+
+        Parameters
+        ----------
+        configYaml : dict
+            Dictionary that contains imsim config details to write to yaml.
+        instCatPath : str
+            Path to instance catalog file.
+        useCcdImg : bool, optional
+            When outputting CCD images this is set to True so that the instance
+            catalog information is included in the configuration. For OPD only
+            this should be set to False. (The default is True.)
+
+        Returns
+        -------
+        dict
+            Updated yaml configuration.
+        """
+
+        if useCcdImg:
+            configYaml["image"].pop("nobjects")
+            configYaml["image"]["world_pos"] = {"type": "InstCatWorldPos"}
+            configYaml["gal"] = {"type": "InstCatObj"}
+            configYaml["input"]["instance_catalog"] = {
+                "file_name": instCatPath,
+                "sed_dir": "$os.environ.get('SIMS_SED_LIBRARY_DIR')",
+            }
+        else:
+            configYaml["image"]["nobjects"] = 0
+            # Only create one empty amplifier file and one OPD.fits file
+            # when running OPD only
+            configYaml["output"]["nfiles"] = 1
+
+        return configYaml
 
     def genInstanceCatalog(self, skySim):
         """
@@ -513,8 +564,10 @@ class ImsimCmpt:
 
             # Rotate OPD if needed
             if rotOpdInDeg != 0:
-                opdRot = rotate(opd, rotOpdInDeg, reshape=False)
-                opdRot[opd == 0] = 0
+                opdRot = opd
+                opdRot[np.isnan(opdRot)] = 0.0
+                opdRot = rotate(opdRot, rotOpdInDeg, reshape=False)
+                opdRot[opdRot == 0] = np.nan
             else:
                 opdRot = opd
 
@@ -654,7 +707,6 @@ class ImsimCmpt:
             # imSim outputs OPD in nanometers so need to change to microns
             # to be consistent with what WEP expects.
             sensorWavefrontData.annularZernikePoly = opdZk[sensorId] / 1e3
-
             listOfWfErr.append(sensorWavefrontData)
 
         return listOfWfErr

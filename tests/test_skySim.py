@@ -36,8 +36,6 @@ class TestSkySim(unittest.TestCase):
     def testSetCamera(self):
         self.skySim.setCamera("lsstfam")
         self.assertEqual(self.skySim._camera.getName(), "LSSTCam")
-        self.skySim.setCamera("comcam")
-        self.assertEqual(self.skySim._camera.getName(), "LSSTComCam")
 
     def testCalcParallacticAngle(self):
         sirius = FixedTarget.from_name("sirius")
