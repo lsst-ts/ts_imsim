@@ -79,6 +79,8 @@ class OpdMetrology:
         wfsFieldX, wfsFieldY, sensorIds = self.getDefaultLsstWfsGQ()
         self.fieldX, self.fieldY = (wfsFieldX, wfsFieldY)
         # Convert from CCS to ZCS for current OFC
+        # TODO: Remove this conversion when ts_ofc
+        # sensitivity matrix is updated.
         self.fieldX = -1.0 * np.array(self.fieldX)
         self.sensorIds = sensorIds
 
@@ -168,6 +170,8 @@ class OpdMetrology:
         self.fieldX = np.array(fieldX)
         self.fieldY = np.array(fieldY)
         # Convert from CCS to ZCS for current OFC
+        # TODO: Remove this conversion when ts_ofc
+        # sensitivity matrix is updated.
         self.fieldX = -1.0 * self.fieldX
 
     def getZkFromOpd(
@@ -238,7 +242,7 @@ class OpdMetrology:
         return zk, opd, opdx, opdy
 
     def rmPTTfromOPD(self, opdFitsFile=None, opdMap=None):
-        """Remove the afftection of piston (z1), x-tilt (z2), and y-tilt (z3)
+        """Remove the piston (z1), x-tilt (z2), and y-tilt (z3)
         from the OPD map.
 
         OPD: Optical path difference.

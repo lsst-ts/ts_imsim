@@ -22,8 +22,10 @@
 import os
 import unittest
 
+import lsst.obs.lsst as obs_lsst
 import numpy as np
 from astropy.io import fits
+from lsst.afw.cameraGeom import FIELD_ANGLE
 from lsst.ts.imsim.opdMetrology import OpdMetrology
 from lsst.ts.imsim.utils.utility import getModulePath, getZkFromFile
 
@@ -66,23 +68,24 @@ class TestOpdMetrology(unittest.TestCase):
 
         fieldX = self.metr.fieldX
         fieldY = self.metr.fieldY
-        self.assertCountEqual(
-            fieldX,
-            [
-                1.1902777777777778,
-                1.1902777777777778,
-                -1.1902777777777778,
-                -1.1902777777777778,
-            ],
-        )
+        # Get true values from obs_lsst
+        camera = obs_lsst.LsstCam.getCamera()
+        detIdMap = camera.getIdMap()
+        trueX = []
+        trueY = []
+        for sens_id in [192, 196, 200, 204]:
+            centerIntra = detIdMap[sens_id].getCenter(FIELD_ANGLE)
+            centerExtra = detIdMap[sens_id - 1].getCenter(FIELD_ANGLE)
+            centerDeg = np.degrees(np.array([centerIntra, centerExtra]))
+            centerX = np.mean(centerDeg[:, 1])
+            centerY = np.mean(centerDeg[:, 0])
+            trueX.append(centerX)
+            trueY.append(centerY)
+
+        self.assertCountEqual(fieldX, trueX)
         self.assertCountEqual(
             fieldY,
-            [
-                -1.1902777777777778,
-                1.1902777777777778,
-                1.1902777777777778,
-                -1.1902777777777778,
-            ],
+            trueY,
         )
 
         wgt = self.metr.wt
@@ -106,7 +109,9 @@ class TestOpdMetrology(unittest.TestCase):
         allOpdAns = getZkFromFile(ansOpdFilePath)
         self.assertLess(np.sum(np.abs(zk[3:] - allOpdAns[191])), 1e-5)
 
-    def testRmPTTfromOPD(self):
+    def testRPTTfromOPD(self):
+        """Test removal of piston (z1), x-tilt (z2), and y-tilt (z3)
+        from the OPD map."""
         opdDir = self._getOpdDir()
         opdFilePath = os.path.join(opdDir, "opd.fits")
         opdMap = fits.getdata(opdFilePath, 1)
