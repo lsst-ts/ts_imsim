@@ -129,3 +129,40 @@ def getZkFromFile(zkFilePath):
         zk[key] = np.fromstring(val[0], sep=" ")
 
     return zk
+
+
+class ModifiedEnvironment:
+    """Context manager to temporarily modify shell environment with specified
+    overrides.
+
+    Parameters
+    ----------
+    **kwargs : dict
+        Dictionary of environment variables to override. Keys and values should
+        be type str, unless the value is None, in which case the environment
+        variable will be unset.
+    """
+
+    def __init__(self, **kwargs):
+        self._overrides = kwargs
+        self._originals = {}
+
+    def __enter__(self):
+        for key, value in self._overrides.items():
+            # Save original value if exists
+            if key in os.environ:
+                self._originals[key] = os.environ[key]
+
+            # Set new values or unset if new value is None
+            if value is None:
+                del os.environ[key]
+            else:
+                os.environ[key] = value
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for key in self._overrides:
+            # Restore original values, delete or keep as they are based on the original state
+            if key in self._originals:
+                os.environ[key] = self._originals[key]
+            else:
+                del os.environ[key]

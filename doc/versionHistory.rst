@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.imsim-0.5.1:
+
+-------------
+0.5.1
+-------------
+
+* Add MacOS support.
+
 .. _lsst.ts.imsim-0.5.0:
 
 -------------

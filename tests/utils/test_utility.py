@@ -25,6 +25,7 @@ import unittest
 from lsst.afw import cameraGeom
 from lsst.obs.lsst import LsstCam
 from lsst.ts.imsim.utils.utility import (
+    ModifiedEnvironment,
     getCamera,
     getConfigDir,
     getModulePath,
@@ -64,3 +65,26 @@ class TestUtility(unittest.TestCase):
             os.path.join(getModulePath(), "tests", "testData", "opd", "opd.zer")
         )
         self.assertCountEqual(zkFromFile.keys(), [191, 195, 199, 203])
+
+    def testModifiedEnvironment(self):
+        # Test adding a new environment variable
+        self.assertNotIn("TEST_AOS_ROCKS_5772", os.environ)
+        with ModifiedEnvironment(TEST_AOS_ROCKS_5772="parrot"):
+            self.assertEqual(os.environ["TEST_AOS_ROCKS_5772"], "parrot")
+        self.assertNotIn("TEST_AOS_ROCKS_5772", os.environ)
+
+        # Test modifying an existing environment variable
+        self.assertNotIn("TEST_AOS_ROCKS_57721", os.environ)
+        os.environ["TEST_AOS_ROCKS_57721"] = "spam"
+        self.assertEqual(os.environ["TEST_AOS_ROCKS_57721"], "spam")
+        with ModifiedEnvironment(TEST_AOS_ROCKS_57721="eggs"):
+            self.assertEqual(os.environ["TEST_AOS_ROCKS_57721"], "eggs")
+        self.assertEqual(os.environ["TEST_AOS_ROCKS_57721"], "spam")
+
+        # Test unsetting an existing environment variable
+        with ModifiedEnvironment(TEST_AOS_ROCKS_57721=None):
+            self.assertNotIn("TEST_AOS_ROCKS_57721", os.environ)
+        self.assertEqual(os.environ["TEST_AOS_ROCKS_57721"], "spam")
+
+        # Clean up
+        del os.environ["TEST_AOS_ROCKS_57721"]
