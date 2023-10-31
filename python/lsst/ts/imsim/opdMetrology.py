@@ -136,17 +136,19 @@ class OpdMetrology:
         """
 
         # Set camera and field ids for given instrument
+        # If CWFS use setDefaultLsstWfsGQ
         if instName == "lsst":
             self.setDefaultLsstWfsGQ()
             return
 
-        instrumentPath = getConfigDirOfc() / instName
+        # For FAM use below
+        instrumentPath = getConfigDirOfc() / "sample_points" / instName
 
         if not instrumentPath.exists():
             raise RuntimeError(f"OFC instrument path does not exist: {instrumentPath}")
 
         # Set the weighting ratio
-        pathWgtFile = instrumentPath / "imgQualWgt.yaml"
+        pathWgtFile = instrumentPath / "img_quality_weight.yaml"
         with open(pathWgtFile, "r") as file:
             wgt = yaml.safe_load(file)
         wgtValues = np.array(list(wgt.values()), dtype=float)
