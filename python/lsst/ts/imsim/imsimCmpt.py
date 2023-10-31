@@ -26,7 +26,12 @@ import yaml
 from astropy.io import fits
 from lsst.ts.imsim.opdMetrology import OpdMetrology
 from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
-from lsst.ts.imsim.utils.utility import getConfigDir, getZkFromFile, makeDir
+from lsst.ts.imsim.utils.utility import (
+    ModifiedEnvironment,
+    getConfigDir,
+    getZkFromFile,
+    makeDir,
+)
 from lsst.ts.ofc.ofc_data.base_ofc_data import BaseOFCData
 from lsst.ts.wep.utils import runProgram
 from scipy.ndimage import rotate
@@ -294,7 +299,14 @@ class ImsimCmpt:
         configFilePath : str
             Path to the imSim configuration yaml file.
         """
-        runProgram(f"galsim {configFilePath}")
+        # For mysterious reasons, having the KMP_INIT_AT_FORK environment
+        # variable set causes problems in the imSim subprocess.  It may be
+        # related to https://github.com/numpy/numpy/issues/11734.  Note that
+        # this variable gets set when sklearn is imported, which happens inside
+        # of ts_wep before ever getting to this method, so we can't just unset
+        # it in the environment ahead of time.
+        with ModifiedEnvironment(KMP_INIT_AT_FORK=None):
+            runProgram(f"galsim {configFilePath}")
 
     def writeYamlAndRunImsim(self, configPath, configYaml):
         """Write yaml config file and run Imsim.

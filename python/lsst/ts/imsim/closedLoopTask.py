@@ -23,6 +23,7 @@ import logging
 import os
 import shutil
 from copy import deepcopy
+from glob import glob
 
 import astropy
 import numpy as np
@@ -1188,7 +1189,9 @@ config.dataset_config.ref_dataset_name='ref_cat'
             )
 
         runProgram(
-            f"convertReferenceCatalog {catDir} {catConfigFilename} {skyFilename} &> {catLogFilename}"
+            f"convertReferenceCatalog {catDir} {catConfigFilename} {skyFilename}",
+            stdout=catLogFilename,
+            stderr=catLogFilename,
         )
 
         runProgram(
@@ -1210,9 +1213,10 @@ config.dataset_config.ref_dataset_name='ref_cat'
             Instrument name.
         """
         outputImgDir = self.imsimCmpt.outputImgDir
+        files = " ".join(glob(os.path.join(outputImgDir, "amp*")))
 
         if instName in ["lsst", "lsstfam"]:
-            runProgram(f"butler ingest-raws {butlerRootPath} {outputImgDir}/amp*")
+            runProgram(f"butler ingest-raws {butlerRootPath} {files}")
 
         runProgram(f"butler define-visits {butlerRootPath} lsst.obs.lsst.LsstCam")
 
