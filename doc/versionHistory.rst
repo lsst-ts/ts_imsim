@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.imsim-0.5.3:
+
+-------------
+0.5.3
+-------------
+
+* Fix rotation sign and interpolation approach when rotating opd.
+
 .. _lsst.ts.imsim-0.5.2:
 
 -------------

@@ -499,7 +499,7 @@ class ClosedLoopTask:
             self.imsimCmpt.analyzeOpdData(
                 instName,
                 zkFileName=opdZkFileName,
-                rotOpdInDeg=-obsMetadata.rotatorAngle,
+                rotOpdInDeg=obsMetadata.rotatorAngle,
                 pssnFileName=opdPssnFileName,
             )
 
@@ -570,7 +570,7 @@ class ClosedLoopTask:
                 field_idx=field_idx,
                 filter_name=obsMetadata.band.upper(),
                 gain=-1,
-                rot=obsMetadata.rotatorAngle,
+                rotation_angle=-obsMetadata.rotatorAngle,
             )
 
             # Set the new aggregated DOF to phosimCmpt
