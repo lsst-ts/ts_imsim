@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.imsim-0.5.2:
+
+-------------
+0.5.2
+-------------
+
+* Adding seeing as parameter for simulations.
+
 .. _lsst.ts.imsim-0.5.1:
 
 -------------

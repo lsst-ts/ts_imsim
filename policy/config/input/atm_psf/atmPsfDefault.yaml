@@ -1,7 +1,7 @@
 atm_psf:
   # first 4 are required
   airmass: $1/np.cos(zenith)
-  rawSeeing: 0.6  # arcsec.  This is for 500 nm at zenith.
+  rawSeeing: *rawSeeing  # arcsec.  This is for 500 nm at zenith.
   band: *band
   boresight: $boresight
   # optional below

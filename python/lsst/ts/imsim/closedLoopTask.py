@@ -1010,6 +1010,7 @@ tasks:
         turnOffAtmosphere,
         opdOnly,
         numPro,
+        rawSeeing,
     ):
         """Run the simulation of images.
 
@@ -1054,6 +1055,8 @@ tasks:
             the OPD and not the actual simulated images.
         numPro : int
             Number of processors to use.
+        rawSeeing : float
+            Raw seeing in arcsec.
         """
         camType, instName = self.getCamTypeAndInstName(inst)
         baseOutputDir = self.checkAndCreateBaseOutputDir(baseOutputDir)
@@ -1075,6 +1078,7 @@ tasks:
             band=filterTypeName.lower(),
             rotatorAngle=self.boresightRotAng,
             mjd=mjd,
+            rawSeeing=rawSeeing,
         )
 
         # Configure the components
@@ -1385,6 +1389,13 @@ config.dataset_config.ref_dataset_name='ref_cat'
 
         parser.add_argument(
             "--opdOnly", action="store_true", help="Turn atmosphere off."
+        )
+
+        parser.add_argument(
+            "--rawSeeing",
+            type=float,
+            default=0.5,
+            help="Raw seeing in arcsec (default: 0.5).",
         )
 
         return parser

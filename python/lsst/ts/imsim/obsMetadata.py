@@ -34,5 +34,6 @@ class ObsMetadata:
     expTime: float = 30.0
     mjd: float = 59580.0
     seqNum: int = 1
+    rawSeeing: int = 0.5
     obsId: str = """$f"IM_P_{astropy.time.Time(mjd, format='mjd').strftime('%Y%m%d')}_{seqnum:06d}" """
     focusZ: float = 0.0  # Defocal distance in mm

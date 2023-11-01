@@ -37,6 +37,7 @@ eval_variables:
 
   fexptime: &exptime 30.0  # seconds
   fmjd: &mjd 59580.0
+  frawSeeing: &rawSeeing 0.5 # arcsec.
   iseqnum: &seqnum 1  # sequence number
   sobsid: &obsid $f"IM_P_{astropy.time.Time(mjd, format='mjd').strftime('%Y%m%d')}_{seqnum:06d}"  # obsID
 
@@ -181,7 +182,7 @@ input:
   atm_psf:
     # first 4 are required
     airmass: $1/np.cos(zenith)
-    rawSeeing: 0.6  # arcsec.  This is for 500 nm at zenith.
+    rawSeeing: *rawSeeing  # arcsec.  This is for 500 nm at zenith.
     band: r
     boresight: $boresight
     # optional below
@@ -270,6 +271,7 @@ psf:
 
 stamp:
   draw_method: phot
+  rawSeeing: *rawSeeing
   photon_ops:
     -
       type: PupilAnnulusSampler
@@ -302,6 +304,7 @@ output:
     observationStartMJD: 59579.999826388895
     rotTelPos: 0.0
     seqnum: 1
+    rawSeeing: *rawSeeing
 
   camera: LsstCam
 
