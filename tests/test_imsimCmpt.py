@@ -44,7 +44,9 @@ class TestImsimCmpt(unittest.TestCase):
     max_diff = None
 
     def setUp(self):
-        self.obs_metadata_test = ObsMetadata(ra=0.0, dec=0.0, band="r", mjd=59580.0, raw_seeing=0.5)
+        self.obs_metadata_test = ObsMetadata(
+            ra=0.0, dec=0.0, band="r", mjd=59580.0, raw_seeing=0.5
+        )
         self.config_pointer_default_lsst_cam = os.path.join(
             get_config_dir(), "lsstCamDefaultPointer.yaml"
         )

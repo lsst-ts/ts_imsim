@@ -57,7 +57,7 @@ if __name__ == "__main__":
         args.config_pointer_file,
         args.turn_off_sky_background,
         args.turn_off_atmosphere,
-        args.opd_only,
+        args.turn_off_wavefront_estimates,
         args.num_proc,
         args.raw_seeing,
     )

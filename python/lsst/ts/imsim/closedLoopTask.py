@@ -1030,7 +1030,7 @@ tasks:
         imsim_config_pointer_file,
         turn_off_sky_background,
         turn_off_atmosphere,
-        opd_only,
+        turn_off_wavefront_estimates,
         num_pro,
         raw_seeing,
     ):
@@ -1072,9 +1072,9 @@ tasks:
             without sky background.
         turn_off_atmosphere : bool
             If set to True then will turn off the imsim atmosphere.
-        opdOnly : bool
+        turn_off_wavefront_estimates : bool
             If set to True then will run the closed loop only with
-            the OPD and not the actual simulated images.
+            the OPD.fits files and not simulated images.
         num_pro : int
             Number of processors to use.
         raw_seeing : float
@@ -1091,7 +1091,7 @@ tasks:
         # Remap the reference filter to g
         filter_type_name = self.map_filter_ref_to_g(filter_type_name)
 
-        if opd_only is True:
+        if turn_off_wavefront_estimates is True:
             self.use_ccd_img = False
 
         obs_metadata = ObsMetadata(
@@ -1174,9 +1174,7 @@ tasks:
             f"butler register-instrument {butler_root_path} lsst.obs.lsst.LsstCam"
         )
 
-    def generate_ref_catalog(
-        self, butler_root_path, path_sky_file, filter_type_name
-    ):
+    def generate_ref_catalog(self, butler_root_path, path_sky_file, filter_type_name):
         """Generate reference star catalog.
 
         Parameters
@@ -1414,7 +1412,12 @@ config.dataset_config.ref_dataset_name='ref_cat'
         )
 
         parser.add_argument(
-            "--opd_only", action="store_true", help="Turn atmosphere off."
+            "--turn_off_wavefront_estimates",
+            action="store_true",
+            help="""
+                 Run with true wavefront values only.
+                 Turns off images generation and running CCDs through WEP.
+                 """,
         )
 
         parser.add_argument(

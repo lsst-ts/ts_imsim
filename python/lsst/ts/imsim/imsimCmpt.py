@@ -26,7 +26,12 @@ import yaml
 from astropy.io import fits
 from lsst.ts.imsim.opdMetrology import OpdMetrology
 from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
-from lsst.ts.imsim.utils.utility import ModifiedEnvironment, get_config_dir, get_zk_from_file, make_dir
+from lsst.ts.imsim.utils.utility import (
+    ModifiedEnvironment,
+    get_config_dir,
+    get_zk_from_file,
+    make_dir,
+)
 from lsst.ts.ofc.ofc_data.base_ofc_data import BaseOFCData
 from lsst.ts.wep.utils import runProgram
 from scipy.ndimage import rotate
