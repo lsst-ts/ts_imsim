@@ -59,4 +59,5 @@ if __name__ == "__main__":
         args.turnOffAtmosphere,
         args.opdOnly,
         args.numProc,
+        args.rawSeeing,
     )

@@ -225,6 +225,7 @@ class ImsimCmpt:
         obsVariablesText += f"  artp: &rtp {obsMetadata.rotatorAngle} deg\n"
         obsVariablesText += f"  fexptime: &exptime {obsMetadata.expTime}\n"
         obsVariablesText += f"  fmjd: &mjd {obsMetadata.mjd}\n"
+        obsVariablesText += f"  frawSeeing: &rawSeeing {obsMetadata.rawSeeing}\n"
         obsVariablesText += f"  iseqnum: &seqnum {obsMetadata.seqNum}\n"
         obsVariablesText += f"  sobsid: &obsid {obsMetadata.obsId}\n"
 
@@ -287,6 +288,7 @@ class ImsimCmpt:
         headerText += f"    rotTelPos: {obsMetadata.rotatorAngle}\n"
         headerText += f"    airmass: {1.0/np.cos(obsMetadata.zenith)}\n"
         headerText += f"    focusZ: {obsMetadata.focusZ}\n"
+        headerText += f"    rawSeeing: {obsMetadata.rawSeeing}\n"
 
         return headerText
 

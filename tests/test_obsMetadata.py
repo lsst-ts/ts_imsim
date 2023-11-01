@@ -35,6 +35,7 @@ class TestObsMetadata(unittest.TestCase):
         self.assertEqual(obsMetaTest.zenith, 0.0)
         self.assertEqual(obsMetaTest.rotatorAngle, 0.0)
         self.assertEqual(obsMetaTest.expTime, 30.0)
+        self.assertEqual(obsMetaTest.rawSeeing, 0.5)
         self.assertEqual(obsMetaTest.mjd, 59580.0)
         self.assertEqual(obsMetaTest.seqNum, 1)
         self.assertEqual(

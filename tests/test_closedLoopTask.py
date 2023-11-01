@@ -185,6 +185,7 @@ class TestclosedLoopTask(unittest.TestCase):
         self.assertEqual(args.boresightDeg, [1.2, 2.3])
         self.assertEqual(args.skyFile, "")
         self.assertEqual(args.mjd, 59580)
+        self.assertEqual(args.rawSeeing, 0.5)
         self.assertFalse(args.turnOffSkyBackground)
         self.assertFalse(args.turnOffAtmosphere)
 
