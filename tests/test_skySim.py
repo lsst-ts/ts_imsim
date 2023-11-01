@@ -26,74 +26,78 @@ from astroplan import FixedTarget, Observer
 from astropy.time import Time
 from lsst.ts.imsim.obsMetadata import ObsMetadata
 from lsst.ts.imsim.skySim import SkySim
-from lsst.ts.imsim.utils.utility import getModulePath
+from lsst.ts.imsim.utils.utility import get_module_path
 
 
 class TestSkySim(unittest.TestCase):
     def setUp(self):
-        self.skySim = SkySim()
+        self.sky_sim = SkySim()
 
-    def testSetCamera(self):
-        self.skySim.setCamera("lsstfam")
-        self.assertEqual(self.skySim._camera.getName(), "LSSTCam")
+    def test_set_camera(self):
+        self.sky_sim.set_camera("lsstfam")
+        self.assertEqual(self.sky_sim._camera.getName(), "LSSTCam")
 
-    def testCalcParallacticAngle(self):
+    def test_calc_parallactic_angle(self):
         sirius = FixedTarget.from_name("sirius")
         t = Time(60000, format="mjd")
-        obsMetadata = ObsMetadata(
+        obs_metadata = ObsMetadata(
             ra=sirius.ra.deg, dec=sirius.dec.deg, band="r", mjd=60000
         )
         rubin = Observer.at_site("cerro pachon")
         self.assertEqual(
-            self.skySim.calcParallacticAngle(obsMetadata),
+            self.sky_sim.calc_parallactic_angle(obs_metadata),
             rubin.parallactic_angle(t, sirius).deg,
         )
 
-    def testAddStarByRaDecInDeg(self):
-        self.skySim.addStarByRaDecInDeg(1, 2, 3, 4)
-        self.assertEqual(len(self.skySim.starId), 1)
+    def test_add_star_by_ra_dec_in_deg(self):
+        self.sky_sim.add_star_by_ra_dec_in_deg(1, 2, 3, 4)
+        self.assertEqual(len(self.sky_sim.star_id), 1)
 
-        self.skySim.addStarByRaDecInDeg(2, 2.1, 3, 4)
-        self.assertEqual(len(self.skySim.starId), 2)
-        self.assertEqual(self.skySim.starId[0], 1)
-        self.assertEqual(self.skySim.starId[1], 2)
+        self.sky_sim.add_star_by_ra_dec_in_deg(2, 2.1, 3, 4)
+        self.assertEqual(len(self.sky_sim.star_id), 2)
+        self.assertEqual(self.sky_sim.star_id[0], 1)
+        self.assertEqual(self.sky_sim.star_id[1], 2)
 
         # Try to add the same star Id again
-        self.skySim.addStarByRaDecInDeg(2, 2.1, 3, 4)
-        self.assertEqual(len(self.skySim.starId), 2)
+        self.sky_sim.add_star_by_ra_dec_in_deg(2, 2.1, 3, 4)
+        self.assertEqual(len(self.sky_sim.star_id), 2)
 
-    def testAddStarByFile(self):
-        self._addStarByFile("wfsStar.txt")
+    def test_add_star_by_file(self):
+        self._add_star_by_file("wfsStar.txt")
 
-        self.assertEqual(len(self.skySim.starId), 8)
+        self.assertEqual(len(self.sky_sim.star_id), 8)
 
-        ra = self.skySim.ra
-        dec = self.skySim.dec
+        ra = self.sky_sim.ra
+        dec = self.sky_sim.dec
         self.assertEqual(ra[2], -1.176)
         self.assertEqual(dec[2], 1.216)
 
-        self.assertEqual(self.skySim.mag[2], 15.0)
+        self.assertEqual(self.sky_sim.mag[2], 15.0)
 
-    def _addStarByFile(self, skyFileName):
-        skyFile = os.path.join(getModulePath(), "tests", "testData", "sky", skyFileName)
-        self.skySim.addStarByFile(skyFile)
+    def _add_star_by_file(self, sky_file_name):
+        skyFile = os.path.join(
+            get_module_path(), "tests", "testData", "sky", sky_file_name
+        )
+        self.sky_sim.add_star_by_file(skyFile)
 
-    def testAddStarByFileWithSglStar(self):
-        self._addStarByFile("wfsSglStar.txt")
+    def test_add_star_by_file_with_sgl_star(self):
+        self._add_star_by_file("wfsSglStar.txt")
 
-        self.assertEqual(len(self.skySim.starId), 1)
+        self.assertEqual(len(self.sky_sim.star_id), 1)
 
-        ra = self.skySim.ra
-        dec = self.skySim.dec
+        ra = self.sky_sim.ra
+        dec = self.sky_sim.dec
         self.assertEqual(ra[0], 1.196)
         self.assertEqual(dec[0], 1.176)
 
-        self.assertEqual(self.skySim.mag[0], 17.0)
+        self.assertEqual(self.sky_sim.mag[0], 17.0)
 
     def testExportSkyToFile(self):
-        self._addStarByFile("wfsStar.txt")
-        outputFilePath = os.path.join(getModulePath(), "output", "testSkyOutput.txt")
+        self._add_star_by_file("wfsStar.txt")
+        output_file_path = os.path.join(
+            get_module_path(), "output", "testSkyOutput.txt"
+        )
 
-        self.skySim.exportSkyToFile(outputFilePath)
-        self.assertTrue(os.path.isfile(outputFilePath))
-        os.remove(outputFilePath)
+        self.sky_sim.export_sky_to_file(output_file_path)
+        self.assertTrue(os.path.isfile(output_file_path))
+        os.remove(output_file_path)

@@ -27,7 +27,7 @@ import numpy as np
 from astropy.io import fits
 from lsst.afw.cameraGeom import FIELD_ANGLE
 from lsst.ts.imsim.opdMetrology import OpdMetrology
-from lsst.ts.imsim.utils.utility import getModulePath, getZkFromFile
+from lsst.ts.imsim.utils.utility import get_module_path, get_zk_from_file
 
 
 class TestOpdMetrology(unittest.TestCase):
@@ -35,124 +35,128 @@ class TestOpdMetrology(unittest.TestCase):
 
     def setUp(self):
         self.metr = OpdMetrology()
-        self.testDataDir = os.path.join(getModulePath(), "tests", "testData")
+        self.test_data_dir = os.path.join(get_module_path(), "tests", "testData")
 
-    def testSetWeightingRatio(self):
+    def test_set_weighting_ratio(self):
         wt = [1, 2]
         self.metr.wt = wt
 
-        wtInMetr = self.metr.wt
-        self.assertEqual(len(wtInMetr), len(wt))
-        self.assertEqual(np.sum(wtInMetr), 1)
-        self.assertAlmostEqual(wtInMetr[1] / wtInMetr[0], 2)
+        wt_in_metr = self.metr.wt
+        self.assertEqual(len(wt_in_metr), len(wt))
+        self.assertEqual(np.sum(wt_in_metr), 1)
+        self.assertAlmostEqual(wt_in_metr[1] / wt_in_metr[0], 2)
         with self.assertRaises(ValueError) as context:
             self.metr.wt = [-1, 1]
         self.assertEqual(str(context.exception), "All weighting ratios should be >= 0.")
 
-    def testSetWgtAndFieldXyOfGQLsstFam(self):
-        self.metr.setWgtAndFieldXyOfGQ("lsstfam")
+    def test_set_wgt_and_field_xy_of_gq_lsst_fam(self):
+        self.metr.set_wgt_and_field_xy_of_gq("lsstfam")
 
-        fieldX = self.metr.fieldX
-        self.assertEqual(len(fieldX), 189)
+        field_x = self.metr.field_x
+        self.assertEqual(len(field_x), 189)
 
         wgt = self.metr.wt
         self.assertEqual(len(wgt), 189)
 
-    def testSetWgtAndFieldXyOfGQErr(self):
+    def test_set_wgt_and_field_xy_of_gq_err(self):
         self.assertRaises(
-            RuntimeError, self.metr.setWgtAndFieldXyOfGQ, "NoThisInstName"
+            RuntimeError, self.metr.set_wgt_and_field_xy_of_gq, "NoThisInstName"
         )
 
-    def testSetDefaultLsstWfsGQ(self):
-        self.metr.setDefaultLsstWfsGQ()
+    def test_set_default_lsst_wfs_gq(self):
+        self.metr.set_default_lsst_wfs_gq()
 
-        fieldX = self.metr.fieldX
-        fieldY = self.metr.fieldY
+        field_x = self.metr.field_x
+        field_y = self.metr.field_y
         # Get true values from obs_lsst
         camera = obs_lsst.LsstCam.getCamera()
-        detIdMap = camera.getIdMap()
-        trueX = []
-        trueY = []
+        det_id_map = camera.getIdMap()
+        true_x = []
+        true_y = []
         for sens_id in [192, 196, 200, 204]:
-            centerIntra = detIdMap[sens_id].getCenter(FIELD_ANGLE)
-            centerExtra = detIdMap[sens_id - 1].getCenter(FIELD_ANGLE)
-            centerDeg = np.degrees(np.array([centerIntra, centerExtra]))
-            centerX = np.mean(centerDeg[:, 1])
-            centerY = np.mean(centerDeg[:, 0])
-            trueX.append(centerX)
-            trueY.append(centerY)
+            center_intra = det_id_map[sens_id].getCenter(FIELD_ANGLE)
+            center_extra = det_id_map[sens_id - 1].getCenter(FIELD_ANGLE)
+            center_det = np.degrees(np.array([center_intra, center_extra]))
+            center_x = np.mean(center_det[:, 1])
+            center_y = np.mean(center_det[:, 0])
+            true_x.append(center_x)
+            true_y.append(center_y)
 
-        self.assertCountEqual(fieldX, trueX)
+        self.assertCountEqual(field_x, true_x)
         self.assertCountEqual(
-            fieldY,
-            trueY,
+            field_y,
+            true_y,
         )
 
         wgt = self.metr.wt
         self.assertCountEqual(wgt, [0.25, 0.25, 0.25, 0.25])
 
-    def testGetDefaultLsstWfsGQ(self):
-        fieldWFSx, fieldWFSy, detIds = self.metr.getDefaultLsstWfsGQ()
-        self.assertEqual(len(fieldWFSx), 4)
-        self.assertEqual(len(detIds), 4)
+    def test_get_default_lsst_wfs_gq(self):
+        field_wfs_x, field_wfs_y, det_ids = self.metr.get_default_lsst_wfs_gq()
+        self.assertEqual(len(field_wfs_x), 4)
+        self.assertEqual(len(det_ids), 4)
 
-    def _getOpdDir(self):
-        opdFileDir = os.path.join(self.testDataDir, "opd")
-        return opdFileDir
+    def _get_opd_dir(self):
+        opd_file_dir = os.path.join(self.test_data_dir, "opd")
+        return opd_file_dir
 
-    def testGetZkFromOpd(self):
-        opdDir = self._getOpdDir()
-        zk = self.metr.getZkFromOpd(opdFitsFile=os.path.join(opdDir, "opd.fits"))[0]
+    def test_get_zk_from_opd(self):
+        opd_dir = self._get_opd_dir()
+        zk = self.metr.get_zk_from_opd(opd_fits_file=os.path.join(opd_dir, "opd.fits"))[
+            0
+        ]
 
-        ansOpdFileName = "opd.zer"
-        ansOpdFilePath = os.path.join(opdDir, ansOpdFileName)
-        allOpdAns = getZkFromFile(ansOpdFilePath)
-        self.assertLess(np.sum(np.abs(zk[3:] - allOpdAns[191])), 1e-5)
+        ans_opd_file_name = "opd.zer"
+        ans_opd_file_path = os.path.join(opd_dir, ans_opd_file_name)
+        all_opd_ans = get_zk_from_file(ans_opd_file_path)
+        self.assertLess(np.sum(np.abs(zk[3:] - all_opd_ans[191])), 1e-5)
 
-    def testRPTTfromOPD(self):
+    def test_rm_ptt_from_opd(self):
         """Test removal of piston (z1), x-tilt (z2), and y-tilt (z3)
         from the OPD map."""
-        opdDir = self._getOpdDir()
-        opdFilePath = os.path.join(opdDir, "opd.fits")
-        opdMap = fits.getdata(opdFilePath, 1)
-        opdRmPTT, opdx, opdy = self.metr.rmPTTfromOPD(opdMap=opdMap)
+        opd_dir = self._get_opd_dir()
+        opd_file_path = os.path.join(opd_dir, "opd.fits")
+        opd_map = fits.getdata(opd_file_path, 1)
+        opd_rm_ptt, opd_x, opd_y = self.metr.rm_ptt_from_opd(opd_map=opd_map)
 
-        # Flip OPD because it will be flipped inside getZkFromOpd
-        zkRmPTT = self.metr.getZkFromOpd(opdMap=opdRmPTT)[0]
-        zkRmPTTInUm = np.sum(np.abs(zkRmPTT[0:3])) / 1e3
-        self.assertLess(zkRmPTTInUm, 9e-2)
+        # Flip OPD because it will be flipped inside get_zk_from_opd
+        zk_rm_ptt = self.metr.get_zk_from_opd(opd_map=opd_rm_ptt)[0]
+        zk_rm_ptt_in_um = np.sum(np.abs(zk_rm_ptt[0:3])) / 1e3
+        self.assertLess(zk_rm_ptt_in_um, 9e-2)
 
-    def testCalcPSSN(self):
-        pssn = self._calcPssn()
-        allData = self._getMetroAllAnsData()
-        self.assertAlmostEqual(pssn, allData[0, 0])
+    def test_calc_pssn(self):
+        pssn = self._calc_pssn()
+        all_data = self._get_metro_all_ans_data()
+        self.assertAlmostEqual(pssn, all_data[0, 0])
 
-    def _calcPssn(self):
-        wavelengthInUm = 0.48
-        opdFilePath = os.path.join(self._getOpdDir(), "opd.fits")
-        opdMap = fits.getdata(opdFilePath, 0) * 1e-3
-        pssn = self.metr.calcPSSN(wavelengthInUm, opdMap=opdMap)
+    def _calc_pssn(self):
+        wavelength_in_um = 0.48
+        opd_file_path = os.path.join(self._get_opd_dir(), "opd.fits")
+        opd_map = fits.getdata(opd_file_path, 0) * 1e-3
+        pssn = self.metr.calc_pssn(wavelength_in_um, opd_map=opd_map)
 
         return pssn
 
-    def _getMetroAllAnsData(self):
-        ansAllDataFileName = "PSSN.txt"
-        ansAllDataFilePath = os.path.join(self._getOpdDir(), ansAllDataFileName)
-        allData = np.loadtxt(ansAllDataFilePath)
+    def _get_metro_all_ans_data(self):
+        ans_all_data_file_name = "PSSN.txt"
+        ans_all_data_file_path = os.path.join(
+            self._get_opd_dir(), ans_all_data_file_name
+        )
+        all_data = np.loadtxt(ans_all_data_file_path)
 
-        return allData
+        return all_data
 
-    def testCalcFWHMeff(self):
-        pssn = self._calcPssn()
-        fwhm = self.metr.calcFWHMeff(pssn)
+    def test_calc_fwhm_eff(self):
+        pssn = self._calc_pssn()
+        fwhm = self.metr.calc_fwhm_eff(pssn)
 
-        allData = self._getMetroAllAnsData()
-        self.assertAlmostEqual(fwhm, allData[1, 0])
+        all_data = self._get_metro_all_ans_data()
+        self.assertAlmostEqual(fwhm, all_data[1, 0])
 
-    def testCalcGQvalue(self):
-        self.metr.setDefaultLsstWfsGQ()
-        allData = self._getMetroAllAnsData()
-        valueList = allData[0, 0:4]
+    def test_calc_gq_value(self):
+        self.metr.set_default_lsst_wfs_gq()
+        all_data = self._get_metro_all_ans_data()
+        value_list = all_data[0, 0:4]
 
-        GQvalue = self.metr.calcGQvalue(valueList)
-        self.assertAlmostEqual(GQvalue, allData[0, -1])
+        gq_value = self.metr.calc_gq_value(value_list)
+        self.assertAlmostEqual(gq_value, all_data[0, -1])

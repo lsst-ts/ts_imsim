@@ -25,74 +25,74 @@ import numpy as np
 class SensorWavefrontError(object):
     """Contains the wavefront errors for a single sensor."""
 
-    def __init__(self, numOfZk=19):
+    def __init__(self, num_of_zk=19):
         """Constructs a sensor wavefront error.
 
         Parameters
         ----------
-        numOfZk : int, optional
+        num_of_zk : int, optional
             Number of annular Zernike polynomials. (the default is 19.)
         """
 
         # Sensor Id
-        self._sensorId = 999
+        self._sensor_id = 999
 
         # Sensor Name
-        self.sensorName = "R99_S99"
+        self.sensor_name = "R99_S99"
 
         # Number of zk
-        self.numOfZk = int(numOfZk)
+        self.num_of_zk = int(num_of_zk)
 
         # Annular Zernike polynomials (zk)
-        self._annularZernikePoly = np.zeros(self.numOfZk)
+        self._annular_zernike_poly = np.zeros(self.num_of_zk)
 
     @property
-    def sensorId(self):
-        return self._sensorId
+    def sensor_id(self):
+        return self._sensor_id
 
-    @sensorId.setter
-    def sensorId(self, newSensorId):
+    @sensor_id.setter
+    def sensor_id(self, new_sensor_id):
         """Set the sensor Id.
 
         Parameters
         ----------
-        newSensorId : int
+        new_sensor_id : int
             The Id of the sensor this wavefront error is for.
 
         Raises
         ------
         ValueError
-            sensorId must be >= 0.
+            sensor_id must be >= 0.
         """
 
-        if newSensorId < 0:
-            raise ValueError("sensorId must be >= 0.")
-        self._sensorId = int(newSensorId)
+        if new_sensor_id < 0:
+            raise ValueError("sensor_id must be >= 0.")
+        self._sensor_id = int(new_sensor_id)
 
     @property
-    def annularZernikePoly(self):
-        return self._annularZernikePoly
+    def annular_zernike_poly(self):
+        return self._annular_zernike_poly
 
-    @annularZernikePoly.setter
-    def annularZernikePoly(self, newAnnularZernikePoly):
+    @annular_zernike_poly.setter
+    def annular_zernike_poly(self, new_annular_zernike_poly):
         """Set the effective annular zernike poly.
 
         Parameters
         ----------
-        newAnnularZernikePoly : numpy.ndarray[self.numOfZk] (float)
+        new_annular_zernike_poly : numpy.ndarray[self.num_of_zk] (float)
             The poly describing the wavefront error in um.
 
         Raises
         ------
         ValueError
-            annularZernikePoly must be an array of self.numOfZk floats.
+            annular_zernike_poly must be an array of self.num_of_zk floats.
         """
 
-        if len(newAnnularZernikePoly) != self.numOfZk:
+        if len(new_annular_zernike_poly) != self.num_of_zk:
             raise ValueError(
-                "annularZernikePoly must be an array of %d floats." % self.numOfZk
+                "annular_zernike_poly must be an array of %d floats." % self.num_of_zk
             )
-        self._annularZernikePoly = np.array(newAnnularZernikePoly)
+        self._annular_zernike_poly = np.array(new_annular_zernike_poly)
 
 
 if __name__ == "__main__":

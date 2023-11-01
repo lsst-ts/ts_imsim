@@ -27,7 +27,7 @@ from lsst.obs.lsst import LsstCam
 from lsst.utils import getPackageDir
 
 
-def getModulePath():
+def get_module_path():
     """Get the path of module.
 
     Returns
@@ -39,7 +39,7 @@ def getModulePath():
     return getPackageDir("ts_imsim")
 
 
-def getPolicyPath():
+def get_policy_path():
     """Get the path of the policy directory.
 
     Returns
@@ -48,10 +48,10 @@ def getPolicyPath():
         Directory of policy files.
     """
 
-    return os.path.join(getModulePath(), "policy")
+    return os.path.join(get_module_path(), "policy")
 
 
-def getConfigDir():
+def get_config_dir():
     """Get the directory of configuration files.
 
     Returns
@@ -60,15 +60,15 @@ def getConfigDir():
         Directory of configuration files.
     """
 
-    return os.path.join(getPolicyPath(), "config")
+    return os.path.join(get_policy_path(), "config")
 
 
-def getCamera(instName):
+def get_camera(inst_name):
     """Returns a lsst instrument for a given instrument name.
 
     Parameters
     ----------
-    instName : `str`
+    inst_name : `str`
         Instrument name. Valid options are 'lsstfam' or 'lsst'.
 
     Returns
@@ -81,15 +81,15 @@ def getCamera(instName):
         If input `instName` is not valid.
     """
     # Check the input
-    if (instName == "lsstfam") or (instName == "lsst"):
+    if (inst_name == "lsstfam") or (inst_name == "lsst"):
         return LsstCam().getCamera()
     else:
         raise ValueError(
-            f"This instrument name ({instName}) is not supported. Must be 'lsstfam' or 'lsst'."
+            f"This instrument name ({inst_name}) is not supported. Must be 'lsstfam' or 'lsst'."
         )
 
 
-def makeDir(newDir, exist_ok=True):
+def make_dir(new_dir, exist_ok=True):
     """Make the new directory.
 
     Super-mkdir; create a leaf directory and all intermediate ones. Works
@@ -98,7 +98,7 @@ def makeDir(newDir, exist_ok=True):
 
     Parameters
     ----------
-    newDir : str
+    new_dir : str
         New directory.
     exist_ok : bool, optional
         If the target directory already exists, raise an OSError if
@@ -106,15 +106,15 @@ def makeDir(newDir, exist_ok=True):
         is True.)
     """
 
-    os.makedirs(newDir, exist_ok=exist_ok)
+    os.makedirs(new_dir, exist_ok=exist_ok)
 
 
-def getZkFromFile(zkFilePath):
+def get_zk_from_file(zk_file_path):
     """Get the zk (z4-z22) from file.
 
     Parameters
     ----------
-    zkFilePath : str
+    zk_file_path : str
         Zk file path.
 
     Returns
@@ -123,7 +123,7 @@ def getZkFromFile(zkFilePath):
         zk matrix. The colunm is z4-z22. The raw is each data point.
     """
 
-    with open(zkFilePath, "r") as file:
+    with open(zk_file_path, "r") as file:
         zk = yaml.safe_load(file)
     for key, val in zk.items():
         zk[key] = np.fromstring(val[0], sep=" ")

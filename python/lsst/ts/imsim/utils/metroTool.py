@@ -28,15 +28,15 @@ from lsst.ts.wep.utils import extractArray, padArray
 
 def calc_pssn(
     array,
-    wlum,
-    aType="opd",
+    wl_um,
+    a_type="opd",
     D=8.36,
-    r0inmRef=0.1382,
+    r0_in_m_ref=0.1382,
     zen=0,
-    pmask=0,
-    imagedelta=0,
+    p_mask=0,
+    image_delta=0,
     fno=1.2335,
-    debugLevel=0,
+    debug_level=0,
 ):
     """Calculate the normalized point source sensitivity (PSSN).
 
@@ -44,27 +44,27 @@ def calc_pssn(
     ----------
     array : numpy.ndarry
         Array that contains either opd or pdf. opd need to be in microns.
-    wlum : float
+    wl_um : float
         Wavelength in microns.
     aType : str, optional
         What is used to calculate pssn - either opd or psf. (the default is
         "opd".)
     D : float, optional
         Side length of OPD image in meter. (the default is 8.36.)
-    r0inmRef : float, optional
+    r0_in_m_ref : float, optional
         Fidicial atmosphere r0 @ 500nm in meter, Konstantinos uses 0.20. (the
         default is 0.1382.)
     zen : float, optional
         Telescope zenith angle in degree. (the default is 0.)
-    pmask : int or numpy.ndarray[int], optional
+    p_mask : int or numpy.ndarray[int], optional
         Pupil mask. when opd is used, it can be generated using opd image, we
         can put 0 or -1 or whatever here. When psf is used, this needs to be
         provided separately with same size as array. (the default is 0.)
-    imagedelta : float, optional
+    image_delta : float, optional
         Only needed when psf is used. use 0 for opd. (the default is 0.)
     fno : float, optional
         Only needed when psf is used. use 0 for opd. (the default is 1.2335.)
-    debugLevel : int, optional
+    debug_level : int, optional
         Debug level. The higher value gives more information. (the default
         is 0.)
 
@@ -91,40 +91,40 @@ def calc_pssn(
     # (n_eff))_atm+sys = 1 / (int (PSF^2)_atm+sys dOmega)
 
     # Check the type is "OPD" or "PSF"
-    if aType not in ("opd", "psf"):
-        raise ValueError("The type of %s is not allowed." % aType)
+    if a_type not in ("opd", "psf"):
+        raise ValueError("The type of %s is not allowed." % a_type)
 
     # Squeeze the array if necessary
     if array.ndim == 3:
-        array2D = array[0, :, :].squeeze()
+        array_2d = array[0, :, :].squeeze()
 
     # Get the k value (magnification ratio used in creating MTF)
-    if aType == "opd":
+    if a_type == "opd":
         try:
-            m = max(array2D.shape)
+            m = max(array_2d.shape)
         except NameError:
             m = max(array.shape)
         k = 1
-    elif aType == "psf":
-        m = max(pmask.shape)
+    elif a_type == "psf":
+        m = max(p_mask.shape)
         # Pupil needs to be padded k times larger to get imagedelta
         # Do not know where to find this formular. Check with Bo.
-        k = fno * wlum / imagedelta
+        k = fno * wl_um / image_delta
 
     # Get the modulation transfer function with the van Karman power spectrum
-    mtfa = createMTFatm(D, m, k, wlum, zen, r0inmRef, model="vonK")
+    mtfa = create_MTF_atm(D, m, k, wl_um, zen, r0_in_m_ref, model="vonK")
 
     # Get the pupil function
-    if aType == "opd":
+    if a_type == "opd":
         try:
-            iad = array2D != 0
+            iad = array_2d != 0
         except NameError:
             iad = array != 0
-    elif aType == "psf":
+    elif a_type == "psf":
         # Add even number
         mk = int(m + np.rint((m * (k - 1) + 1e-5) / 2) * 2)
         # padArray(pmask, m)
-        iad = pmask
+        iad = p_mask
 
     # OPD --> PSF --> OTF --> OTF' (OTF + atmosphere) --> PSF'
     # Check with Bo that we could get OTF' or PSF' from PhoSim or not directly.
@@ -139,49 +139,49 @@ def calc_pssn(
     psft = opd2psf(
         opdt,
         iad,
-        wlum,
-        imagedelta=imagedelta,
-        sensorFactor=1,
+        wl_um,
+        image_delta=image_delta,
+        sensor_factor=1,
         fno=fno,
-        debugLevel=debugLevel,
+        debug_level=debug_level,
     )
 
     # PSF to optical transfer function (OTF)
-    otft = psf2otf(psft)
+    otft = psf_to_otf(psft)
 
     # Add atmosphere to perfect telescope
     otfa = otft * mtfa
 
     # OTF to PSF
-    psfa = otf2psf(otfa)
+    psfa = otf_to_psf(otfa)
 
     # Atmospheric PSS (point spread sensitivity) = 1/neff_atm
     pssa = np.sum(psfa**2)
 
     # Calculate PSF with error (atmosphere + system)
-    if aType == "opd":
+    if a_type == "opd":
         if array.ndim == 2:
-            ninst = 1
+            n_inst = 1
         else:
-            ninst = array.shape[0]
+            n_inst = array.shape[0]
 
-        for ii in range(ninst):
+        for ii in range(n_inst):
             if array.ndim == 2:
-                array2D = array
+                array_2d = array
             else:
-                array2D = array[ii, :, :].squeeze()
+                array_2d = array[ii, :, :].squeeze()
 
-            psfei = opd2psf(array2D, iad, wlum, debugLevel=debugLevel)
+            psfe_i = opd2psf(array_2d, iad, wl_um, debug_level=debug_level)
 
             if ii == 0:
-                psfe = psfei
+                psfe = psfe_i
             else:
-                psfe += psfei
+                psfe += psfe_i
 
         # Do the normalization based on the number of instrument
-        psfe = psfe / ninst
+        psfe = psfe / n_inst
 
-    elif aType == "psf":
+    elif a_type == "psf":
         if array.shape[0] == mk:
             psfe = array
 
@@ -200,28 +200,28 @@ def calc_pssn(
         psfe = psfe / np.sum(psfe) * np.sum(psft)
 
     # OTF with system error
-    otfe = psf2otf(psfe)
+    otfe = psf_to_otf(psfe)
 
     # Add the atmosphere error
     # OTF with system and atmosphere errors
-    otftot = otfe * mtfa
+    otf_total = otfe * mtfa
 
     # PSF with system and atmosphere errors
-    psftot = otf2psf(otftot)
+    psf_total = otf_to_psf(otf_total)
 
     # atmospheric + error PSS
-    pss = np.sum(psftot**2)
+    pss = np.sum(psf_total**2)
 
     # normalized PSS
     pssn = pss / pssa
 
-    if debugLevel >= 3:
+    if debug_level >= 3:
         print("pssn = %10.8e/%10.8e = %6.4f." % (pss, pssa, pssn))
 
     return pssn
 
 
-def createMTFatm(D, m, k, wlum, zen, r0inmRef, model="vonK"):
+def create_MTF_atm(D, m, k, wl_um, zen, r0_in_m_ref, model="vonK"):
     """Generate the modulation transfer function (MTF) for atmosphere.
 
     Parameters
@@ -233,11 +233,11 @@ def createMTFatm(D, m, k, wlum, zen, r0inmRef, model="vonK"):
         have to cover the length of D.
     k : int
         Use a k-times bigger array to pad the MTF. Use k=1 for the same size.
-    wlum : float
+    wl_um : float
         Wavelength in um.
     zen : float
         Telescope zenith angle in degree.
-    r0inmRef : float
+    r0_in_m_ref : float
         Reference r0 in meter at the wavelength of 0.5 um.
     model : str, optional
         Kolmogorov power spectrum ("Kolm") or van Karman power spectrum
@@ -250,7 +250,7 @@ def createMTFatm(D, m, k, wlum, zen, r0inmRef, model="vonK"):
     """
 
     # Get the atmosphere phase structure function
-    sfa = atmSF(D, m, wlum, zen, r0inmRef, model)
+    sfa = atm_sf(D, m, wl_um, zen, r0_in_m_ref, model)
 
     # Get the modular transfer function for atmosphere
     mtfa = np.exp(-0.5 * sfa)
@@ -264,7 +264,7 @@ def createMTFatm(D, m, k, wlum, zen, r0inmRef, model="vonK"):
     return mtfa
 
 
-def atmSF(D, m, wlum, zen, r0inmRef, model):
+def atm_sf(D, m, wl_um, zen, r0_in_m_ref, model):
     """Get the atmosphere phase structure function.
 
     Parameters
@@ -273,11 +273,11 @@ def atmSF(D, m, wlum, zen, r0inmRef, model):
         Side length of optical path difference (OPD) image in m.
     m : int
         Dimension of OPD image in pixel.
-    wlum : float
+    wl_um : float
         Wavelength in um.
     zen : float
         Telescope zenith angle in degree.
-    r0inmRef : float
+    r0_in_m_ref : float
         Reference r0 in meter at the wavelength of 0.5 um.
     model : str
         Kolmogorov power spectrum ("Kolm") or van Karman power spectrum
@@ -299,7 +299,7 @@ def atmSF(D, m, wlum, zen, r0inmRef, model):
         raise ValueError("Does not support %s atmosphere model." % model)
 
     # Get the atomosphere reference r0 in meter.
-    r0a = r0Wz(r0inmRef, zen, wlum)
+    r0a = r0_wl_zen(r0_in_m_ref, zen, wl_um)
 
     # Round elements of the array to the nearest integer.
     m0 = np.rint(0.5 * (m + 1) + 1e-5)
@@ -353,17 +353,17 @@ def atmSF(D, m, wlum, zen, r0inmRef, model):
     return sfa
 
 
-def r0Wz(r0inmRef, zen, wlum):
+def r0_wl_zen(r0_in_m_ref, zen, wl_um):
     """Get the atomosphere reference r0, which is a function of zenith angle
     and wavelength.
 
     Parameters
     ----------
-    r0inmRef : float
+    r0_in_m_ref : float
         Reference r0 in meter at the wavelength of 0.5 um.
     zen : float
         Telescope zenith angle in degree.
-    wlum : float
+    wl_um : float
         Wavelength in um.
 
     Returns
@@ -376,27 +376,27 @@ def r0Wz(r0inmRef, zen, wlum):
     zen = zen * np.pi / 180
 
     # Get the atmosphere reference r0
-    r0aref = r0inmRef * np.cos(zen) ** 0.6
+    r0_atm_ref = r0_in_m_ref * np.cos(zen) ** 0.6
 
     # Atmosphere reference r0 at the specific wavelength in um
     # 0.5 um is the reference wavelength
-    r0a = r0aref * (wlum / 0.5) ** 1.2
+    r0_atm = r0_atm_ref * (wl_um / 0.5) ** 1.2
 
-    return r0a
+    return r0_atm
 
 
-def psf2eAtmW(
+def psf_to_e_atm_weighted(
     array,
-    wlum,
-    aType="opd",
+    wl_um,
+    a_type="opd",
     D=8.36,
-    pmask=0,
-    r0inmRef=0.1382,
-    sensorFactor=1,
+    p_mask=0,
+    r0_in_m_ref=0.1382,
+    sensor_factor=1,
     zen=0,
-    imagedelta=0.2,
+    image_delta=0.2,
     fno=1.2335,
-    debugLevel=0,
+    debug_level=0,
 ):
     """Calculate the ellipticity with the error of atmosphere and weighting
     function.
@@ -405,27 +405,27 @@ def psf2eAtmW(
     ----------
     array : numpy.ndarray
         Wavefront OPD in micron, or psf image.
-    wlum : float
+    wl_um : float
         Wavelength in microns.
-    aType : str, optional
+    a_type : str, optional
         Type of image ("opd" or "psf"). (the default is "opd".)
     D : float, optional
         Side length of optical path difference (OPD) image in m. (the default
         is 8.36.)
-    pmask : int or numpy.ndarray[int], optional
+    p_mask : int or numpy.ndarray[int], optional
         Pupil mask. (the default is 0.)
-    r0inmRef : float, optional
+    r0_in_m_ref : float, optional
         Fidicial atmosphere r0 @ 500nm in meter. (the default is 0.1382.)
-    sensorFactor : float, optional
+    sensor_factor : float, optional
         Factor of sensor. (the default is 1.)
     zen : float, optional
         Telescope zenith angle in degree. (the default is 0.)
-    imagedelta : float, optional
+    image_delta : float, optional
         Only needed when psf is used. 1 pixel = 0.2 arcsec. (the default is
         0.2.)
     fno : float, optional
         Only needed when psf is used. use 0 for opd. (the default is 1.2335.)
-    debugLevel : int, optional
+    debug_level : int, optional
         The higher value gives more information. (the default is 0.)
 
     Returns
@@ -444,63 +444,63 @@ def psf2eAtmW(
     # because the ellipticity calculation operates on psf.
 
     # Get the k value
-    k = fno * wlum / imagedelta
+    k = fno * wl_um / image_delta
 
     # Get the PSF with the system error
-    if aType == "opd":
-        m = array.shape[0] / sensorFactor
+    if a_type == "opd":
+        m = array.shape[0] / sensor_factor
         psfe = opd2psf(
             array,
             0,
-            wlum,
-            imagedelta=imagedelta,
-            sensorFactor=sensorFactor,
+            wl_um,
+            image_delta=image_delta,
+            sensor_factor=sensor_factor,
             fno=fno,
-            debugLevel=debugLevel,
+            debug_level=debug_level,
         )
     else:
-        m = max(pmask.shape)
+        m = max(p_mask.shape)
         psfe = array
 
     # Opitcal transfer function (OTF) of system error
-    otfe = psf2otf(psfe)
+    otfe = psf_to_otf(psfe)
 
     # Modulation transfer function (MTF) with atmosphere
-    mtfa = createMTFatm(D, m, k, wlum, zen, r0inmRef)
+    mtfa = create_MTF_atm(D, m, k, wl_um, zen, r0_in_m_ref)
 
     # OTF with system and atmosphere errors
     otf = otfe * mtfa
 
     # PSF with system and atmosphere errors
-    psf = otf2psf(otf)
+    psf = otf_to_psf(otf)
 
-    if debugLevel >= 3:
+    if debug_level >= 3:
         print("Below from the Gaussian weigting function on ellipticity.")
 
     # Get the ellipticity and correlation function
     # The second input of psfeW should be pixeinum (1 pixel = 10 um).
     # Check this part with Bo.
-    e, q11, q22, q12 = psf2eW(
-        psf, imagedelta, wlum, atmModel="Gau", debugLevel=debugLevel
+    e, q11, q22, q12 = psf_to_ellip_weighted(
+        psf, image_delta, wl_um, atm_model="Gau", debug_level=debug_level
     )
 
     return e, q11, q22, q12
 
 
-def psf2eW(psf, pixinum, wlum, atmModel="Gau", debugLevel=0):
+def psf_to_ellip_weighted(psf, pix_in_um, wl_um, atm_model="Gau", debug_level=0):
     """Calculate the ellipticity with the weighting function.
 
     Parameters
     ----------
     psf : numpy.ndarray
         Point spread function (PSF).
-    pixinum : float
+    pix_in_um : float
         Pixel in um.
-    wlum : float
+    wl_um : float
         Wavelength in microns.
-    atmModel : str, optional
+    atm_model : str, optional
         Atmosphere model ("Gau" or "2Gau"). (the default is "Gau".)
-    debugLevel : int, optional
+    debug_level : int, optional
         The higher value gives more information. (the default is 0.)
 
     Returns
@@ -519,37 +519,37 @@ def psf2eW(psf, pixinum, wlum, atmModel="Gau", debugLevel=0):
     x, y = np.meshgrid(np.arange(1, psf.shape[0] + 1), np.arange(1, psf.shape[1] + 1))
 
     # Average x and y
-    xbar = np.sum(x * psf) / np.sum(psf)
-    ybar = np.sum(y * psf) / np.sum(psf)
+    x_bar = np.sum(x * psf) / np.sum(psf)
+    y_bar = np.sum(y * psf) / np.sum(psf)
 
     # Show the averaged x and y
-    if debugLevel >= 3:
-        print("xbar=%6.3f, ybar=%6.3f" % (xbar, ybar))
+    if debug_level >= 3:
+        print("xbar=%6.3f, ybar=%6.3f" % (x_bar, y_bar))
 
     # Distance^2 to center
-    r2 = (x - xbar) ** 2 + (y - ybar) ** 2
+    r2 = (x - x_bar) ** 2 + (y - y_bar) ** 2
 
     # Weighting function based on the atmospheric model
     # FWHM is assigned to be 0.6 arcsec. Need to check with Bo for this.
-    fwhminarcsec = 0.6
+    fwhm_in_arcsec = 0.6
     oversample = 1
-    W = createAtm(
-        wlum,
-        fwhminarcsec,
+    W = create_atm(
+        wl_um,
+        fwhm_in_arcsec,
         r2,
-        pixinum,
+        pix_in_um,
         oversample,
-        model=atmModel,
-        debugLevel=debugLevel,
+        model=atm_model,
+        debug_level=debug_level,
     )
 
     # Apply the weighting function to PSF
     psf = psf * W
 
     # Correlation function
-    Q11 = np.sum(((x - xbar) ** 2) * psf) / np.sum(psf)
-    Q22 = np.sum(((y - ybar) ** 2) * psf) / np.sum(psf)
-    Q12 = np.sum(((x - xbar) * (y - ybar)) * psf) / np.sum(psf)
+    Q11 = np.sum(((x - x_bar) ** 2) * psf) / np.sum(psf)
+    Q22 = np.sum(((y - y_bar) ** 2) * psf) / np.sum(psf)
+    Q12 = np.sum(((x - x_bar) * (y - y_bar)) * psf) / np.sum(psf)
 
     # Calculate the ellipticity
     T = Q11 + Q22
@@ -566,27 +566,27 @@ def psf2eW(psf, pixinum, wlum, atmModel="Gau", debugLevel=0):
     return e, Q11, Q22, Q12
 
 
-def createAtm(
-    wlum, fwhminarcsec, gridsize, pixinum, oversample, model="Gau", debugLevel=0
+def create_atm(
+    wl_um, fwhm_in_arcsec, grid_size, pix_in_um, oversample, model="Gau", debug_level=0
 ):
     """Calculate the weighting function for a certain atmosphere model.
 
     Parameters
     ----------
-    wlum : float
+    wl_um : float
         Wavelength in microns.
-    fwhminarcsec : float
+    fwhm_in_arcsec : float
         Full width in half maximum (FWHM) in arcsec.
-    gridsize : int or numpy.ndarray[int]
+    grid_size : int or numpy.ndarray[int]
         Size of grid. If it is the array, it should be (distance to center)^2.
         That means r2.
-    pixinum : int
+    pix_in_um : int
         Pixel in um.
     oversample : int
         k times of image resolution compared with the original one.
     model : str, optional
         Atmosphere model ("Gau" or "2Gau"). (the default is "Gau".)
-    debugLevel : int, optional
+    debug_level : int, optional
         The higher value gives more information. (the default is 0.)
 
     Returns
@@ -598,8 +598,8 @@ def createAtm(
     # Get the weighting function
 
     # Distance^2 to center
-    if isinstance(gridsize, (int)):
-        nreso = gridsize * oversample
+    if isinstance(grid_size, (int)):
+        nreso = grid_size * oversample
 
         # n for radius length
         nr = nreso / 2
@@ -609,16 +609,16 @@ def createAtm(
         r2 = x * x + y * y
 
     else:
-        r2 = gridsize
+        r2 = grid_size
 
     # FWHM in arcsec --> FWHM in um
-    fwhminum = fwhminarcsec / 0.2 * 10
+    fwhm_in_um = fwhm_in_arcsec / 0.2 * 10
 
     # Calculate the weighting function
     if model == "Gau":
         # Sigma in um
-        sig = fwhminum / 2 / np.sqrt(2 * np.log(2))
-        sig = sig / (pixinum / oversample)
+        sig = fwhm_in_um / 2 / np.sqrt(2 * np.log(2))
+        sig = sig / (pix_in_um / oversample)
 
         z = np.exp(-r2 / 2 / sig**2)
 
@@ -627,21 +627,21 @@ def createAtm(
         # let x = exp(-r^2/(2*alpha^2)), which results in 1/2*max
         # we want to get (1+.1)/2=0.55 from below
         # x=0.4673194304; printf('%20.10f\n'%x**.25*.1+x);
-        sig = fwhminum / (2 * np.sqrt(-2 * np.log(0.4673194304)))
+        sig = fwhm_in_um / (2 * np.sqrt(-2 * np.log(0.4673194304)))
 
         # In (oversampled) pixel
-        sig = sig / (pixinum / oversample)
+        sig = sig / (pix_in_um / oversample)
 
         z = np.exp(-r2 / 2 / sig**2) + 0.4 / 4 * np.exp(-r2 / 8 / sig**2)
 
-    if debugLevel >= 3:
-        print("sigma1=%6.4f arcsec" % (sig * (pixinum / oversample) / 10 * 0.2))
+    if debug_level >= 3:
+        print("sigma1=%6.4f arcsec" % (sig * (pix_in_um / oversample) / 10 * 0.2))
 
     return z
 
 
 def opd2psf(
-    opd, pupil, wavelength, imagedelta=0, sensorFactor=1, fno=1.2335, debugLevel=0
+    opd, pupil, wavelength, image_delta=0, sensor_factor=1, fno=1.2335, debug_level=0
 ):
     """Optical path difference (OPD) to point spread function (PSF).
 
@@ -654,15 +654,15 @@ def opd2psf(
         geometry from OPD.
     wavelength : float
         Wavelength in um.
-    imagedelta : float, optional
+    image_delta : float, optional
         Pixel size in um. Use 0 if pixel size is not specified. (the default
         is 0.)
-    sensorFactor : float, optional
+    sensor_factor : float, optional
         Factor of sensor. Only need this if imagedelta != 0. (the default
         is 1.)
     fno : float, optional
          Only need this if imagedelta=0. (the default is 1.2335.)
-    debugLevel : int, optional
+    debug_level : int, optional
         The higher value gives more information. (the default is 0.)
 
     Returns
@@ -692,7 +692,7 @@ def opd2psf(
         raise ValueError("Shapes of OPD and pupil are different.")
 
     # For the PSF
-    if imagedelta != 0:
+    if image_delta != 0:
         # Check the dimension of OPD
         if opd.shape[0] != opd.shape[1]:
             raise ValueError(
@@ -701,29 +701,31 @@ def opd2psf(
             )
 
         # Get the k value and the padding
-        k = fno * wavelength / imagedelta
-        padding = k / sensorFactor
+        k = fno * wavelength / image_delta
+        padding = k / sensor_factor
 
         # Check the padding
         if padding < 1:
-            errorMes = "opd2psf: Sampling too low, data inaccurate.\n"
-            errorMes += "Imagedelta needs to be smaller than"
-            errorMes += " fno * wlum = %4.2f um.\n" % (fno * wavelength)
-            errorMes += "So that the padding factor > 1.\n"
-            errorMes += "Otherwise we have to cut pupil to be < D."
+            error_msg = "opd2psf: Sampling too low, data inaccurate.\n"
+            error_msg += "Imagedelta needs to be smaller than"
+            error_msg += " fno * wl_um = %4.2f um.\n" % (fno * wavelength)
+            error_msg += "So that the padding factor > 1.\n"
+            error_msg += "Otherwise we have to cut pupil to be < D."
 
-            raise ValueError(errorMes)
+            raise ValueError(error_msg)
 
         # Size of sensor
-        sensorSamples = opd.shape[0]
+        sensor_samples = opd.shape[0]
 
         # Add even number for padding
-        N = int(sensorSamples + np.rint(((padding - 1) * sensorSamples + 1e-5) / 2) * 2)
+        N = int(
+            sensor_samples + np.rint(((padding - 1) * sensor_samples + 1e-5) / 2) * 2
+        )
         pupil = padArray(pupil, N)
         opd = padArray(opd, N)
 
         # Show the padding information or not
-        if debugLevel >= 3:
+        if debug_level >= 3:
             print("padding = %8.6f." % padding)
 
     # If imagedelta = 0, we don't do any padding, and go with below
@@ -735,10 +737,10 @@ def opd2psf(
     z = z / np.sum(z)
 
     # Show the information of PSF from OPD
-    if debugLevel >= 3:
-        print("opd2psf(): imagedelta = %8.6f." % imagedelta, end="")
+    if debug_level >= 3:
+        print("opd2psf(): imagedelta = %8.6f." % image_delta, end="")
 
-        if imagedelta == 0:
+        if image_delta == 0:
             print("0 means using OPD with padding as provided.")
 
         print("Verify psf has been normalized: %4.1f." % np.sum(z))
@@ -746,7 +748,7 @@ def opd2psf(
     return z
 
 
-def psf2otf(psf):
+def psf_to_otf(psf):
     """Point spread function (PSF) to optical transfer function (OTF).
 
     Parameters
@@ -765,7 +767,7 @@ def psf2otf(psf):
     return otf
 
 
-def otf2psf(otf):
+def otf_to_psf(otf):
     """Optical transfer function (OTF) to point spread function (PSF).
 
     Parameters

@@ -26,7 +26,7 @@ import unittest
 
 from lsst.ts.imsim.closedLoopTask import ClosedLoopTask
 from lsst.ts.imsim.obsMetadata import ObsMetadata
-from lsst.ts.imsim.utils.utility import getModulePath
+from lsst.ts.imsim.utils.utility import get_module_path
 from lsst.ts.wep.utils import CamType, FilterType
 
 
@@ -34,166 +34,170 @@ class TestclosedLoopTask(unittest.TestCase):
     """Test the closedLoopTask class."""
 
     def setUp(self):
-        self.closedLoopTask = ClosedLoopTask()
-        self.obsMetadata = ObsMetadata(0.0, 0.0, "r")
+        self.closed_loop_task = ClosedLoopTask()
+        self.obs_metadata = ObsMetadata(0.0, 0.0, "r")
 
-        rootTestDir = os.path.join(getModulePath(), "tests")
-        self.testDir = tempfile.TemporaryDirectory(dir=rootTestDir)
+        root_test_dir = os.path.join(get_module_path(), "tests")
+        self.test_dir = tempfile.TemporaryDirectory(dir=root_test_dir)
 
     def tearDown(self):
-        self.testDir.cleanup()
+        self.test_dir.cleanup()
 
-    def testConfigSkySimWithError(self):
+    def test_config_sky_sim_with_error(self):
         self.assertRaises(
             ValueError,
-            self.closedLoopTask.configSkySim,
+            self.closed_loop_task.config_sky_sim,
             "NoThisInstName",
-            self.obsMetadata,
+            self.obs_metadata,
         )
 
-    def testConfigSkySimNoSkyFileLSST(self):
-        self.closedLoopTask.configSkySim("lsst", self.obsMetadata)
+    def test_config_sky_sim_no_sky_file_lsst(self):
+        self.closed_loop_task.config_sky_sim("lsst", self.obs_metadata)
 
-        skySim = self.closedLoopTask.skySim
-        self.assertEqual(len(skySim.starId), 8)
+        sky_sim = self.closed_loop_task.sky_sim
+        self.assertEqual(len(sky_sim.star_id), 8)
 
-    def testConfigSkySimWithSkyFile(self):
-        testSkyFile = os.path.join(
-            getModulePath(), "tests", "testData", "sky", "wfsStar.txt"
+    def test_config_sky_sim_with_sky_file(self):
+        test_sky_file = os.path.join(
+            get_module_path(), "tests", "testData", "sky", "wfsStar.txt"
         )
-        self.closedLoopTask.configSkySim(
-            "lsst", self.obsMetadata, pathSkyFile=testSkyFile
+        self.closed_loop_task.config_sky_sim(
+            "lsst", self.obs_metadata, path_sky_file=test_sky_file
         )
 
-        skySim = self.closedLoopTask.skySim
-        self.assertEqual(len(skySim.starId), 8)
-        self.assertEqual(skySim.mag[0], 15)
+        sky_sim = self.closed_loop_task.sky_sim
+        self.assertEqual(len(sky_sim.star_id), 8)
+        self.assertEqual(sky_sim.mag[0], 15)
 
-    def testConfigOfcCalc(self):
-        instName = "lsst"
-        self.closedLoopTask.configOfcCalc(instName)
+    def test_config_ofc_calc(self):
+        inst_name = "lsst"
+        self.closed_loop_task.config_ofc_calc(inst_name)
 
-        ofcCalc = self.closedLoopTask.ofcCalc
-        self.assertEqual(ofcCalc.ofc_data.name, instName)
+        ofc_calc = self.closed_loop_task.ofc_calc
+        self.assertEqual(ofc_calc.ofc_data.name, inst_name)
 
-    def testMapFilterRefToG(self):
+    def test_map_filter_ref_to_g(self):
         # test that the reference filter
         # gets mapped to g
-        for filterTypeName in ["ref", ""]:
-            mappedFilterName = self.closedLoopTask.mapFilterRefToG(filterTypeName)
-            self.assertEqual(mappedFilterName, "g")
+        for filter_type_name in ["ref", ""]:
+            mapped_filter_name = self.closed_loop_task.map_filter_ref_to_g(
+                filter_type_name
+            )
+            self.assertEqual(mapped_filter_name, "g")
 
         # test that all other filters are
         # mapped to themselves
-        for filterTypeName in "ugrizy":
-            mappedFilterName = self.closedLoopTask.mapFilterRefToG(filterTypeName)
-            self.assertEqual(mappedFilterName, filterTypeName)
+        for filter_type_name in "ugrizy":
+            mapped_filter_name = self.closed_loop_task.map_filter_ref_to_g(
+                filter_type_name
+            )
+            self.assertEqual(mapped_filter_name, filter_type_name)
 
-    def testGetFilterTypeRef(self):
-        filterType = self.closedLoopTask.getFilterType("ref")
-        self.assertEqual(filterType, FilterType.REF)
+    def test_get_filter_type_ref(self):
+        filter_type = self.closed_loop_task.get_filter_type("ref")
+        self.assertEqual(filter_type, FilterType.REF)
 
-    def testGetFilterTypeU(self):
-        filterType = self.closedLoopTask.getFilterType("u")
-        self.assertEqual(filterType, FilterType.LSST_U)
+    def test_get_filter_type_u(self):
+        filter_type = self.closed_loop_task.get_filter_type("u")
+        self.assertEqual(filter_type, FilterType.LSST_U)
 
-    def testGetFilterTypeG(self):
-        filterType = self.closedLoopTask.getFilterType("g")
-        self.assertEqual(filterType, FilterType.LSST_G)
+    def test_get_filter_type_g(self):
+        filter_type = self.closed_loop_task.get_filter_type("g")
+        self.assertEqual(filter_type, FilterType.LSST_G)
 
-    def testGetFilterTypeR(self):
-        filterType = self.closedLoopTask.getFilterType("r")
-        self.assertEqual(filterType, FilterType.LSST_R)
+    def test_get_filter_type_r(self):
+        filter_type = self.closed_loop_task.get_filter_type("r")
+        self.assertEqual(filter_type, FilterType.LSST_R)
 
-    def testGetFilterTypeI(self):
-        filterType = self.closedLoopTask.getFilterType("i")
-        self.assertEqual(filterType, FilterType.LSST_I)
+    def test_get_filter_type_i(self):
+        filter_type = self.closed_loop_task.get_filter_type("i")
+        self.assertEqual(filter_type, FilterType.LSST_I)
 
-    def testGetFilterTypeZ(self):
-        filterType = self.closedLoopTask.getFilterType("z")
-        self.assertEqual(filterType, FilterType.LSST_Z)
+    def test_get_filter_type_z(self):
+        filter_type = self.closed_loop_task.get_filter_type("z")
+        self.assertEqual(filter_type, FilterType.LSST_Z)
 
-    def testGetFilterTypeY(self):
-        filterType = self.closedLoopTask.getFilterType("y")
-        self.assertEqual(filterType, FilterType.LSST_Y)
+    def test_get_filter_type_y(self):
+        filter_type = self.closed_loop_task.get_filter_type("y")
+        self.assertEqual(filter_type, FilterType.LSST_Y)
 
-    def testGetFilterTypeErr(self):
+    def test_get_filter_type_err(self):
         self.assertRaises(
-            ValueError, self.closedLoopTask.getFilterType, "noThisFilterType"
+            ValueError, self.closed_loop_task.get_filter_type, "noThisFilterType"
         )
 
-    def testGetCamTypeAndInstNameLsst(self):
-        camType, instName = self.closedLoopTask.getCamTypeAndInstName("lsst")
-        self.assertEqual(camType, CamType.LsstCam)
-        self.assertEqual(instName, "lsst")
+    def test_get_cam_type_and_inst_name_lsst(self):
+        cam_type, inst_name = self.closed_loop_task.get_cam_type_and_inst_name("lsst")
+        self.assertEqual(cam_type, CamType.LsstCam)
+        self.assertEqual(inst_name, "lsst")
 
-    def testGetCamTypeAndInstNameErr(self):
+    def test_get_cam_type_and_inst_name_err(self):
         self.assertRaises(
-            ValueError, self.closedLoopTask.getCamTypeAndInstName, "noThisInst"
+            ValueError, self.closed_loop_task.get_cam_type_and_inst_name, "noThisInst"
         )
 
-    def testEraseDirectoryContent(self):
+    def test_erase_directory_content(self):
         # Make the temporary directory
-        tempDir = os.path.join(self.testDir.name, "tempDir")
-        os.mkdir(tempDir)
-        files = os.listdir(self.testDir.name)
+        temp_dir = os.path.join(self.test_dir.name, "tempDir")
+        os.mkdir(temp_dir)
+        files = os.listdir(self.test_dir.name)
         self.assertEqual(len(files), 1)
 
         # Try to erase the content
-        self.closedLoopTask.eraseDirectoryContent(self.testDir.name)
+        self.closed_loop_task.erase_directory_content(self.test_dir.name)
 
-        files = os.listdir(self.testDir.name)
+        files = os.listdir(self.test_dir.name)
         self.assertEqual(len(files), 0)
 
-    def testCheckBoresight(self):
-        self.assertRaises(ValueError, self.closedLoopTask.checkBoresight, [-1, 0])
-        self.assertRaises(ValueError, self.closedLoopTask.checkBoresight, [361, 0])
-        self.assertRaises(ValueError, self.closedLoopTask.checkBoresight, [0, -91])
-        self.assertRaises(ValueError, self.closedLoopTask.checkBoresight, [0, 91])
+    def test_check_boresight(self):
+        self.assertRaises(ValueError, self.closed_loop_task.check_boresight, [-1, 0])
+        self.assertRaises(ValueError, self.closed_loop_task.check_boresight, [361, 0])
+        self.assertRaises(ValueError, self.closed_loop_task.check_boresight, [0, -91])
+        self.assertRaises(ValueError, self.closed_loop_task.check_boresight, [0, 91])
 
-    def testCheckAndCreateBaseOutputDir(self):
+    def test_check_and_create_base_output_dir(self):
         # check that the output dir is created
         # where the name is given
-        baseOutputDir = os.path.join(self.testDir.name, "testBaseOutputDir")
-        self.assertFalse(os.path.exists(baseOutputDir))
-        self.closedLoopTask.checkAndCreateBaseOutputDir(baseOutputDir)
-        self.assertTrue(os.path.exists(baseOutputDir))
+        base_output_dir = os.path.join(self.test_dir.name, "testBaseOutputDir")
+        self.assertFalse(os.path.exists(base_output_dir))
+        self.closed_loop_task.check_and_create_base_output_dir(base_output_dir)
+        self.assertTrue(os.path.exists(base_output_dir))
 
-    def testSetDefaultParser(self):
+    def test_set_default_parser(self):
         parser = argparse.ArgumentParser()
-        parser = ClosedLoopTask.setDefaultParser(parser)
+        parser = ClosedLoopTask.set_default_parser(parser)
 
         args = parser.parse_known_args()[0]
         self.assertEqual(args.inst, "lsst")
-        self.assertEqual(args.filterType, "")
-        self.assertEqual(args.rotCam, 0.0)
-        self.assertEqual(args.iterNum, 5)
+        self.assertEqual(args.filter_type, "")
+        self.assertEqual(args.rot_cam, 0.0)
+        self.assertEqual(args.iter_num, 5)
         self.assertEqual(args.output, "")
         self.assertFalse(args.clobber)
-        self.assertEqual(args.configPointerFile, "")
-        self.assertEqual(args.pipelineFile, "")
-        self.assertEqual(args.skySeed, 42)
-        self.assertEqual(args.pertSeed, 11)
+        self.assertEqual(args.config_pointer_file, "")
+        self.assertEqual(args.pipeline_file, "")
+        self.assertEqual(args.sky_seed, 42)
+        self.assertEqual(args.pert_seed, 11)
 
-    def testSetImgParser(self):
+    def test_set_img_parser(self):
         parser = argparse.ArgumentParser()
-        parser = ClosedLoopTask.setImgParser(parser)
+        parser = ClosedLoopTask.set_img_parser(parser)
 
-        argsToTest = ["--boresightDeg", "1.2", "2.3"]
+        args_to_test = ["--boresight_deg", "1.2", "2.3"]
 
-        args = parser.parse_known_args(args=argsToTest)[0]
-        self.assertEqual(args.boresightDeg, [1.2, 2.3])
-        self.assertEqual(args.skyFile, "")
+        args = parser.parse_known_args(args=args_to_test)[0]
+        self.assertEqual(args.boresight_deg, [1.2, 2.3])
+        self.assertEqual(args.sky_file, "")
         self.assertEqual(args.mjd, 59580)
-        self.assertEqual(args.rawSeeing, 0.5)
-        self.assertFalse(args.turnOffSkyBackground)
-        self.assertFalse(args.turnOffAtmosphere)
+        self.assertEqual(args.raw_seeing, 0.5)
+        self.assertFalse(args.turn_off_sky_background)
+        self.assertFalse(args.turn_off_atmosphere)
 
-    def testGetSensorNameListOfFieldsLsstWfs(self):
-        sensorNameList = self.closedLoopTask.getSensorNameListOfFields("lsst")
-        self.assertEqual(len(sensorNameList), 8)
+    def test_get_sensor_name_list_of_field_lsst_wfs(self):
+        sensor_name_list = self.closed_loop_task.get_sensor_name_list_of_fields("lsst")
+        self.assertEqual(len(sensor_name_list), 8)
 
-        sensorNameListAns = [
+        sensor_name_list_ans = [
             "R00_SW0",
             "R00_SW1",
             "R40_SW0",
@@ -203,11 +207,11 @@ class TestclosedLoopTask(unittest.TestCase):
             "R44_SW0",
             "R44_SW1",
         ]
-        self.assertCountEqual(sensorNameList, sensorNameListAns)
+        self.assertCountEqual(sensor_name_list, sensor_name_list_ans)
 
-    def testGetSensorIdListOfFields(self):
-        sensorIdList = self.closedLoopTask.getSensorIdListOfFields("lsst")
-        self.assertEqual(len(sensorIdList), 8)
+    def test_get_sensor_id_list_of_fields(self):
+        sensor_id_list = self.closed_loop_task.get_sensor_id_list_of_fields("lsst")
+        self.assertEqual(len(sensor_id_list), 8)
 
-        sensorIdListAns = [191, 192, 195, 196, 199, 200, 203, 204]
-        self.assertCountEqual(sensorIdList, sensorIdListAns)
+        sensor_id_list_ans = [191, 192, 195, 196, 199, 200, 203, 204]
+        self.assertCountEqual(sensor_id_list, sensor_id_list_ans)

@@ -29,84 +29,84 @@ class TestSensorWavefrontError(unittest.TestCase):
     """Test the SensorWavefrontError class."""
 
     def setUp(self):
-        self.numOfZk = 19
-        self.sensorWavefrontError = SensorWavefrontError(numOfZk=self.numOfZk)
+        self.num_of_zk = 19
+        self.sensor_wavefront_error = SensorWavefrontError(num_of_zk=self.num_of_zk)
 
-        self.sensorId = 999
-        self.sensorName = "R99_S99"
+        self.sensor_id = 999
+        self.sensor_name = "R99_S99"
 
-    def testGetNumOfZk(self):
-        self.assertEqual(self.sensorWavefrontError.numOfZk, self.numOfZk)
+    def test_get_num_of_zk(self):
+        self.assertEqual(self.sensor_wavefront_error.num_of_zk, self.num_of_zk)
 
-    def testGetSensorId(self):
-        sensorId = self.sensorWavefrontError.sensorId
-        self.assertEqual(sensorId, self.sensorId)
-        self.assertTrue(isinstance(sensorId, int))
+    def test_get_sensor_id(self):
+        sensor_id = self.sensor_wavefront_error.sensor_id
+        self.assertEqual(sensor_id, self.sensor_id)
+        self.assertTrue(isinstance(sensor_id, int))
 
     def testSetSensorId(self):
-        sensorId = 2
-        self.sensorWavefrontError.sensorId = sensorId
+        sensor_id = 2
+        self.sensor_wavefront_error.sensor_id = sensor_id
 
-        sensorIdInObject = self.sensorWavefrontError.sensorId
-        self.assertEqual(sensorIdInObject, sensorId)
+        sensor_id_in_object = self.sensor_wavefront_error.sensor_id
+        self.assertEqual(sensor_id_in_object, sensor_id)
 
-    def testSetSensorIdWithFloatInputType(self):
-        sensorId = 2.0
-        self.sensorWavefrontError.sensorId = sensorId
+    def test_set_sensor_id_with_float_input(self):
+        sensor_id = 2.0
+        self.sensor_wavefront_error.sensor_id = sensor_id
 
-        sensorIdInObject = self.sensorWavefrontError.sensorId
-        self.assertTrue(isinstance(sensorIdInObject, int))
-        self.assertEqual(sensorIdInObject, sensorId)
+        sensor_id_in_object = self.sensor_wavefront_error.sensor_id
+        self.assertTrue(isinstance(sensor_id_in_object, int))
+        self.assertEqual(sensor_id_in_object, sensor_id)
 
-    def testSetSensorIdWithValueLessThanZero(self):
+    def test_set_sensor_id_with_value_less_than_zero(self):
         with self.assertRaises(ValueError) as context:
-            self.sensorWavefrontError.sensorId = -1
-        self.assertEqual(str(context.exception), "sensorId must be >= 0.")
+            self.sensor_wavefront_error.sensor_id = -1
+        self.assertEqual(str(context.exception), "sensor_id must be >= 0.")
 
-    def testGetSensorName(self):
-        sensorName = self.sensorWavefrontError.sensorName
-        self.assertEqual(sensorName, self.sensorName)
-        self.assertTrue(isinstance(sensorName, str))
+    def test_get_sensor_name(self):
+        sensor_name = self.sensor_wavefront_error.sensor_name
+        self.assertEqual(sensor_name, self.sensor_name)
+        self.assertTrue(isinstance(sensor_name, str))
 
-    def testSetSensorName(self):
-        sensorName = "R42_S24"
-        self.sensorWavefrontError.sensorName = sensorName
+    def test_set_sensor_name(self):
+        sensor_name = "R42_S24"
+        self.sensor_wavefront_error.sensor_name = sensor_name
 
-        sensorNameInObject = self.sensorWavefrontError.sensorName
-        self.assertEqual(sensorNameInObject, sensorName)
+        sensor_name_in_object = self.sensor_wavefront_error.sensor_name
+        self.assertEqual(sensor_name_in_object, sensor_name)
 
-    def testGetAnnularZernikePoly(self):
-        annularZernikePoly = self.sensorWavefrontError.annularZernikePoly
+    def test_get_annulary_zernike_poly(self):
+        annular_zernike_poly = self.sensor_wavefront_error.annular_zernike_poly
 
-        self.assertEqual(len(annularZernikePoly), self.numOfZk)
-        self.assertTrue(isinstance(annularZernikePoly, np.ndarray))
+        self.assertEqual(len(annular_zernike_poly), self.num_of_zk)
+        self.assertTrue(isinstance(annular_zernike_poly, np.ndarray))
 
-        delta = np.sum(np.abs(annularZernikePoly))
+        delta = np.sum(np.abs(annular_zernike_poly))
         self.assertEqual(delta, 0)
 
-    def testSetAnnularZernikePoly(self):
-        randValue = np.random.rand(self.numOfZk)
-        self.sensorWavefrontError.annularZernikePoly = randValue
+    def test_set_annular_zernike_poly(self):
+        rand_value = np.random.rand(self.num_of_zk)
+        self.sensor_wavefront_error.annular_zernike_poly = rand_value
 
-        valueInObj = self.sensorWavefrontError.annularZernikePoly
+        value_in_obj = self.sensor_wavefront_error.annular_zernike_poly
 
-        delta = np.sum(np.abs(randValue - valueInObj))
+        delta = np.sum(np.abs(rand_value - value_in_obj))
         self.assertEqual(delta, 0)
 
-    def testSetAnnularZernikePolyWithListInput(self):
-        listValue = [1] * self.numOfZk
-        self.sensorWavefrontError.annularZernikePoly = listValue
+    def test_set_annular_zernike_poly_with_list_input(self):
+        list_value = [1] * self.num_of_zk
+        self.sensor_wavefront_error.annular_zernike_poly = list_value
 
-        valueInObj = self.sensorWavefrontError.annularZernikePoly
-        self.assertEqual(np.sum(valueInObj), self.numOfZk)
+        value_in_obj = self.sensor_wavefront_error.annular_zernike_poly
+        self.assertEqual(np.sum(value_in_obj), self.num_of_zk)
 
-    def testSetAnnularZernikePolyWithWrongLength(self):
-        wrongValue = np.ones(self.numOfZk + 1)
+    def test_set_annular_zernike_poly_with_wrong_length(self):
+        wrong_value = np.ones(self.num_of_zk + 1)
         with self.assertRaises(ValueError) as context:
-            self.sensorWavefrontError.annularZernikePoly = wrongValue
+            self.sensor_wavefront_error.annular_zernike_poly = wrong_value
         self.assertEqual(
             str(context.exception),
-            f"annularZernikePoly must be an array of {self.numOfZk} floats.",
+            f"annular_zernike_poly must be an array of {self.num_of_zk} floats.",
         )
 
 
