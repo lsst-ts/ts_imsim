@@ -740,7 +740,7 @@ class ClosedLoopTask:
                     imsim_config_yaml["output"]["opd"]["file_name"],
                 )
                 if os.path.exists(imsimOpdPath):
-                    self.log.info(f"OPD already created, moving to analysis.")
+                    self.log.info("OPD already created, moving to analysis.")
                 else:
                     self.log.info(
                         f"Writing Imsim Configuration file to {imsim_config_path}"

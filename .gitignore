@@ -10,10 +10,9 @@ config.log
 *Lib.py
 
 # Pre-commit configs
-.pre-commit-config.yaml
+.mypy.ini
 .flake8
 .isort.cfg
-.mypy.ini
 
 # Built by sconsUtils
 version.py
@@ -37,3 +36,4 @@ pytest_session.txt
 
 # MacOS metadata
 .DS_Store
+.clang-format

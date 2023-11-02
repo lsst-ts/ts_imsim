@@ -173,7 +173,8 @@ class ModifiedEnvironment:
 
     def __exit__(self, exc_type: None, exc_val: None, exc_tb: None) -> None:
         for key in self._overrides:
-            # Restore original values, delete or keep as they are based on the original state
+            # Restore original values, delete or keep as they are
+            # based on the original state.
             if key in self._originals:
                 os.environ[key] = self._originals[key]
             else:
