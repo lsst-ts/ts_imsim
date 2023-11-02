@@ -19,12 +19,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import matplotlib.pyplot as plt
-import numpy as np
 from typing import List, Optional
 
+import matplotlib.pyplot as plt
+import numpy as np
 
-def _save_fig(plt: plt, save_to_file_path: Optional[str]=None, dpi: Optional[int]=None) -> None:
+
+def _save_fig(
+    plt: plt, save_to_file_path: Optional[str] = None, dpi: Optional[int] = None
+) -> None:
     """Save the figure.
 
     Parameters
@@ -45,7 +48,9 @@ def _save_fig(plt: plt, save_to_file_path: Optional[str]=None, dpi: Optional[int
         plt.show()
 
 
-def plot_fwhm_of_iters(pssn_files: List[str], save_to_file_path: Optional[str]=None, dpi: None=None) -> None:
+def plot_fwhm_of_iters(
+    pssn_files: List[str], save_to_file_path: Optional[str] = None, dpi: None = None
+) -> None:
     """Plot the FWHM of iteration.
 
     FWHM: Full width at half maximum.

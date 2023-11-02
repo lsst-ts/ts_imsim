@@ -25,7 +25,7 @@ import numpy as np
 class SensorWavefrontError(object):
     """Contains the wavefront errors for a single sensor."""
 
-    def __init__(self, num_of_zk: int=19) -> None:
+    def __init__(self, num_of_zk: int = 19) -> None:
         """Constructs a sensor wavefront error.
 
         Parameters

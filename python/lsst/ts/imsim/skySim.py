@@ -19,12 +19,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from typing import List, Union
+
 import astropy
 import numpy as np
 from astroplan import Observer
-from lsst.ts.imsim.utils.utility import get_camera
 from lsst.ts.imsim.obsMetadata import ObsMetadata
-from typing import List, Union
+from lsst.ts.imsim.utils.utility import get_camera
 
 
 class SkySim:
@@ -79,7 +80,9 @@ class SkySim:
 
         return rubin.parallactic_angle(time, boresight).deg
 
-    def add_star_by_ra_dec_in_deg(self, star_id: int, ra_in_deg: float, dec_in_deg: float, mag: int) -> None:
+    def add_star_by_ra_dec_in_deg(
+        self, star_id: int, ra_in_deg: float, dec_in_deg: float, mag: int
+    ) -> None:
         """Add the star information by (ra, dec) in degrees.
 
         Parameters
@@ -109,7 +112,9 @@ class SkySim:
                 self.dec = np.append(self.dec, dec_in_deg_list[ii])
                 self.mag = np.append(self.mag, mag_list[ii])
 
-    def _change_to_list_if_necessary(self, variable: Union[int, float, list, np.ndarray]) -> List[Union[int, float]]:
+    def _change_to_list_if_necessary(
+        self, variable: Union[int, float, list, np.ndarray]
+    ) -> List[Union[int, float]]:
         """Change the data type to list.
 
         Parameters

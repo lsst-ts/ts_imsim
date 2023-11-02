@@ -23,9 +23,9 @@ import os
 import shutil
 import unittest
 
+import galsim
 import numpy as np
 import yaml
-import galsim
 from lsst.ts.imsim.imsimCmpt import ImsimCmpt
 from lsst.ts.imsim.obsMetadata import ObsMetadata
 from lsst.ts.imsim.skySim import SkySim
@@ -66,7 +66,9 @@ class TestImsimCmpt(unittest.TestCase):
         # Set the output directories
         self.output_dir = os.path.join(get_module_path(), "tests", "tmp")
         self.output_img_dir = os.path.join(self.output_dir, "img")
-        self.opd_file_path = os.path.join(self._get_opd_file_dir_of_lsst_cam(), "opd.fits")
+        self.opd_file_path = os.path.join(
+            self._get_opd_file_dir_of_lsst_cam(), "opd.fits"
+        )
 
         self.imsim_cmpt.output_dir = self.output_dir
         self.imsim_cmpt.output_img_dir = self.output_img_dir
@@ -216,26 +218,36 @@ class TestImsimCmpt(unittest.TestCase):
         rotation_angle = 20.0
         num_opd = 4
 
-        zerinkes_rotation_0 = self.imsim_cmpt._map_opd_to_zk(
-            rot_opd_in_deg=0.0,
-            num_opd=num_opd,
-        )*1e-3
+        zerinkes_rotation_0 = (
+            self.imsim_cmpt._map_opd_to_zk(
+                rot_opd_in_deg=0.0,
+                num_opd=num_opd,
+            )
+            * 1e-3
+        )
 
-        zerinkes_rotation_20 = self.imsim_cmpt._map_opd_to_zk(
-            rot_opd_in_deg=rotation_angle,
-            num_opd=num_opd,
-        )*1e-3
+        zerinkes_rotation_20 = (
+            self.imsim_cmpt._map_opd_to_zk(
+                rot_opd_in_deg=rotation_angle,
+                num_opd=num_opd,
+            )
+            * 1e-3
+        )
 
         for idx in range(num_opd):
             padded_zernikes = np.pad(zerinkes_rotation_20[idx, :], (4, 0))
 
             galsim_zernikes = galsim.zernike.Zernike(
                 padded_zernikes,
-                R_outer=4.18, # Outer radius obscuration
-                R_inner=2.558, # Inner radius obscuration
+                R_outer=4.18,  # Outer radius obscuration
+                R_inner=2.558,  # Inner radius obscuration
             )
 
-            np.testing.assert_almost_equal(galsim_zernikes.rotate(np.deg2rad(-rotation_angle)).coef[4:], zerinkes_rotation_0[idx, :], decimal = 1)
+            np.testing.assert_almost_equal(
+                galsim_zernikes.rotate(np.deg2rad(-rotation_angle)).coef[4:],
+                zerinkes_rotation_0[idx, :],
+                decimal=1,
+            )
 
     def _analyze_lsst_cam_opd_data(self, rot_opd_in_deg=0.0):
         shutil.copy(

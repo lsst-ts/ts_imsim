@@ -20,14 +20,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
+from typing import Dict
 
 import numpy as np
 import yaml
+from lsst.afw import cameraGeom
 from lsst.obs.lsst import LsstCam
 from lsst.utils import getPackageDir
-from lsst.afw import cameraGeom
 from numpy import ndarray
-from typing import Dict
 
 
 def get_module_path() -> str:
@@ -92,7 +92,7 @@ def get_camera(inst_name: str) -> cameraGeom.Camera:
         )
 
 
-def make_dir(new_dir: str, exist_ok: bool=True) -> None:
+def make_dir(new_dir: str, exist_ok: bool = True) -> None:
     """Make the new directory.
 
     Super-mkdir; create a leaf directory and all intermediate ones. Works

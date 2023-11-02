@@ -20,6 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import yaml
@@ -29,7 +30,6 @@ from lsst.ts.imsim.utils.metroTool import calc_pssn
 from lsst.ts.imsim.utils.utility import get_camera, get_policy_path
 from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
 from lsst.ts.wep.utils import ZernikeAnnularFit, ZernikeEval
-from typing import List, Optional, Tuple, Union
 
 
 class OpdMetrology:
@@ -177,11 +177,11 @@ class OpdMetrology:
 
     def get_zk_from_opd(
         self,
-        opd_fits_file: Optional[str]=None,
-        opd_map: Optional[np.ndarray]=None,
-        zk_terms: int=22,
-        obscuration: float=0.61,
-        flip_lr: bool=True,
+        opd_fits_file: Optional[str] = None,
+        opd_map: Optional[np.ndarray] = None,
+        zk_terms: int = 22,
+        obscuration: float = 0.61,
+        flip_lr: bool = True,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Get the wavefront error of OPD in the basis of annular Zernike
         polynomials.
@@ -247,7 +247,9 @@ class OpdMetrology:
 
         return zk, opd, opd_x, opd_y
 
-    def rm_ptt_from_opd(self, opd_fits_file: Optional[str]=None, opd_map: Optional[np.ndarray]=None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def rm_ptt_from_opd(
+        self, opd_fits_file: Optional[str] = None, opd_map: Optional[np.ndarray] = None
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Remove the piston (z1), x-tilt (z2), and y-tilt (z3)
         from the OPD map.
 
@@ -285,7 +287,12 @@ class OpdMetrology:
         return opd, opd_x, opd_y
 
     def calc_pssn(
-        self, wavelength_in_um: float, opd_fits_file: Optional[str]=None, opd_map: Optional[np.ndarray]=None, zen: int=0, debug_level: int=0
+        self,
+        wavelength_in_um: float,
+        opd_fits_file: Optional[str] = None,
+        opd_map: Optional[np.ndarray] = None,
+        zen: int = 0,
+        debug_level: int = 0,
     ) -> float:
         """Calculate the PSSN based on OPD map.
 

@@ -20,11 +20,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import yaml
 from astropy.io import fits
+from lsst.afw import cameraGeom
+from lsst.ts.imsim.obsMetadata import ObsMetadata
 from lsst.ts.imsim.opdMetrology import OpdMetrology
+from lsst.ts.imsim.skySim import SkySim
 from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
 from lsst.ts.imsim.utils.utility import (
     ModifiedEnvironment,
@@ -35,10 +39,6 @@ from lsst.ts.imsim.utils.utility import (
 from lsst.ts.ofc.ofc_data.base_ofc_data import BaseOFCData
 from lsst.ts.wep.utils import runProgram
 from scipy.ndimage import rotate
-from lsst.afw import cameraGeom
-from lsst.ts.imsim.obsMetadata import ObsMetadata
-from lsst.ts.imsim.skySim import SkySim
-from typing import Any, Dict, List, Tuple, Union, Optional
 
 
 class ImsimCmpt:
@@ -97,7 +97,9 @@ class ImsimCmpt:
         make_dir(new_output_img_dir)
         self._outputImgDir = new_output_img_dir
 
-    def _verify_pointer_file(self, file_pointer_info: dict, config_sections: List[str]) -> None:
+    def _verify_pointer_file(
+        self, file_pointer_info: dict, config_sections: List[str]
+    ) -> None:
         """Verify that pointer file has filepaths for all needed
         sections of a complete imsim configuration file.
 
@@ -126,7 +128,7 @@ class ImsimCmpt:
         obs_metadata: ObsMetadata,
         config_pointer_file: str,
         inst_name: str,
-        required_modules_file: Optional[str]=None,
+        required_modules_file: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Parameters
@@ -316,7 +318,9 @@ class ImsimCmpt:
         with ModifiedEnvironment(KMP_INIT_AT_FORK=None):
             runProgram(f"galsim {config_file_path}")
 
-    def write_yaml_and_run_imsim(self, config_path: str, config_yaml: Dict[str, Any]) -> None:
+    def write_yaml_and_run_imsim(
+        self, config_path: str, config_yaml: Dict[str, Any]
+    ) -> None:
         """Write yaml config file and run Imsim.
 
         Parameters
@@ -331,7 +335,9 @@ class ImsimCmpt:
             yaml.safe_dump(config_yaml, file)
         self.run_imsim(config_path)
 
-    def add_sources_to_config(self, config_yaml: Dict[str, Any], inst_cat_path: str, use_ccd_img: bool=True) -> Dict[str, Any]:
+    def add_sources_to_config(
+        self, config_yaml: Dict[str, Any], inst_cat_path: str, use_ccd_img: bool = True
+    ) -> Dict[str, Any]:
         """Add source information to config. If using CCD it will add
         the instance catalog details. If only using OPD it will remove
         the instance catalog info so that we are not generating
@@ -417,14 +423,14 @@ class ImsimCmpt:
         ra: float,
         dec: float,
         mag_norm: float,
-        sed_name: str="flatSED/sed_flat.txt.gz",
-        redshift: float=0,
-        gamma_1: float=0,
-        gamma_2: float=0,
-        kappa: float=0,
-        delta_ra: float=0,
-        delta_dec: float=0,
-        source_type: str="point",
+        sed_name: str = "flatSED/sed_flat.txt.gz",
+        redshift: float = 0,
+        gamma_1: float = 0,
+        gamma_2: float = 0,
+        kappa: float = 0,
+        delta_ra: float = 0,
+        delta_dec: float = 0,
+        source_type: str = "point",
     ) -> str:
         """Generate the star source.
 
@@ -500,9 +506,9 @@ class ImsimCmpt:
     def analyze_opd_data(
         self,
         inst_name: str,
-        zk_file_name: str="opd.zer",
-        rot_opd_in_deg: float=0.0,
-        pssn_file_name: str="PSSN.txt",
+        zk_file_name: str = "opd.zer",
+        rot_opd_in_deg: float = 0.0,
+        pssn_file_name: str = "PSSN.txt",
     ) -> None:
         """Analyze the OPD data.
 
@@ -536,7 +542,9 @@ class ImsimCmpt:
         self._write_opd_zk_file(zk_file_name, rot_opd_in_deg, num_opd)
         self._write_opd_pssn_file(pssn_file_name, num_opd)
 
-    def _write_opd_zk_file(self, zk_file_name: str, rot_opd_in_deg: float, num_opd: int) -> None:
+    def _write_opd_zk_file(
+        self, zk_file_name: str, rot_opd_in_deg: float, num_opd: int
+    ) -> None:
         """Write the OPD in zk file.
 
         OPD: optical path difference.
@@ -599,7 +607,7 @@ class ImsimCmpt:
                 # Note that we use order = 0 to avoid interpolation errors.
                 min_value = np.nanmin(np.abs(opd_rot))
                 opd_rot[np.isnan(opd_rot)] = 0.0
-                opd_rot = rotate(opd_rot, rot_opd_in_deg, reshape=False, order = 0)
+                opd_rot = rotate(opd_rot, rot_opd_in_deg, reshape=False, order=0)
                 opd_rot[np.abs(opd_rot) <= min_value] = np.nan
             else:
                 opd_rot = opd
@@ -711,7 +719,10 @@ class ImsimCmpt:
         return eff_fwhm_list, gq_eff_fwhm
 
     def map_opd_data_to_list_of_wf_err(
-        self, opd_zk_file_name: str, sensor_id_list: List[int], sensor_name_list: List[str]
+        self,
+        opd_zk_file_name: str,
+        sensor_id_list: List[int],
+        sensor_name_list: List[str],
     ) -> List[SensorWavefrontError]:
         """Map the OPD data to the list of wavefront error.
 
@@ -770,7 +781,9 @@ class ImsimCmpt:
 
         return gq_eff_fwhm
 
-    def get_list_of_fwhm_sensor_data(self, pssn_file_name: str, sensor_id_list: List[int]) -> Tuple[np.ndarray, np.ndarray]:
+    def get_list_of_fwhm_sensor_data(
+        self, pssn_file_name: str, sensor_id_list: List[int]
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Get the list of FWHM sensor data based on the OPD PSSN file.
 
         FWHM: Full width at half maximum.
@@ -852,7 +865,11 @@ class ImsimCmpt:
         return data
 
     def reorder_and_save_wf_err_file(
-        self, list_of_wf_err: List[SensorWavefrontError], ref_sensor_name_list: List[str], camera: cameraGeom.Camera, zk_file_name: str="wfs.zer"
+        self,
+        list_of_wf_err: List[SensorWavefrontError],
+        ref_sensor_name_list: List[str],
+        camera: cameraGeom.Camera,
+        zk_file_name: str = "wfs.zer",
     ) -> None:
         """Reorder the wavefront error in the wavefront error list according to
         the reference sensor name list and save to a file.
@@ -895,7 +912,9 @@ class ImsimCmpt:
         with open(file_path, "w") as file:
             file.write(file_txt)
 
-    def _trans_list_of_wf_err_to_map(self, list_of_wf_err: List[SensorWavefrontError], camera: cameraGeom.Camera) -> Dict[str, np.ndarray]:
+    def _trans_list_of_wf_err_to_map(
+        self, list_of_wf_err: List[SensorWavefrontError], camera: cameraGeom.Camera
+    ) -> Dict[str, np.ndarray]:
         """Transform the list of wavefront error to map.
 
         Parameters
@@ -928,7 +947,9 @@ class ImsimCmpt:
 
         return wf_err_map
 
-    def _get_wf_err_values_and_stack_to_matrix(self, wf_err_map: Dict[str, np.ndarray]) -> np.ndarray:
+    def _get_wf_err_values_and_stack_to_matrix(
+        self, wf_err_map: Dict[str, np.ndarray]
+    ) -> np.ndarray:
         """Get the wavefront errors and stack them to be a matrix.
 
         Parameters
@@ -953,7 +974,7 @@ class ImsimCmpt:
         return value_matrix
 
     def save_dof_in_um_file_for_next_iter(
-        self, dof_in_um_file_name: str="dofPertInNextIter.mat"
+        self, dof_in_um_file_name: str = "dofPertInNextIter.mat"
     ) -> None:
         """Save the DOF in um data to file for the next iteration.
 

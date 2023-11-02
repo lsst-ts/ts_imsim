@@ -20,24 +20,24 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import warnings
+from typing import Tuple, Union
 
 import numpy as np
 import scipy.special as sp
 from lsst.ts.wep.utils import extractArray, padArray
-from typing import Union, Tuple
 
 
 def calc_pssn(
     array: np.ndarray,
     wl_um: float,
-    a_type: str="opd",
-    D: float=8.36,
-    r0_in_m_ref: float=0.1382,
-    zen: float=0,
-    p_mask: Union[int, np.ndarray]=0,
-    image_delta: float=0,
-    fno: float=1.2335,
-    debug_level: int=0,
+    a_type: str = "opd",
+    D: float = 8.36,
+    r0_in_m_ref: float = 0.1382,
+    zen: float = 0,
+    p_mask: Union[int, np.ndarray] = 0,
+    image_delta: float = 0,
+    fno: float = 1.2335,
+    debug_level: int = 0,
 ) -> float:
     """Calculate the normalized point source sensitivity (PSSN).
 
@@ -273,7 +273,9 @@ def create_MTF_atm(
     return mtfa
 
 
-def atm_sf(D: float, m: int, wl_um: float, zen: float, r0_in_m_ref: float, model: str) -> np.ndarray:
+def atm_sf(
+    D: float, m: int, wl_um: float, zen: float, r0_in_m_ref: float, model: str
+) -> np.ndarray:
     """Get the atmosphere phase structure function.
 
     Parameters
@@ -397,15 +399,15 @@ def r0_wl_zen(r0_in_m_ref: float, zen: int, wl_um: float) -> float:
 def psf_to_e_atm_weighted(
     array: np.ndarray,
     wl_um: float,
-    a_type: str="opd",
-    D: float=8.36,
-    p_mask: Union[float, np.ndarray]=0,
-    r0_in_m_ref: float=0.1382,
-    sensor_factor: float=1,
-    zen: float=0,
-    image_delta: float=0.2,
-    fno: float=1.2335,
-    debug_level: int=0,
+    a_type: str = "opd",
+    D: float = 8.36,
+    p_mask: Union[float, np.ndarray] = 0,
+    r0_in_m_ref: float = 0.1382,
+    sensor_factor: float = 1,
+    zen: float = 0,
+    image_delta: float = 0.2,
+    fno: float = 1.2335,
+    debug_level: int = 0,
 ) -> Tuple[float, np.ndarray, np.ndarray, np.ndarray]:
     """Calculate the ellipticity with the error of atmosphere and weighting
     function.
@@ -496,7 +498,13 @@ def psf_to_e_atm_weighted(
     return e, q11, q22, q12
 
 
-def psf_to_ellip_weighted(psf, pix_in_um: np.ndarray, wl_um: float, atm_model: str="Gau", debug_level: int=0) -> Tuple[float, np.ndarray, np.ndarray, np.ndarray]:
+def psf_to_ellip_weighted(
+    psf,
+    pix_in_um: np.ndarray,
+    wl_um: float,
+    atm_model: str = "Gau",
+    debug_level: int = 0,
+) -> Tuple[float, np.ndarray, np.ndarray, np.ndarray]:
     """Calculate the ellipticity with the weighting function.
 
     Parameters
@@ -576,7 +584,13 @@ def psf_to_ellip_weighted(psf, pix_in_um: np.ndarray, wl_um: float, atm_model: s
 
 
 def create_atm(
-    wl_um: float, fwhm_in_arcsec: float, grid_size: Union[int, np.ndarray], pix_in_um: int, oversample: int, model: str="Gau", debug_level: int=0
+    wl_um: float,
+    fwhm_in_arcsec: float,
+    grid_size: Union[int, np.ndarray],
+    pix_in_um: int,
+    oversample: int,
+    model: str = "Gau",
+    debug_level: int = 0,
 ) -> np.ndarray:
     """Calculate the weighting function for a certain atmosphere model.
 
@@ -650,7 +664,13 @@ def create_atm(
 
 
 def opd2psf(
-    opd: np.ndarray, pupil: np.ndarray, wavelength: float, image_delta: float=0, sensor_factor: float=1, fno: float=1.2335, debug_level: int=0
+    opd: np.ndarray,
+    pupil: np.ndarray,
+    wavelength: float,
+    image_delta: float = 0,
+    sensor_factor: float = 1,
+    fno: float = 1.2335,
+    debug_level: int = 0,
 ) -> np.ndarray:
     """Optical path difference (OPD) to point spread function (PSF).
 
