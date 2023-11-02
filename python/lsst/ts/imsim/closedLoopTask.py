@@ -40,10 +40,13 @@ from lsst.ts.ofc import OFC, OFCData
 from lsst.ts.wep.utils import CamType, FilterType
 from lsst.ts.wep.utils import getConfigDir as getWepConfigDir
 from lsst.ts.wep.utils import rotMatrix, runProgram
+import lsst.ts.wep.utils.enumUtils
+from argparse import ArgumentParser
+from typing import List, Optional, Tuple
 
 
 class ClosedLoopTask:
-    def __init__(self):
+    def __init__(self) -> None:
         """Initilization of the closed loop task class to
         run the simulation with imSim."""
 
@@ -66,7 +69,7 @@ class ClosedLoopTask:
         # Use CCD image
         self.use_ccd_img = True
 
-    def config_sky_sim(self, inst_name, obs_metadata, path_sky_file="", star_mag=15):
+    def config_sky_sim(self, inst_name: str, obs_metadata: ObsMetadata, path_sky_file: str="", star_mag: float=15.0) -> None:
         """Configure the sky simulator.
 
         If the path of sky file is not provided, The defult OPD field positions
@@ -76,9 +79,9 @@ class ClosedLoopTask:
 
         Parameters
         ----------
-        inst_name : enum 'InstName' in lsst.ts.ofc.Utility
+        inst_name : str
             Instrument name.
-        obs_metadata : lsst.ts.imsim.ObsMetadata object
+        obs_metadata : lsst.ts.imsim.ObsMetadata
             Observation metadata.
         path_sky_file : str, optional
             Path to the sky file. (the default is "".)
@@ -105,15 +108,15 @@ class ClosedLoopTask:
             self.sky_sim.add_star_by_file(abs_sky_file_path)
 
     def _set_sky_sim_based_on_opd_field_pos(
-        self, inst_name, obs_metadata, par_angle, star_mag
-    ):
+        self, inst_name: str, obs_metadata: ObsMetadata, par_angle: float, star_mag: int
+    ) -> None:
         """Set the sky simulator based on the OPD field positions.
 
         OPD: Optical path difference.
 
         Parameters
         ----------
-        inst_name : enum 'InstName' in lsst.ts.ofc.Utility
+        inst_name : str
             Instrument name.
         obs_metadata : lsst.ts.imsim.ObsMetadata object
             Observation metadata.
@@ -170,20 +173,20 @@ class ClosedLoopTask:
             )
             star_id += 1
 
-    def config_ofc_calc(self, inst_name):
+    def config_ofc_calc(self, inst_name: str) -> None:
         """Configure the OFC calculator.
 
         OFC: Optical feedback calculator.
 
         Parameters
         ----------
-        inst_name : enum 'InstName' in lsst.ts.ofc.Utility
+        inst_name : str
             Instrument name.
         """
 
         self.ofc_calc = OFC(OFCData(inst_name))
 
-    def map_filter_ref_to_g(self, filter_type_name):
+    def map_filter_ref_to_g(self, filter_type_name: str) -> str:
         """Map the reference filter to the G filter.
 
         Parameters
@@ -198,7 +201,7 @@ class ClosedLoopTask:
         """
         return "g" if filter_type_name in ("ref", "") else filter_type_name
 
-    def check_boresight(self, boresight):
+    def check_boresight(self, boresight: List[float]) -> None:
         """Check the boresight.
 
         Parameters
@@ -221,7 +224,7 @@ class ClosedLoopTask:
         if dec < -90 or dec > 90:
             raise ValueError("The declination (Dec) should be in [-90, 90].")
 
-    def get_sensor_name_list_of_fields(self, inst_name):
+    def get_sensor_name_list_of_fields(self, inst_name: str) -> List[str]:
         """Get the list of sensor name of fields.
 
         The list will be sorted based on the field index.
@@ -252,7 +255,7 @@ class ClosedLoopTask:
             if detector.getType() == detector_type
         ]
 
-    def get_sensor_id_list_of_fields(self, inst_name):
+    def get_sensor_id_list_of_fields(self, inst_name: str) -> List[int]:
         """Get the list of sensor ids of fields.
 
         The list will be sorted based on the field index.
@@ -284,7 +287,7 @@ class ClosedLoopTask:
             if detector.getType() == detector_type
         ]
 
-    def check_and_create_base_output_dir(self, base_output_dir):
+    def check_and_create_base_output_dir(self, base_output_dir: str) -> str:
         """Check and create the base output directory.
 
         This function will create the directory if it does not exist.
@@ -304,7 +307,7 @@ class ClosedLoopTask:
 
         return output_dir
 
-    def get_cam_type_and_inst_name(self, inst):
+    def get_cam_type_and_inst_name(self, inst: str) -> Tuple[CamType, str]:
         """Get the camera type and instrument name.
 
         Parameters
@@ -314,7 +317,7 @@ class ClosedLoopTask:
 
         Returns
         -------
-        lsst.ts.wep.utility.CamType
+        lsst.ts.wep.utils.enumUtils.CamType
             Camera type.
         str
             Instrument name.
@@ -332,7 +335,7 @@ class ClosedLoopTask:
         else:
             raise ValueError(f"This instrument ({inst}) is not supported.")
 
-    def get_filter_type(self, filter_type_name):
+    def get_filter_type(self, filter_type_name: str) -> FilterType:
         """Get the filter type.
 
         Parameters
@@ -342,7 +345,7 @@ class ClosedLoopTask:
 
         Returns
         -------
-        lsst.ts.wep.utility.FilterType
+        lsst.ts.wep.utils.FilterType
             Filter type.
 
         Raises
@@ -370,20 +373,20 @@ class ClosedLoopTask:
 
     def _run_sim(
         self,
-        cam_type,
-        inst_name,
-        obs_metadata,
-        base_output_dir,
-        butler_root_path,
-        sky_seed,
-        pert_seed,
-        iter_num,
-        num_pro=1,
-        pipeline_file="",
-        imsim_config_pointer_file="",
-        turn_off_sky_background=False,
-        turn_off_atmosphere=False,
-    ):
+        cam_type: CamType,
+        inst_name: str,
+        obs_metadata: ObsMetadata,
+        base_output_dir: str,
+        butler_root_path: str,
+        sky_seed: int,
+        pert_seed: int,
+        iter_num: int,
+        num_pro: int=1,
+        pipeline_file: str="",
+        imsim_config_pointer_file: str="",
+        turn_off_sky_background: bool=False,
+        turn_off_atmosphere: bool=False,
+    ) -> None:
         """Run the simulation.
 
         Parameters
@@ -613,15 +616,15 @@ class ClosedLoopTask:
 
     def _generate_images(
         self,
-        obs_metadata,
-        inst_name,
-        sky_seed=42,
-        pert_seed=11,
-        num_pro=1,
-        imsim_config_pointer_file=None,
-        turn_off_sky_background=False,
-        turn_off_atmosphere=False,
-    ):
+        obs_metadata: ObsMetadata,
+        inst_name: str,
+        sky_seed: int=42,
+        pert_seed: int=11,
+        num_pro: int=1,
+        imsim_config_pointer_file: Optional[str]=None,
+        turn_off_sky_background: bool=False,
+        turn_off_atmosphere: bool=False,
+    ) -> None:
         """Calculate the wavefront error from the images generated by PhoSim.
 
         Parameters
@@ -754,13 +757,13 @@ class ClosedLoopTask:
 
     def _calc_wf_err_from_img(
         self,
-        obs_metadata,
-        butler_root_path,
-        inst_name,
-        num_pro=1,
-        pipeline_file=None,
-        filter_type_name="",
-    ):
+        obs_metadata: ObsMetadata,
+        butler_root_path: str,
+        inst_name: str,
+        num_pro: int=1,
+        pipeline_file: Optional[str]=None,
+        filter_type_name: str="",
+    ) -> List[SensorWavefrontError]:
         """Calculate the wavefront error from the images generated by PhoSim.
 
         Parameters
@@ -802,13 +805,13 @@ class ClosedLoopTask:
 
     def run_wep(
         self,
-        seq_num,
-        butler_root_path,
-        inst_name,
-        num_pro=1,
-        pipeline_file=None,
-        filter_type_name="",
-    ):
+        seq_num: int,
+        butler_root_path: str,
+        inst_name: str,
+        num_pro: int=1,
+        pipeline_file: Optional[str]=None,
+        filter_type_name: str="",
+    ) -> List[SensorWavefrontError]:
         """Run wavefront estimation pipeline task for wavefront sensors.
 
         Parameters
@@ -919,7 +922,7 @@ class ClosedLoopTask:
 
         return list_of_wf_err
 
-    def rotate_det_name_ccs_to_zcs(self, det_name):
+    def rotate_det_name_ccs_to_zcs(self, det_name: str) -> str:
         """Rotate the sensor name from CCS (Camera Coordinate System)
         to the ZCS (Zemax Coordinate System) that OFC expects.
 
@@ -953,7 +956,7 @@ class ClosedLoopTask:
 
         return f"{zcs_raft}_{zcs_sensor}"
 
-    def write_wep_configuration(self, inst_name, pipeline_yaml_path, filter_type_name):
+    def write_wep_configuration(self, inst_name: str, pipeline_yaml_path: str, filter_type_name: str) -> None:
         """Write wavefront estimation pipeline task configuration.
 
         Parameters
@@ -1015,25 +1018,25 @@ tasks:
 
     def run_img(
         self,
-        inst,
-        filter_type_name,
-        rot_cam_in_deg,
-        boresight,
-        mjd,
-        base_output_dir,
-        path_sky_file,
-        do_erase_dir_content,
-        sky_seed,
-        pert_seed,
-        iter_num,
-        pipeline_file,
-        imsim_config_pointer_file,
-        turn_off_sky_background,
-        turn_off_atmosphere,
-        turn_off_wavefront_estimates,
-        num_pro,
-        raw_seeing,
-    ):
+        inst: str,
+        filter_type_name: str,
+        rot_cam_in_deg: float,
+        boresight: List[float],
+        mjd: float,
+        base_output_dir: str,
+        path_sky_file: str,
+        do_erase_dir_content: bool,
+        sky_seed: int,
+        pert_seed: int,
+        iter_num: int,
+        pipeline_file: str,
+        imsim_config_pointer_file: str,
+        turn_off_sky_background: bool,
+        turn_off_atmosphere: bool,
+        turn_off_wavefront_estimates: bool,
+        num_pro: int,
+        raw_seeing: float,
+    ) -> None:
         """Run the simulation of images.
 
         Parameters
@@ -1154,7 +1157,7 @@ tasks:
             turn_off_atmosphere=turn_off_atmosphere,
         )
 
-    def generate_butler(self, butler_root_path, inst_name):
+    def generate_butler(self, butler_root_path: str, inst_name: str) -> None:
         """Generate butler gen3.
 
         Parameters
@@ -1174,7 +1177,7 @@ tasks:
             f"butler register-instrument {butler_root_path} lsst.obs.lsst.LsstCam"
         )
 
-    def generate_ref_catalog(self, butler_root_path, path_sky_file, filter_type_name):
+    def generate_ref_catalog(self, butler_root_path: str, path_sky_file: str, filter_type_name: str) -> None:
         """Generate reference star catalog.
 
         Parameters
@@ -1230,7 +1233,7 @@ config.dataset_config.ref_dataset_name='ref_cat'
             f"butler ingest-files -t direct {butler_root_path} cal_ref_cat refcats {sky_ecsv_file_name}"
         )
 
-    def ingest_data(self, butler_root_path, inst_name):
+    def ingest_data(self, butler_root_path: str, inst_name: str) -> None:
         """Ingest data into a gen3 data Butler.
 
         Parameters
@@ -1248,7 +1251,7 @@ config.dataset_config.ref_dataset_name='ref_cat'
 
         runProgram(f"butler define-visits {butler_root_path} lsst.obs.lsst.LsstCam")
 
-    def erase_directory_content(self, target_dir):
+    def erase_directory_content(self, target_dir: str) -> None:
         """Erase the directory content.
 
         Parameters
@@ -1265,7 +1268,7 @@ config.dataset_config.ref_dataset_name='ref_cat'
                 shutil.rmtree(file_path)
 
     @staticmethod
-    def set_default_parser(parser):
+    def set_default_parser(parser: ArgumentParser) -> ArgumentParser:
         """Set the default parser.
 
         Parameters
@@ -1364,7 +1367,7 @@ config.dataset_config.ref_dataset_name='ref_cat'
         return parser
 
     @staticmethod
-    def set_img_parser(parser):
+    def set_img_parser(parser: ArgumentParser) -> ArgumentParser:
         """Set the image-specific parser.
 
         Parameters

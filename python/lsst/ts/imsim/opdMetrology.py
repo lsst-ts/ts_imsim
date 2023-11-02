@@ -29,10 +29,11 @@ from lsst.ts.imsim.utils.metroTool import calc_pssn
 from lsst.ts.imsim.utils.utility import get_camera, get_policy_path
 from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
 from lsst.ts.wep.utils import ZernikeAnnularFit, ZernikeEval
+from typing import List, Optional, Tuple, Union
 
 
 class OpdMetrology:
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialization of OPD metrology class.
 
         OPD: Optical path difference.
@@ -44,11 +45,11 @@ class OpdMetrology:
         self.sensor_ids = []
 
     @property
-    def wt(self):
+    def wt(self) -> Union[List, np.ndarray]:
         return self._wt
 
     @wt.setter
-    def wt(self, new_wt):
+    def wt(self, new_wt: Union[List, np.ndarray]) -> None:
         """Set the weighting ratio used in Gaussian quadrature.
 
         Parameters
@@ -68,7 +69,7 @@ class OpdMetrology:
         else:
             raise ValueError("All weighting ratios should be >= 0.")
 
-    def set_default_lsst_wfs_gq(self):
+    def set_default_lsst_wfs_gq(self) -> None:
         """Set default values for LSST WFS field X, Y
         and weighting ratio.
         """
@@ -84,7 +85,7 @@ class OpdMetrology:
         self.field_x = -1.0 * np.array(self.field_x)
         self.sensor_ids = sensor_ids
 
-    def get_default_lsst_wfs_gq(self):
+    def get_default_lsst_wfs_gq(self) -> Tuple[List[float], List[float], List[int]]:
         """Get the default field X, Y of LSST WFS on GQ.
 
         WFS: Wavefront sensor.
@@ -118,7 +119,7 @@ class OpdMetrology:
 
         return field_x, field_y, det_ids
 
-    def set_wgt_and_field_xy_of_gq(self, inst_name):
+    def set_wgt_and_field_xy_of_gq(self, inst_name: str) -> None:
         """Set the GQ weighting ratio and field X, Y.
 
         GQ: Gaussian quadrature.
@@ -176,12 +177,12 @@ class OpdMetrology:
 
     def get_zk_from_opd(
         self,
-        opd_fits_file=None,
-        opd_map=None,
-        zk_terms=22,
-        obscuration=0.61,
-        flip_lr=True,
-    ):
+        opd_fits_file: Optional[str]=None,
+        opd_map: Optional[np.ndarray]=None,
+        zk_terms: int=22,
+        obscuration: float=0.61,
+        flip_lr: bool=True,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Get the wavefront error of OPD in the basis of annular Zernike
         polynomials.
 
@@ -246,7 +247,7 @@ class OpdMetrology:
 
         return zk, opd, opd_x, opd_y
 
-    def rm_ptt_from_opd(self, opd_fits_file=None, opd_map=None):
+    def rm_ptt_from_opd(self, opd_fits_file: Optional[str]=None, opd_map: Optional[np.ndarray]=None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Remove the piston (z1), x-tilt (z2), and y-tilt (z3)
         from the OPD map.
 
@@ -284,8 +285,8 @@ class OpdMetrology:
         return opd, opd_x, opd_y
 
     def calc_pssn(
-        self, wavelength_in_um, opd_fits_file=None, opd_map=None, zen=0, debug_level=0
-    ):
+        self, wavelength_in_um: float, opd_fits_file: Optional[str]=None, opd_map: Optional[np.ndarray]=None, zen: int=0, debug_level: int=0
+    ) -> float:
         """Calculate the PSSN based on OPD map.
 
         PSSN: Normalized point source sensitivity.
@@ -323,7 +324,7 @@ class OpdMetrology:
 
         return pssn
 
-    def calc_gq_value(self, value_list):
+    def calc_gq_value(self, value_list: Union[List[float], np.ndarray]) -> float:
         """Calculate the GQ value.
 
         GQ: Gaussian quadrature
@@ -354,7 +355,7 @@ class OpdMetrology:
 
         return gq_value
 
-    def calc_fwhm_eff(self, pssn):
+    def calc_fwhm_eff(self, pssn: float) -> float:
         """Calculate the effective FWHM.
 
         FWHM: Full width at half maximum.

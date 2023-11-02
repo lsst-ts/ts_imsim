@@ -24,20 +24,21 @@ import warnings
 import numpy as np
 import scipy.special as sp
 from lsst.ts.wep.utils import extractArray, padArray
+from typing import Union, Tuple
 
 
 def calc_pssn(
-    array,
-    wl_um,
-    a_type="opd",
-    D=8.36,
-    r0_in_m_ref=0.1382,
-    zen=0,
-    p_mask=0,
-    image_delta=0,
-    fno=1.2335,
-    debug_level=0,
-):
+    array: np.ndarray,
+    wl_um: float,
+    a_type: str="opd",
+    D: float=8.36,
+    r0_in_m_ref: float=0.1382,
+    zen: float=0,
+    p_mask: Union[int, np.ndarray]=0,
+    image_delta: float=0,
+    fno: float=1.2335,
+    debug_level: int=0,
+) -> float:
     """Calculate the normalized point source sensitivity (PSSN).
 
     Parameters
@@ -221,7 +222,15 @@ def calc_pssn(
     return pssn
 
 
-def create_MTF_atm(D, m, k, wl_um, zen, r0_in_m_ref, model="vonK"):
+def create_MTF_atm(
+    D: float,
+    m: int,
+    k: int,
+    wl_um: float,
+    zen: float,
+    r0_in_m_ref: float,
+    model: str = "vonK",
+) -> np.ndarray:
     """Generate the modulation transfer function (MTF) for atmosphere.
 
     Parameters
@@ -264,7 +273,7 @@ def create_MTF_atm(D, m, k, wl_um, zen, r0_in_m_ref, model="vonK"):
     return mtfa
 
 
-def atm_sf(D, m, wl_um, zen, r0_in_m_ref, model):
+def atm_sf(D: float, m: int, wl_um: float, zen: float, r0_in_m_ref: float, model: str) -> np.ndarray:
     """Get the atmosphere phase structure function.
 
     Parameters
@@ -353,7 +362,7 @@ def atm_sf(D, m, wl_um, zen, r0_in_m_ref, model):
     return sfa
 
 
-def r0_wl_zen(r0_in_m_ref, zen, wl_um):
+def r0_wl_zen(r0_in_m_ref: float, zen: int, wl_um: float) -> float:
     """Get the atomosphere reference r0, which is a function of zenith angle
     and wavelength.
 
@@ -386,18 +395,18 @@ def r0_wl_zen(r0_in_m_ref, zen, wl_um):
 
 
 def psf_to_e_atm_weighted(
-    array,
-    wl_um,
-    a_type="opd",
-    D=8.36,
-    p_mask=0,
-    r0_in_m_ref=0.1382,
-    sensor_factor=1,
-    zen=0,
-    image_delta=0.2,
-    fno=1.2335,
-    debug_level=0,
-):
+    array: np.ndarray,
+    wl_um: float,
+    a_type: str="opd",
+    D: float=8.36,
+    p_mask: Union[float, np.ndarray]=0,
+    r0_in_m_ref: float=0.1382,
+    sensor_factor: float=1,
+    zen: float=0,
+    image_delta: float=0.2,
+    fno: float=1.2335,
+    debug_level: int=0,
+) -> Tuple[float, np.ndarray, np.ndarray, np.ndarray]:
     """Calculate the ellipticity with the error of atmosphere and weighting
     function.
 
@@ -487,7 +496,7 @@ def psf_to_e_atm_weighted(
     return e, q11, q22, q12
 
 
-def psf_to_ellip_weighted(psf, pix_in_um, wl_um, atm_model="Gau", debug_level=0):
+def psf_to_ellip_weighted(psf, pix_in_um: np.ndarray, wl_um: float, atm_model: str="Gau", debug_level: int=0) -> Tuple[float, np.ndarray, np.ndarray, np.ndarray]:
     """Calculate the ellipticity with the weighting function.
 
     Parameters
@@ -567,8 +576,8 @@ def psf_to_ellip_weighted(psf, pix_in_um, wl_um, atm_model="Gau", debug_level=0)
 
 
 def create_atm(
-    wl_um, fwhm_in_arcsec, grid_size, pix_in_um, oversample, model="Gau", debug_level=0
-):
+    wl_um: float, fwhm_in_arcsec: float, grid_size: Union[int, np.ndarray], pix_in_um: int, oversample: int, model: str="Gau", debug_level: int=0
+) -> np.ndarray:
     """Calculate the weighting function for a certain atmosphere model.
 
     Parameters
@@ -641,8 +650,8 @@ def create_atm(
 
 
 def opd2psf(
-    opd, pupil, wavelength, image_delta=0, sensor_factor=1, fno=1.2335, debug_level=0
-):
+    opd: np.ndarray, pupil: np.ndarray, wavelength: float, image_delta: float=0, sensor_factor: float=1, fno: float=1.2335, debug_level: int=0
+) -> np.ndarray:
     """Optical path difference (OPD) to point spread function (PSF).
 
     Parameters
@@ -748,7 +757,7 @@ def opd2psf(
     return z
 
 
-def psf_to_otf(psf):
+def psf_to_otf(psf: np.ndarray) -> np.ndarray:
     """Point spread function (PSF) to optical transfer function (OTF).
 
     Parameters
@@ -767,7 +776,7 @@ def psf_to_otf(psf):
     return otf
 
 
-def otf_to_psf(otf):
+def otf_to_psf(otf: np.ndarray) -> np.ndarray:
     """Optical transfer function (OTF) to point spread function (PSF).
 
     Parameters

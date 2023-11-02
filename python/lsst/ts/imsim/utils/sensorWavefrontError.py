@@ -25,7 +25,7 @@ import numpy as np
 class SensorWavefrontError(object):
     """Contains the wavefront errors for a single sensor."""
 
-    def __init__(self, num_of_zk=19):
+    def __init__(self, num_of_zk: int=19) -> None:
         """Constructs a sensor wavefront error.
 
         Parameters
@@ -47,11 +47,11 @@ class SensorWavefrontError(object):
         self._annular_zernike_poly = np.zeros(self.num_of_zk)
 
     @property
-    def sensor_id(self):
+    def sensor_id(self) -> int:
         return self._sensor_id
 
     @sensor_id.setter
-    def sensor_id(self, new_sensor_id):
+    def sensor_id(self, new_sensor_id: int) -> None:
         """Set the sensor Id.
 
         Parameters
@@ -70,11 +70,11 @@ class SensorWavefrontError(object):
         self._sensor_id = int(new_sensor_id)
 
     @property
-    def annular_zernike_poly(self):
+    def annular_zernike_poly(self) -> np.ndarray:
         return self._annular_zernike_poly
 
     @annular_zernike_poly.setter
-    def annular_zernike_poly(self, new_annular_zernike_poly):
+    def annular_zernike_poly(self, new_annular_zernike_poly: np.ndarray) -> None:
         """Set the effective annular zernike poly.
 
         Parameters

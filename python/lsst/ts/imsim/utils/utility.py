@@ -25,9 +25,12 @@ import numpy as np
 import yaml
 from lsst.obs.lsst import LsstCam
 from lsst.utils import getPackageDir
+from lsst.afw import cameraGeom
+from numpy import ndarray
+from typing import Dict
 
 
-def get_module_path():
+def get_module_path() -> str:
     """Get the path of module.
 
     Returns
@@ -39,7 +42,7 @@ def get_module_path():
     return getPackageDir("ts_imsim")
 
 
-def get_policy_path():
+def get_policy_path() -> str:
     """Get the path of the policy directory.
 
     Returns
@@ -51,7 +54,7 @@ def get_policy_path():
     return os.path.join(get_module_path(), "policy")
 
 
-def get_config_dir():
+def get_config_dir() -> str:
     """Get the directory of configuration files.
 
     Returns
@@ -63,7 +66,7 @@ def get_config_dir():
     return os.path.join(get_policy_path(), "config")
 
 
-def get_camera(inst_name):
+def get_camera(inst_name: str) -> cameraGeom.Camera:
     """Returns a lsst instrument for a given instrument name.
 
     Parameters
@@ -89,7 +92,7 @@ def get_camera(inst_name):
         )
 
 
-def make_dir(new_dir, exist_ok=True):
+def make_dir(new_dir: str, exist_ok: bool=True) -> None:
     """Make the new directory.
 
     Super-mkdir; create a leaf directory and all intermediate ones. Works
@@ -109,7 +112,7 @@ def make_dir(new_dir, exist_ok=True):
     os.makedirs(new_dir, exist_ok=exist_ok)
 
 
-def get_zk_from_file(zk_file_path):
+def get_zk_from_file(zk_file_path: str) -> Dict[int, ndarray]:
     """Get the zk (z4-z22) from file.
 
     Parameters
@@ -143,11 +146,11 @@ class ModifiedEnvironment:
         variable will be unset.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         self._overrides = kwargs
         self._originals = {}
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         for key, value in self._overrides.items():
             # Save original value if exists
             if key in os.environ:
@@ -159,7 +162,7 @@ class ModifiedEnvironment:
             else:
                 os.environ[key] = value
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: None, exc_val: None, exc_tb: None) -> None:
         for key in self._overrides:
             # Restore original values, delete or keep as they are based on the original state
             if key in self._originals:

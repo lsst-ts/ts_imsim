@@ -23,10 +23,12 @@ import astropy
 import numpy as np
 from astroplan import Observer
 from lsst.ts.imsim.utils.utility import get_camera
+from lsst.ts.imsim.obsMetadata import ObsMetadata
+from typing import List, Union
 
 
 class SkySim:
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialization of sky simulator class."""
 
         # Star ID
@@ -44,7 +46,7 @@ class SkySim:
         # Camera
         self._camera = None
 
-    def set_camera(self, inst_name):
+    def set_camera(self, inst_name: str) -> None:
         """Set the camera.
 
         Parameters
@@ -55,7 +57,7 @@ class SkySim:
 
         self._camera = get_camera(inst_name)
 
-    def calc_parallactic_angle(self, obs_metadata):
+    def calc_parallactic_angle(self, obs_metadata: ObsMetadata) -> float:
         """Calculate the parallactic angle so we know the
         sky rotation angle on alt-az mount for the observation.
 
@@ -77,7 +79,7 @@ class SkySim:
 
         return rubin.parallactic_angle(time, boresight).deg
 
-    def add_star_by_ra_dec_in_deg(self, star_id, ra_in_deg, dec_in_deg, mag):
+    def add_star_by_ra_dec_in_deg(self, star_id: int, ra_in_deg: float, dec_in_deg: float, mag: int) -> None:
         """Add the star information by (ra, dec) in degrees.
 
         Parameters
@@ -107,7 +109,7 @@ class SkySim:
                 self.dec = np.append(self.dec, dec_in_deg_list[ii])
                 self.mag = np.append(self.mag, mag_list[ii])
 
-    def _change_to_list_if_necessary(self, variable):
+    def _change_to_list_if_necessary(self, variable: Union[int, float, list, np.ndarray]) -> List[Union[int, float]]:
         """Change the data type to list.
 
         Parameters
@@ -126,7 +128,7 @@ class SkySim:
         else:
             return variable
 
-    def _is_uniq_star_id(self, star_id):
+    def _is_uniq_star_id(self, star_id: int) -> bool:
         """Check the star ID is unique or not.
 
         Parameters
@@ -148,7 +150,7 @@ class SkySim:
 
         return is_unique
 
-    def add_star_by_file(self, red_file_path, skip_rows=0):
+    def add_star_by_file(self, read_file_path: str, skip_rows: int = 0) -> None:
         """Add the star data by reading the file.
 
         Parameters
@@ -159,7 +161,7 @@ class SkySim:
             Skip the first "skiprows" lines. (the default is 0.)
         """
 
-        data = np.loadtxt(red_file_path, skiprows=skip_rows)
+        data = np.loadtxt(read_file_path, skiprows=skip_rows)
 
         # Only consider the non-empty data
         if len(data) != 0:
@@ -170,7 +172,7 @@ class SkySim:
             for star in data:
                 self.add_star_by_ra_dec_in_deg(star[0], star[1], star[2], star[3])
 
-    def export_sky_to_file(self, output_file_path):
+    def export_sky_to_file(self, output_file_path: str) -> None:
         """Export the star information into the file.
 
         Parameters
