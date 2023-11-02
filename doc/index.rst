@@ -17,7 +17,16 @@ Overview
 
 Run the Rubin Observatory Active Optics System (AOS) in a closed loop with ImSim.
 
-The badges above navigate to the GitHub repository for the ts_imsim code and Jenkins CI jobs.
+The badges above navigate to the GitHub repository for the ``ts_imsim`` code and Jenkins CI jobs.
+
+Development Documentation
+=========================
+
+Classes and their methods, and how to get involved in the ``ts_imsim`` development is described in this section.
+
+.. toctree::
+    developer-guide/developer-guide
+    :maxdepth: 1
 
 .. _Version_History:
 
