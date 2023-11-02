@@ -148,7 +148,11 @@ class ClosedLoopTask:
         starId = 0
         raInDegArr = np.array(opdMetr.fieldX)
         decInDegArr = np.array(opdMetr.fieldY)
-        rotation = rotMatrix(obsMetadata.rotatorAngle - parAngle)
+        # Extra 180 degree rotation based upon this note:
+        # https://lsstc.slack.com/archives/CHXKSF3HC/p1651863987821319?thread_ts=1651863934.274719&cid=CHXKSF3HC
+        # that shows photons farthest from Zenith on sky appear on "top"
+        # of focal plane.
+        rotation = rotMatrix(obsMetadata.rotatorAngle - parAngle + 180)
         for raInDeg, decInDeg in zip(raInDegArr, decInDegArr):
             # It is noted that the field position might be < 0. But it is
             # not the same case for ra (0 <= ra <= 360).
