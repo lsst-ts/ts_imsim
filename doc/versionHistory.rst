@@ -6,6 +6,12 @@
 Version History
 ##################
 
+-------------
+0.5.4
+-------------
+
+* Adding 180 degree rotation in rotationMatrix to account for photons farthest from Zenith on sky appear on "top".
+
 .. _lsst.ts.imsim-0.5.3:
 
 -------------
