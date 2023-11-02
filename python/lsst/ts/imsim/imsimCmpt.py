@@ -578,10 +578,16 @@ class ImsimCmpt:
 
             # Rotate OPD if needed
             if rotOpdInDeg != 0:
-                opdRot = opd
+                opdRot = opd.copy()
+                # Since to rotate the opd we need to substitue the nan values
+                # for zeros, we need to find the minimum value of the opd
+                # excluding the nan values. Then after the rotation we will discard
+                # the values that are smaller than the minimum value.
+                # Note that we use order = 0 to avoid interpolation errors.
+                minValue = np.nanmin(np.abs(opdRot))
                 opdRot[np.isnan(opdRot)] = 0.0
-                opdRot = rotate(opdRot, rotOpdInDeg, reshape=False)
-                opdRot[opdRot == 0] = np.nan
+                opdRot = rotate(opdRot, rotOpdInDeg, reshape=False, order = 0)
+                opdRot[np.abs(opdRot) <= minValue] = np.nan
             else:
                 opdRot = opd
 

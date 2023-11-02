@@ -25,6 +25,7 @@ import unittest
 
 import numpy as np
 import yaml
+import galsim
 from lsst.ts.imsim.imsimCmpt import ImsimCmpt
 from lsst.ts.imsim.obsMetadata import ObsMetadata
 from lsst.ts.imsim.skySim import SkySim
@@ -63,9 +64,11 @@ class TestImsimCmpt(unittest.TestCase):
         # Set the output directories
         self.outputDir = os.path.join(getModulePath(), "tests", "tmp")
         self.outputImgDir = os.path.join(self.outputDir, "img")
+        self.opdFilePath = os.path.join(self._getOpdFileDirOfLsstCam(), "opd.fits")
 
         self.imsimCmpt.outputDir = self.outputDir
         self.imsimCmpt.outputImgDir = self.outputImgDir
+        self.imsimCmpt.opdFilePath = self.opdFilePath
 
         # Set the file name of analyzed OPD data
         self.zkFileName = "opd.zer"
@@ -193,6 +196,32 @@ class TestImsimCmpt(unittest.TestCase):
 
         delta = np.sum(np.abs(pssn - ansPssn))
         self.assertLess(delta, 1e-10)
+
+    def testRotateOpdData(self):
+        """Test the rotation of OPD data."""
+        rotation_angle = 20.0
+        numOpd = 4
+
+        zerinkes_rotation_0 = self.imsimCmpt._mapOpdToZk(
+            rotOpdInDeg=0.0,
+            numOpd=numOpd,
+        )*1e-3
+
+        zerinkes_rotation_20 = self.imsimCmpt._mapOpdToZk(
+            rotOpdInDeg=rotation_angle,
+            numOpd=numOpd,
+        )*1e-3
+
+        for idx in range(numOpd):
+            padded_zernikes = np.pad(zerinkes_rotation_20[idx, :], (4, 0))
+
+            galsim_zernikes = galsim.zernike.Zernike(
+                padded_zernikes,
+                R_outer=4.18, # Outer radius obscuration
+                R_inner=2.558, # Inner radius obscuration
+            )
+
+            np.testing.assert_almost_equal(galsim_zernikes.rotate(np.deg2rad(-rotation_angle)).coef[4:], zerinkes_rotation_0[idx, :], decimal = 1)
 
     def _analyzeLsstCamOpdData(self, rotOpdInDeg=0.0):
         shutil.copy(
