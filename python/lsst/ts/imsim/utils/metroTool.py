@@ -24,7 +24,7 @@ __all__ = [
     "create_mtf_atm",
     "atm_sf",
     "r0_wl_zen",
-    "psf_to_e_atm_weighted",
+    "psf_to_ellip_atm_weighted",
     "psf_to_ellip_weighted",
     "create_atm",
     "opd_to_psf",
@@ -42,7 +42,7 @@ from lsst.ts.wep.utils import extractArray, padArray
 def calc_pssn(
     array: np.ndarray,
     wl_um: float,
-    a_type: str = "opd",
+    input_data_type: str = "opd",
     D: float = 8.36,
     r0_in_m_ref: float = 0.1382,
     zen: float = 0,
@@ -59,7 +59,7 @@ def calc_pssn(
         Array that contains either opd or pdf. opd need to be in microns.
     wl_um : float
         Wavelength in microns.
-    aType : str, optional
+    input_data_type : str, optional
         What is used to calculate pssn - either opd or psf. (the default is
         "opd".)
     D : float, optional
@@ -104,21 +104,21 @@ def calc_pssn(
     # (n_eff))_atm+sys = 1 / (int (PSF^2)_atm+sys dOmega)
 
     # Check the type is "OPD" or "PSF"
-    if a_type not in ("opd", "psf"):
-        raise ValueError("The type of %s is not allowed." % a_type)
+    if input_data_type not in ("opd", "psf"):
+        raise ValueError("The input data type of %s is not allowed." % input_data_type)
 
     # Squeeze the array if necessary
     if array.ndim == 3:
         array_2d = array[0, :, :].squeeze()
 
     # Get the k value (magnification ratio used in creating MTF)
-    if a_type == "opd":
+    if input_data_type == "opd":
         try:
             m = max(array_2d.shape)
         except NameError:
             m = max(array.shape)
         k = 1
-    elif a_type == "psf":
+    elif input_data_type == "psf":
         m = max(p_mask.shape)
         # Pupil needs to be padded k times larger to get imagedelta
         # Do not know where to find this formular. Check with Bo.
@@ -128,12 +128,12 @@ def calc_pssn(
     mtfa = create_mtf_atm(D, m, k, wl_um, zen, r0_in_m_ref, model="vonK")
 
     # Get the pupil function
-    if a_type == "opd":
+    if input_data_type == "opd":
         try:
             iad = array_2d != 0
         except NameError:
             iad = array != 0
-    elif a_type == "psf":
+    elif input_data_type == "psf":
         # Add even number
         mk = int(m + np.rint((m * (k - 1) + 1e-5) / 2) * 2)
         # padArray(pmask, m)
@@ -172,7 +172,7 @@ def calc_pssn(
     pssa = np.sum(psfa**2)
 
     # Calculate PSF with error (atmosphere + system)
-    if a_type == "opd":
+    if input_data_type == "opd":
         if array.ndim == 2:
             n_inst = 1
         else:
@@ -194,7 +194,7 @@ def calc_pssn(
         # Do the normalization based on the number of instrument
         psfe = psfe / n_inst
 
-    elif a_type == "psf":
+    elif input_data_type == "psf":
         if array.shape[0] == mk:
             psfe = array
 
@@ -408,10 +408,10 @@ def r0_wl_zen(r0_in_m_ref: float, zen: int, wl_um: float) -> float:
     return r0_atm
 
 
-def psf_to_e_atm_weighted(
+def psf_to_ellip_atm_weighted(
     array: np.ndarray,
     wl_um: float,
-    a_type: str = "opd",
+    input_data_type: str = "opd",
     D: float = 8.36,
     p_mask: float | np.ndarray = 0,
     r0_in_m_ref: float = 0.1382,
@@ -430,7 +430,7 @@ def psf_to_e_atm_weighted(
         Wavefront OPD in micron, or psf image.
     wl_um : float
         Wavelength in microns.
-    a_type : str, optional
+    input_data_type : str, optional
         Type of image ("opd" or "psf"). (the default is "opd".)
     D : float, optional
         Side length of optical path difference (OPD) image in m. (the default
@@ -470,7 +470,7 @@ def psf_to_e_atm_weighted(
     k = fno * wl_um / image_delta
 
     # Get the PSF with the system error
-    if a_type == "opd":
+    if input_data_type == "opd":
         m = array.shape[0] / sensor_factor
         psfe = opd_to_psf(
             array,

@@ -79,7 +79,11 @@ class SkySim:
         return rubin.parallactic_angle(time, boresight).deg
 
     def add_star_by_ra_dec_in_deg(
-        self, star_id: int, ra_in_deg: float, dec_in_deg: float, mag: int
+        self,
+        star_id: int | list[int] | np.ndarray,
+        ra_in_deg: float | list[float] | np.ndarray,
+        dec_in_deg: float | list[float] | np.ndarray,
+        mag: float | list[float] | np.ndarray,
     ) -> None:
         """Add the star information by (ra, dec) in degrees.
 

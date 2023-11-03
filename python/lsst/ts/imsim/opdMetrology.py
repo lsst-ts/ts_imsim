@@ -52,7 +52,7 @@ class OpdMetrology:
 
         Parameters
         ----------
-        wt : list or numpy.ndarray
+        new_wt : list or numpy.ndarray
             Weighting ratio.
 
         Raises
@@ -245,7 +245,7 @@ class OpdMetrology:
 
         return zk, opd, opd_x, opd_y
 
-    def rm_ptt_from_opd(
+    def rm_piston_tip_tilt_from_opd(
         self, opd_fits_file: str = None, opd_map: np.ndarray = None
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Remove the piston (z1), x-tilt (z2), and y-tilt (z3)
@@ -320,9 +320,9 @@ class OpdMetrology:
         # Before calc_pssn,
         # (1) Remove PTT (piston, x-tilt, y-tilt),
         # (2) Make sure outside of pupil are all zeros
-        opd_rm_ptt = self.rm_ptt_from_opd(opd_fits_file=opd_fits_file, opd_map=opd_map)[
-            0
-        ]
+        opd_rm_ptt = self.rm_piston_tip_tilt_from_opd(
+            opd_fits_file=opd_fits_file, opd_map=opd_map
+        )[0]
 
         # Calculate the normalized point source sensitivity (PSSN)
         pssn = calc_pssn(opd_rm_ptt, wavelength_in_um, zen=zen, debug_level=debug_level)
