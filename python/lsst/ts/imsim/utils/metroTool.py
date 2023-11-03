@@ -19,6 +19,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+__all__ = [
+    "calc_pssn",
+    "create_mtf_atm",
+    "atm_sf",
+    "r0_wl_zen",
+    "psf_to_e_atm_weighted",
+    "psf_to_ellip_weighted",
+    "create_atm",
+    "opd_to_psf",
+    "psf_to_otf",
+    "otf_to_psf",
+]
+
 import warnings
 from typing import Tuple, Union
 
@@ -113,7 +126,7 @@ def calc_pssn(
         k = fno * wl_um / image_delta
 
     # Get the modulation transfer function with the van Karman power spectrum
-    mtfa = create_MTF_atm(D, m, k, wl_um, zen, r0_in_m_ref, model="vonK")
+    mtfa = create_mtf_atm(D, m, k, wl_um, zen, r0_in_m_ref, model="vonK")
 
     # Get the pupil function
     if a_type == "opd":
@@ -137,7 +150,7 @@ def calc_pssn(
     opdt = np.zeros((m, m))
 
     # OPD to PSF
-    psft = opd2psf(
+    psft = opd_to_psf(
         opdt,
         iad,
         wl_um,
@@ -172,7 +185,7 @@ def calc_pssn(
             else:
                 array_2d = array[ii, :, :].squeeze()
 
-            psfe_i = opd2psf(array_2d, iad, wl_um, debug_level=debug_level)
+            psfe_i = opd_to_psf(array_2d, iad, wl_um, debug_level=debug_level)
 
             if ii == 0:
                 psfe = psfe_i
@@ -222,7 +235,7 @@ def calc_pssn(
     return pssn
 
 
-def create_MTF_atm(
+def create_mtf_atm(
     D: float,
     m: int,
     k: int,
@@ -460,7 +473,7 @@ def psf_to_e_atm_weighted(
     # Get the PSF with the system error
     if a_type == "opd":
         m = array.shape[0] / sensor_factor
-        psfe = opd2psf(
+        psfe = opd_to_psf(
             array,
             0,
             wl_um,
@@ -477,7 +490,7 @@ def psf_to_e_atm_weighted(
     otfe = psf_to_otf(psfe)
 
     # Modulation transfer function (MTF) with atmosphere
-    mtfa = create_MTF_atm(D, m, k, wl_um, zen, r0_in_m_ref)
+    mtfa = create_mtf_atm(D, m, k, wl_um, zen, r0_in_m_ref)
 
     # OTF with system and atmosphere errors
     otf = otfe * mtfa
@@ -663,7 +676,7 @@ def create_atm(
     return z
 
 
-def opd2psf(
+def opd_to_psf(
     opd: np.ndarray,
     pupil: np.ndarray,
     wavelength: float,

@@ -25,7 +25,7 @@ import astropy
 import numpy as np
 from astroplan import Observer
 from lsst.ts.imsim.obsMetadata import ObsMetadata
-from lsst.ts.imsim.utils.utility import get_camera
+from lsst.ts.imsim.utils import get_camera
 
 
 class SkySim:

@@ -29,9 +29,9 @@ from lsst.afw import cameraGeom
 from lsst.ts.imsim.obsMetadata import ObsMetadata
 from lsst.ts.imsim.opdMetrology import OpdMetrology
 from lsst.ts.imsim.skySim import SkySim
-from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
-from lsst.ts.imsim.utils.utility import (
+from lsst.ts.imsim.utils import (
     ModifiedEnvironment,
+    SensorWavefrontError,
     get_config_dir,
     get_zk_from_file,
     make_dir,

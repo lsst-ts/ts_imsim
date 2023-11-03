@@ -26,8 +26,7 @@ import numpy as np
 import yaml
 from astropy.io import fits
 from lsst.afw.cameraGeom import FIELD_ANGLE
-from lsst.ts.imsim.utils.metroTool import calc_pssn
-from lsst.ts.imsim.utils.utility import get_camera, get_policy_path
+from lsst.ts.imsim.utils import calc_pssn, get_camera
 from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
 from lsst.ts.wep.utils import ZernikeAnnularFit, ZernikeEval
 

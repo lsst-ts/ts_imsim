@@ -28,7 +28,6 @@ from glob import glob
 from typing import List, Optional, Tuple
 
 import astropy
-import lsst.ts.wep.utils.enumUtils
 import numpy as np
 from lsst.afw.cameraGeom import FIELD_ANGLE, DetectorType
 from lsst.daf import butler as dafButler
@@ -36,9 +35,13 @@ from lsst.ts.imsim.imsimCmpt import ImsimCmpt
 from lsst.ts.imsim.obsMetadata import ObsMetadata
 from lsst.ts.imsim.opdMetrology import OpdMetrology
 from lsst.ts.imsim.skySim import SkySim
-from lsst.ts.imsim.utils.plotUtil import plot_fwhm_of_iters
-from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
-from lsst.ts.imsim.utils.utility import get_camera, get_config_dir, make_dir
+from lsst.ts.imsim.utils import (
+    SensorWavefrontError,
+    get_camera,
+    get_config_dir,
+    make_dir,
+    plot_fwhm_of_iters,
+)
 from lsst.ts.ofc import OFC, OFCData
 from lsst.ts.wep.utils import CamType, FilterType
 from lsst.ts.wep.utils import getConfigDir as getWepConfigDir
