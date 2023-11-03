@@ -19,8 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import List, Union
-
 import astropy
 import numpy as np
 from astroplan import Observer
@@ -113,8 +111,8 @@ class SkySim:
                 self.mag = np.append(self.mag, mag_list[ii])
 
     def _change_to_list_if_necessary(
-        self, variable: Union[int, float, list, np.ndarray]
-    ) -> List[Union[int, float]]:
+        self, variable: int | float | list | np.ndarray
+    ) -> list[int | float]:
         """Change the data type to list.
 
         Parameters

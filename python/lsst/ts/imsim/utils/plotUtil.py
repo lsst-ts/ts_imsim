@@ -21,15 +21,11 @@
 
 __all__ = ["plot_fwhm_of_iters"]
 
-from typing import List, Optional
-
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-def _save_fig(
-    plt: plt, save_to_file_path: Optional[str] = None, dpi: Optional[int] = None
-) -> None:
+def _save_fig(plt: plt, save_to_file_path: str = None, dpi: int = None) -> None:
     """Save the figure.
 
     Parameters
@@ -51,7 +47,7 @@ def _save_fig(
 
 
 def plot_fwhm_of_iters(
-    pssn_files: List[str], save_to_file_path: Optional[str] = None, dpi: None = None
+    pssn_files: list[str], save_to_file_path: str = None, dpi: None = None
 ) -> None:
     """Plot the FWHM of iteration.
 

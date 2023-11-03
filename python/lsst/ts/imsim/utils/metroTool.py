@@ -33,7 +33,6 @@ __all__ = [
 ]
 
 import warnings
-from typing import Tuple, Union
 
 import numpy as np
 import scipy.special as sp
@@ -47,7 +46,7 @@ def calc_pssn(
     D: float = 8.36,
     r0_in_m_ref: float = 0.1382,
     zen: float = 0,
-    p_mask: Union[int, np.ndarray] = 0,
+    p_mask: int | np.ndarray = 0,
     image_delta: float = 0,
     fno: float = 1.2335,
     debug_level: int = 0,
@@ -414,14 +413,14 @@ def psf_to_e_atm_weighted(
     wl_um: float,
     a_type: str = "opd",
     D: float = 8.36,
-    p_mask: Union[float, np.ndarray] = 0,
+    p_mask: float | np.ndarray = 0,
     r0_in_m_ref: float = 0.1382,
     sensor_factor: float = 1,
     zen: float = 0,
     image_delta: float = 0.2,
     fno: float = 1.2335,
     debug_level: int = 0,
-) -> Tuple[float, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[float, np.ndarray, np.ndarray, np.ndarray]:
     """Calculate the ellipticity with the error of atmosphere and weighting
     function.
 
@@ -517,7 +516,7 @@ def psf_to_ellip_weighted(
     wl_um: float,
     atm_model: str = "Gau",
     debug_level: int = 0,
-) -> Tuple[float, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[float, np.ndarray, np.ndarray, np.ndarray]:
     """Calculate the ellipticity with the weighting function.
 
     Parameters
@@ -599,7 +598,7 @@ def psf_to_ellip_weighted(
 def create_atm(
     wl_um: float,
     fwhm_in_arcsec: float,
-    grid_size: Union[int, np.ndarray],
+    grid_size: int | np.ndarray,
     pix_in_um: int,
     oversample: int,
     model: str = "Gau",

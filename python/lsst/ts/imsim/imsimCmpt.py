@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 import yaml
@@ -98,7 +98,7 @@ class ImsimCmpt:
         self._outputImgDir = new_output_img_dir
 
     def _verify_pointer_file(
-        self, file_pointer_info: dict, config_sections: List[str]
+        self, file_pointer_info: dict, config_sections: list[str]
     ) -> None:
         """Verify that pointer file has filepaths for all needed
         sections of a complete imsim configuration file.
@@ -128,8 +128,8 @@ class ImsimCmpt:
         obs_metadata: ObsMetadata,
         config_pointer_file: str,
         inst_name: str,
-        required_modules_file: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        required_modules_file: str = None,
+    ) -> dict[str, Any]:
         """
         Parameters
         ----------
@@ -319,7 +319,7 @@ class ImsimCmpt:
             runProgram(f"galsim {config_file_path}")
 
     def write_yaml_and_run_imsim(
-        self, config_path: str, config_yaml: Dict[str, Any]
+        self, config_path: str, config_yaml: dict[str, Any]
     ) -> None:
         """Write yaml config file and run Imsim.
 
@@ -336,8 +336,8 @@ class ImsimCmpt:
         self.run_imsim(config_path)
 
     def add_sources_to_config(
-        self, config_yaml: Dict[str, Any], inst_cat_path: str, use_ccd_img: bool = True
-    ) -> Dict[str, Any]:
+        self, config_yaml: dict[str, Any], inst_cat_path: str, use_ccd_img: bool = True
+    ) -> dict[str, Any]:
         """Add source information to config. If using CCD it will add
         the instance catalog details. If only using OPD it will remove
         the instance catalog info so that we are not generating
@@ -653,7 +653,7 @@ class ImsimCmpt:
         header = "The followings are PSSN and FWHM (in arcsec) data. The final number is the GQ value."
         np.savetxt(file_path, data, header=header)
 
-    def _calc_pssn_opd(self, num_opd: int) -> Tuple[List[float], float]:
+    def _calc_pssn_opd(self, num_opd: int) -> tuple[list[float], float]:
         """Calculate the PSSN of OPD.
 
         OPD: Optical path difference.
@@ -687,7 +687,7 @@ class ImsimCmpt:
 
         return pssn_list, gq_eff_pssn
 
-    def _calc_eff_fwhm_opd(self, pssn_list: List[float]) -> Tuple[List[float], float]:
+    def _calc_eff_fwhm_opd(self, pssn_list: list[float]) -> tuple[list[float], float]:
         """Calculate the effective FWHM of OPD.
 
         FWHM: Full width and half maximum.
@@ -721,9 +721,9 @@ class ImsimCmpt:
     def map_opd_data_to_list_of_wf_err(
         self,
         opd_zk_file_name: str,
-        sensor_id_list: List[int],
-        sensor_name_list: List[str],
-    ) -> List[SensorWavefrontError]:
+        sensor_id_list: list[int],
+        sensor_name_list: list[str],
+    ) -> list[SensorWavefrontError]:
         """Map the OPD data to the list of wavefront error.
 
         OPD: Optical path difference.
@@ -782,8 +782,8 @@ class ImsimCmpt:
         return gq_eff_fwhm
 
     def get_list_of_fwhm_sensor_data(
-        self, pssn_file_name: str, sensor_id_list: List[int]
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        self, pssn_file_name: str, sensor_id_list: list[int]
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Get the list of FWHM sensor data based on the OPD PSSN file.
 
         FWHM: Full width at half maximum.
@@ -866,8 +866,8 @@ class ImsimCmpt:
 
     def reorder_and_save_wf_err_file(
         self,
-        list_of_wf_err: List[SensorWavefrontError],
-        ref_sensor_name_list: List[str],
+        list_of_wf_err: list[SensorWavefrontError],
+        ref_sensor_name_list: list[str],
         camera: cameraGeom.Camera,
         zk_file_name: str = "wfs.zer",
     ) -> None:
@@ -913,8 +913,8 @@ class ImsimCmpt:
             file.write(file_txt)
 
     def _trans_list_of_wf_err_to_map(
-        self, list_of_wf_err: List[SensorWavefrontError], camera: cameraGeom.Camera
-    ) -> Dict[str, np.ndarray]:
+        self, list_of_wf_err: list[SensorWavefrontError], camera: cameraGeom.Camera
+    ) -> dict[str, np.ndarray]:
         """Transform the list of wavefront error to map.
 
         Parameters
@@ -948,7 +948,7 @@ class ImsimCmpt:
         return wf_err_map
 
     def _get_wf_err_values_and_stack_to_matrix(
-        self, wf_err_map: Dict[str, np.ndarray]
+        self, wf_err_map: dict[str, np.ndarray]
     ) -> np.ndarray:
         """Get the wavefront errors and stack them to be a matrix.
 

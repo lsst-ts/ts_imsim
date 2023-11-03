@@ -30,7 +30,6 @@ __all__ = [
 ]
 
 import os
-from typing import Dict
 
 import numpy as np
 import yaml
@@ -122,7 +121,7 @@ def make_dir(new_dir: str, exist_ok: bool = True) -> None:
     os.makedirs(new_dir, exist_ok=exist_ok)
 
 
-def get_zk_from_file(zk_file_path: str) -> Dict[int, ndarray]:
+def get_zk_from_file(zk_file_path: str) -> dict[int, ndarray]:
     """Get the zk (z4-z22) from file.
 
     Parameters

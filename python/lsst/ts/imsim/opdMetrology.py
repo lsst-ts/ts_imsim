@@ -20,7 +20,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import yaml
@@ -44,11 +43,11 @@ class OpdMetrology:
         self.sensor_ids = []
 
     @property
-    def wt(self) -> Union[List, np.ndarray]:
+    def wt(self) -> list | np.ndarray:
         return self._wt
 
     @wt.setter
-    def wt(self, new_wt: Union[List, np.ndarray]) -> None:
+    def wt(self, new_wt: list | np.ndarray) -> None:
         """Set the weighting ratio used in Gaussian quadrature.
 
         Parameters
@@ -84,7 +83,7 @@ class OpdMetrology:
         self.field_x = -1.0 * np.array(self.field_x)
         self.sensor_ids = sensor_ids
 
-    def get_default_lsst_wfs_gq(self) -> Tuple[List[float], List[float], List[int]]:
+    def get_default_lsst_wfs_gq(self) -> tuple[list[float], list[float], list[int]]:
         """Get the default field X, Y of LSST WFS on GQ.
 
         WFS: Wavefront sensor.
@@ -176,12 +175,12 @@ class OpdMetrology:
 
     def get_zk_from_opd(
         self,
-        opd_fits_file: Optional[str] = None,
-        opd_map: Optional[np.ndarray] = None,
+        opd_fits_file: str = None,
+        opd_map: np.ndarray = None,
         zk_terms: int = 22,
         obscuration: float = 0.61,
         flip_lr: bool = True,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Get the wavefront error of OPD in the basis of annular Zernike
         polynomials.
 
@@ -247,8 +246,8 @@ class OpdMetrology:
         return zk, opd, opd_x, opd_y
 
     def rm_ptt_from_opd(
-        self, opd_fits_file: Optional[str] = None, opd_map: Optional[np.ndarray] = None
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        self, opd_fits_file: str = None, opd_map: np.ndarray = None
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Remove the piston (z1), x-tilt (z2), and y-tilt (z3)
         from the OPD map.
 
@@ -288,8 +287,8 @@ class OpdMetrology:
     def calc_pssn(
         self,
         wavelength_in_um: float,
-        opd_fits_file: Optional[str] = None,
-        opd_map: Optional[np.ndarray] = None,
+        opd_fits_file: str = None,
+        opd_map: np.ndarray = None,
         zen: int = 0,
         debug_level: int = 0,
     ) -> float:
@@ -330,7 +329,7 @@ class OpdMetrology:
 
         return pssn
 
-    def calc_gq_value(self, value_list: Union[List[float], np.ndarray]) -> float:
+    def calc_gq_value(self, value_list: list[float] | np.ndarray) -> float:
         """Calculate the GQ value.
 
         GQ: Gaussian quadrature
