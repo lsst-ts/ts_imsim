@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+__all__ = ["SkySim"]
+
 import astropy
 import numpy as np
 from astroplan import Observer
@@ -27,9 +29,8 @@ from lsst.ts.imsim.utils import get_camera
 
 
 class SkySim:
+    """Initialization of sky simulator class."""
     def __init__(self) -> None:
-        """Initialization of sky simulator class."""
-
         # Star ID
         self.star_id = np.array([], dtype=int)
 

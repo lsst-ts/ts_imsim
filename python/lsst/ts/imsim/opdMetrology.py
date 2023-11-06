@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+__all__ = ["OpdMetrology"]
+
 import os
 
 import numpy as np
@@ -31,12 +33,11 @@ from lsst.ts.wep.utils import ZernikeAnnularFit, ZernikeEval
 
 
 class OpdMetrology:
+    """Initialization of OPD metrology class.
+
+    OPD: Optical path difference.
+    """
     def __init__(self) -> None:
-        """Initialization of OPD metrology class.
-
-        OPD: Optical path difference.
-        """
-
         self._wt = np.array([])
         self.field_x = np.array([])
         self.field_y = np.array([])
