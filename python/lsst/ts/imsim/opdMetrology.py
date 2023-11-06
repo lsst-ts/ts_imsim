@@ -175,8 +175,8 @@ class OpdMetrology:
 
     def get_zk_from_opd(
         self,
-        opd_fits_file: str = None,
-        opd_map: np.ndarray = None,
+        opd_fits_file: str | None = None,
+        opd_map: np.ndarray | None = None,
         zk_terms: int = 22,
         obscuration: float = 0.61,
         flip_lr: bool = True,
@@ -246,7 +246,7 @@ class OpdMetrology:
         return zk, opd, opd_x, opd_y
 
     def rm_piston_tip_tilt_from_opd(
-        self, opd_fits_file: str = None, opd_map: np.ndarray = None
+        self, opd_fits_file: str | None = None, opd_map: np.ndarray | None = None
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Remove the piston (z1), x-tilt (z2), and y-tilt (z3)
         from the OPD map.
@@ -287,8 +287,8 @@ class OpdMetrology:
     def calc_pssn(
         self,
         wavelength_in_um: float,
-        opd_fits_file: str = None,
-        opd_map: np.ndarray = None,
+        opd_fits_file: str | None = None,
+        opd_map: np.ndarray | None = None,
         zen: int = 0,
         debug_level: int = 0,
     ) -> float:

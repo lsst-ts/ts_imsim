@@ -128,7 +128,7 @@ class ImsimCmpt:
         obs_metadata: ObsMetadata,
         config_pointer_file: str,
         inst_name: str,
-        required_modules_file: str = None,
+        required_modules_file: str | None = None,
     ) -> dict[str, Any]:
         """
         Parameters
