@@ -31,8 +31,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Run AOS closed-loop simulation (default is amplifier files)."
     )
-    parser = ClosedLoopTask.setDefaultParser(parser)
-    parser = ClosedLoopTask.setImgParser(parser)
+    parser = ClosedLoopTask.set_default_parser(parser)
+    parser = ClosedLoopTask.set_img_parser(parser)
 
     # Get the arguments
     args = parser.parse_args()
@@ -41,23 +41,23 @@ if __name__ == "__main__":
 
     # Run the simulation
     closeLoopTask = ClosedLoopTask()
-    closeLoopTask.runImg(
+    closeLoopTask.run_img(
         args.inst,
-        args.filterType,
-        args.rotCam,
-        args.boresightDeg,
+        args.filter_type,
+        args.rot_cam,
+        args.boresight_deg,
         args.mjd,
         args.output,
-        args.skyFile,
+        args.sky_file,
         args.clobber,
-        args.skySeed,
-        args.pertSeed,
-        args.iterNum,
-        args.pipelineFile,
-        args.configPointerFile,
-        args.turnOffSkyBackground,
-        args.turnOffAtmosphere,
-        args.opdOnly,
-        args.numProc,
-        args.rawSeeing,
+        args.sky_seed,
+        args.pert_seed,
+        args.iter_num,
+        args.pipeline_file,
+        args.config_pointer_file,
+        args.turn_off_sky_background,
+        args.turn_off_atmosphere,
+        args.turn_off_wavefront_estimates,
+        args.num_proc,
+        args.raw_seeing,
     )

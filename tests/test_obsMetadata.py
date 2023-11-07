@@ -27,18 +27,19 @@ from lsst.ts.imsim.obsMetadata import ObsMetadata
 class TestObsMetadata(unittest.TestCase):
     """Test the ObsMetadata dataclass."""
 
-    def testObsMetadata(self):
-        obsMetaTest = ObsMetadata(ra=0.0, dec=0.0, band="r")
-        self.assertEqual(obsMetaTest.ra, 0.0)
-        self.assertEqual(obsMetaTest.dec, 0.0)
-        self.assertEqual(obsMetaTest.band, "r")
-        self.assertEqual(obsMetaTest.zenith, 0.0)
-        self.assertEqual(obsMetaTest.rotatorAngle, 0.0)
-        self.assertEqual(obsMetaTest.expTime, 30.0)
-        self.assertEqual(obsMetaTest.rawSeeing, 0.5)
-        self.assertEqual(obsMetaTest.mjd, 59580.0)
-        self.assertEqual(obsMetaTest.seqNum, 1)
+    def test_obs_metadata(self):
+        obs_meta_test = ObsMetadata(ra=0.0, dec=0.0, band="r")
+        self.assertEqual(obs_meta_test.ra, 0.0)
+        self.assertEqual(obs_meta_test.dec, 0.0)
+        self.assertEqual(obs_meta_test.band, "r")
+        self.assertEqual(obs_meta_test.zenith, 0.0)
+        self.assertEqual(obs_meta_test.rotator_angle, 0.0)
+        self.assertEqual(obs_meta_test.exp_time, 30.0)
+        self.assertEqual(obs_meta_test.raw_seeing, 0.5)
+        self.assertEqual(obs_meta_test.mjd, 59580.0)
+        self.assertEqual(obs_meta_test.seq_num, 1)
         self.assertEqual(
-            obsMetaTest.obsId,
+            obs_meta_test.obs_id,
             "$f\"IM_P_{astropy.time.Time(mjd, format='mjd').strftime('%Y%m%d')}_{seqnum:06d}\" ",
         )
+        self.assertEqual(obs_meta_test.focus_z, 0.0)

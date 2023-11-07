@@ -26,47 +26,48 @@ from lsst.afw import cameraGeom
 from lsst.obs.lsst import LsstCam
 from lsst.ts.imsim.utils.utility import (
     ModifiedEnvironment,
-    getCamera,
-    getConfigDir,
-    getModulePath,
-    getPolicyPath,
-    getZkFromFile,
+    get_camera,
+    get_config_dir,
+    get_module_path,
+    get_policy_path,
+    get_zk_from_file,
 )
 
 
 class TestUtility(unittest.TestCase):
-    def testGetModulePath(self):
-        self.assertEqual(os.environ["TS_IMSIM_DIR"], getModulePath())
+    def test_get_module_path(self):
+        self.assertEqual(os.environ["TS_IMSIM_DIR"], get_module_path())
 
-    def testGetPolicyPath(self):
+    def test_get_policy_path(self):
         self.assertEqual(
-            os.path.join(os.environ["TS_IMSIM_DIR"], "policy"), getPolicyPath()
+            os.path.join(os.environ["TS_IMSIM_DIR"], "policy"), get_policy_path()
         )
 
-    def testGetConfigDir(self):
+    def test_get_config_dir(self):
         self.assertEqual(
-            os.path.join(os.environ["TS_IMSIM_DIR"], "policy", "config"), getConfigDir()
+            os.path.join(os.environ["TS_IMSIM_DIR"], "policy", "config"),
+            get_config_dir(),
         )
 
-    def testGetCamera(self):
-        lsstFamCam = getCamera("lsstfam")
-        self.assertIsInstance(lsstFamCam, cameraGeom.Camera)
-        self.assertEqual(lsstFamCam.getName(), LsstCam.getCamera().getName())
+    def test_get_camera(self):
+        lsst_fam_cam = get_camera("lsstfam")
+        self.assertIsInstance(lsst_fam_cam, cameraGeom.Camera)
+        self.assertEqual(lsst_fam_cam.getName(), LsstCam.getCamera().getName())
 
-        lsstCam = getCamera("lsst")
-        self.assertIsInstance(lsstCam, cameraGeom.Camera)
-        self.assertEqual(lsstCam.getName(), LsstCam.getCamera().getName())
+        lsst_cam = get_camera("lsst")
+        self.assertIsInstance(lsst_cam, cameraGeom.Camera)
+        self.assertEqual(lsst_cam.getName(), LsstCam.getCamera().getName())
 
         with self.assertRaises(ValueError):
-            getCamera("invalid")
+            get_camera("invalid")
 
-    def testGetZkFromFile(self):
-        zkFromFile = getZkFromFile(
-            os.path.join(getModulePath(), "tests", "testData", "opd", "opd.zer")
+    def test_get_zk_from_file(self):
+        zk_from_file = get_zk_from_file(
+            os.path.join(get_module_path(), "tests", "testData", "opd", "opd.zer")
         )
-        self.assertCountEqual(zkFromFile.keys(), [191, 195, 199, 203])
+        self.assertCountEqual(zk_from_file.keys(), [191, 195, 199, 203])
 
-    def testModifiedEnvironment(self):
+    def test_modified_environment(self):
         # Test adding a new environment variable
         self.assertNotIn("TEST_AOS_ROCKS_5772", os.environ)
         with ModifiedEnvironment(TEST_AOS_ROCKS_5772="parrot"):

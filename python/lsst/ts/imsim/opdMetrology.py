@@ -25,35 +25,34 @@ import numpy as np
 import yaml
 from astropy.io import fits
 from lsst.afw.cameraGeom import FIELD_ANGLE
-from lsst.ts.imsim.utils.metroTool import calc_pssn
-from lsst.ts.imsim.utils.utility import getCamera, getPolicyPath
+from lsst.ts.imsim.utils import calc_pssn, get_camera
 from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
 from lsst.ts.wep.utils import ZernikeAnnularFit, ZernikeEval
 
 
 class OpdMetrology:
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialization of OPD metrology class.
 
         OPD: Optical path difference.
         """
 
         self._wt = np.array([])
-        self.fieldX = np.array([])
-        self.fieldY = np.array([])
-        self.sensorIds = []
+        self.field_x = np.array([])
+        self.field_y = np.array([])
+        self.sensor_ids = []
 
     @property
-    def wt(self):
+    def wt(self) -> list | np.ndarray:
         return self._wt
 
     @wt.setter
-    def wt(self, newWt):
+    def wt(self, new_wt: list | np.ndarray) -> None:
         """Set the weighting ratio used in Gaussian quadrature.
 
         Parameters
         ----------
-        wt : list or numpy.ndarray
+        new_wt : list or numpy.ndarray
             Weighting ratio.
 
         Raises
@@ -62,13 +61,13 @@ class OpdMetrology:
             All weighting ratios should be >=0.
         """
 
-        wtArray = np.array(newWt, dtype=float)
-        if np.all(wtArray >= 0):
-            self._wt = wtArray / np.sum(wtArray)
+        wt_arr = np.array(new_wt, dtype=float)
+        if np.all(wt_arr >= 0):
+            self._wt = wt_arr / np.sum(wt_arr)
         else:
             raise ValueError("All weighting ratios should be >= 0.")
 
-    def setDefaultLsstWfsGQ(self):
+    def set_default_lsst_wfs_gq(self) -> None:
         """Set default values for LSST WFS field X, Y
         and weighting ratio.
         """
@@ -76,15 +75,15 @@ class OpdMetrology:
         # Set equal full weights for each of the
         # four corner wavefront sensor pairs.
         self.wt = np.array([1.0, 1.0, 1.0, 1.0])
-        wfsFieldX, wfsFieldY, sensorIds = self.getDefaultLsstWfsGQ()
-        self.fieldX, self.fieldY = (wfsFieldX, wfsFieldY)
+        wfs_field_x, wfs_field_y, sensor_ids = self.get_default_lsst_wfs_gq()
+        self.field_x, self.field_y = (wfs_field_x, wfs_field_y)
         # Convert from CCS to ZCS for current OFC
         # TODO: Remove this conversion when ts_ofc
         # sensitivity matrix is updated.
-        self.fieldX = -1.0 * np.array(self.fieldX)
-        self.sensorIds = sensorIds
+        self.field_x = -1.0 * np.array(self.field_x)
+        self.sensor_ids = sensor_ids
 
-    def getDefaultLsstWfsGQ(self):
+    def get_default_lsst_wfs_gq(self) -> tuple[list[float], list[float], list[int]]:
         """Get the default field X, Y of LSST WFS on GQ.
 
         WFS: Wavefront sensor.
@@ -103,29 +102,29 @@ class OpdMetrology:
         # Field x, y for 4 WFS in the Camera Coordinate System (CCS)
         # These will be chosen at the center of the extra-intra
         # focal pairs of wavefront sensors.
-        detIds = [191, 195, 199, 203]
-        camera = getCamera("lsst")
-        fieldX = []
-        fieldY = []
-        detMap = camera.getIdMap()
-        for detId in detIds:
-            detExtraCenter = np.degrees(detMap[detId].getCenter(FIELD_ANGLE))
-            detIntraCenter = np.degrees(detMap[detId + 1].getCenter(FIELD_ANGLE))
+        det_ids = [191, 195, 199, 203]
+        camera = get_camera("lsst")
+        field_x = []
+        field_y = []
+        det_map = camera.getIdMap()
+        for det_id in det_ids:
+            det_extra_center = np.degrees(det_map[det_id].getCenter(FIELD_ANGLE))
+            det_intra_center = np.degrees(det_map[det_id + 1].getCenter(FIELD_ANGLE))
             # Switch X,Y coordinates to convert from DVCS to CCS coords
-            detCenter = np.mean([detExtraCenter, detIntraCenter], axis=0)
-            fieldY.append(detCenter[0])
-            fieldX.append(detCenter[1])
+            det_center = np.mean([det_extra_center, det_intra_center], axis=0)
+            field_y.append(det_center[0])
+            field_x.append(det_center[1])
 
-        return fieldX, fieldY, detIds
+        return field_x, field_y, det_ids
 
-    def setWgtAndFieldXyOfGQ(self, instName):
+    def set_wgt_and_field_xy_of_gq(self, inst_name: str) -> None:
         """Set the GQ weighting ratio and field X, Y.
 
         GQ: Gaussian quadrature.
 
         Parameters
         ----------
-        instName : `str`
+        inst_name : `str`
             Instrument name.
             Valid options are 'lsst' or 'lsstfam.
 
@@ -136,47 +135,52 @@ class OpdMetrology:
         """
 
         # Set camera and field ids for given instrument
-        if instName == "lsst":
-            self.setDefaultLsstWfsGQ()
+        if inst_name == "lsst":
+            self.set_default_lsst_wfs_gq()
             return
 
-        instrumentPath = getConfigDirOfc() / instName
+        instrument_path = getConfigDirOfc() / inst_name
 
-        if not instrumentPath.exists():
-            raise RuntimeError(f"OFC instrument path does not exist: {instrumentPath}")
+        if not instrument_path.exists():
+            raise RuntimeError(f"OFC instrument path does not exist: {instrument_path}")
 
         # Set the weighting ratio
-        pathWgtFile = instrumentPath / "imgQualWgt.yaml"
-        with open(pathWgtFile, "r") as file:
+        path_wgt_file = instrument_path / "imgQualWgt.yaml"
+        with open(path_wgt_file, "r") as file:
             wgt = yaml.safe_load(file)
-        wgtValues = np.array(list(wgt.values()), dtype=float)
+        wgt_values = np.array(list(wgt.values()), dtype=float)
         # Normalize weights
-        self.wt = wgtValues / np.sum(wgtValues)
+        self.wt = wgt_values / np.sum(wgt_values)
 
-        if instName == "lsstfam":
-            camera = getCamera(instName)
-            self.sensorIds = np.arange(189)
+        if inst_name == "lsstfam":
+            camera = get_camera(inst_name)
+            self.sensor_ids = np.arange(189)
         else:
-            raise ValueError(f"Instrument {instName} is not supported in OPD mode.")
+            raise ValueError(f"Instrument {inst_name} is not supported in OPD mode.")
 
-        fieldX = []
-        fieldY = []
-        detMap = camera.getIdMap()
-        for detId in self.sensorIds:
-            detCenter = detMap[detId].getCenter(FIELD_ANGLE)
+        field_x = []
+        field_y = []
+        det_map = camera.getIdMap()
+        for det_id in self.sensor_ids:
+            det_center = det_map[det_id].getCenter(FIELD_ANGLE)
             # Switch X,Y coordinates to convert from DVCS to CCS coords
-            fieldY.append(np.degrees(detCenter[0]))
-            fieldX.append(np.degrees(detCenter[1]))
-        self.fieldX = np.array(fieldX)
-        self.fieldY = np.array(fieldY)
+            field_y.append(np.degrees(det_center[0]))
+            field_x.append(np.degrees(det_center[1]))
+        self.field_x = np.array(field_x)
+        self.field_y = np.array(field_y)
         # Convert from CCS to ZCS for current OFC
         # TODO: Remove this conversion when ts_ofc
         # sensitivity matrix is updated.
-        self.fieldX = -1.0 * self.fieldX
+        self.field_x = -1.0 * self.field_x
 
-    def getZkFromOpd(
-        self, opdFitsFile=None, opdMap=None, znTerms=22, obscuration=0.61, flipLR=True
-    ):
+    def get_zk_from_opd(
+        self,
+        opd_fits_file: str | None = None,
+        opd_map: np.ndarray | None = None,
+        zk_terms: int = 22,
+        obscuration: float = 0.61,
+        flip_lr: bool = True,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Get the wavefront error of OPD in the basis of annular Zernike
         polynomials.
 
@@ -184,16 +188,16 @@ class OpdMetrology:
 
         Parameters
         ----------
-        opdFitsFile : str, optional
+        opd_fits_file : str, optional
             OPD FITS file. (the default is None.)
-        opdMap : numpy.ndarray, optional
+        opd_map : numpy.ndarray, optional
             OPD map data. (the default is None.)
-        znTerms : int, optional
+        zk_terms : int, optional
             Number of terms of annular Zk (z1-z22 by default). (the default
             is 22.)
         obscuration : float, optional
             Obscuration of annular Zernike polynomial. (the default is 0.61.)
-        flipLR : bool, optional
+        flip_lr : bool, optional
             Flip the opd image in the left-right direction. Currently
             this flip is needed in the closed loop because ts_ofc
             has a sensitivity matrix in the Zemax Coordinate System
@@ -218,12 +222,12 @@ class OpdMetrology:
         """
 
         # Get the OPD data (imSim OPD unit: nm)
-        if opdFitsFile is not None:
-            opd = fits.getdata(opdFitsFile)
-        elif opdMap is not None:
-            opd = opdMap.copy()
+        if opd_fits_file is not None:
+            opd = fits.getdata(opd_fits_file)
+        elif opd_map is not None:
+            opd = opd_map.copy()
         # TODO: Remove when OFC moves to CCS instead of ZCS
-        if flipLR is True:
+        if flip_lr is True:
             opd = np.fliplr(opd)
 
         # Check the x, y dimensions of OPD are the same
@@ -231,17 +235,19 @@ class OpdMetrology:
             raise ValueError("The x, y dimensions of OPD are different.")
 
         # x-, y-coordinate in the OPD image
-        opdSize = opd.shape[0]
-        opdGrid1d = np.linspace(-1, 1, opdSize)
-        opdx, opdy = np.meshgrid(opdGrid1d, opdGrid1d)
+        opd_size = opd.shape[0]
+        opd_grid_1d = np.linspace(-1, 1, opd_size)
+        opd_x, opd_y = np.meshgrid(opd_grid_1d, opd_grid_1d)
 
         # Fit the OPD map with Zk and write into the file
         idx = ~np.isnan(opd)
-        zk = ZernikeAnnularFit(opd[idx], opdx[idx], opdy[idx], znTerms, obscuration)
+        zk = ZernikeAnnularFit(opd[idx], opd_x[idx], opd_y[idx], zk_terms, obscuration)
 
-        return zk, opd, opdx, opdy
+        return zk, opd, opd_x, opd_y
 
-    def rmPTTfromOPD(self, opdFitsFile=None, opdMap=None):
+    def rm_piston_tip_tilt_from_opd(
+        self, opd_fits_file: str | None = None, opd_map: np.ndarray | None = None
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Remove the piston (z1), x-tilt (z2), and y-tilt (z3)
         from the OPD map.
 
@@ -249,9 +255,9 @@ class OpdMetrology:
 
         Parameters
         ----------
-        opdFitsFile : str, optional
+        opd_fits_file : str, optional
             OPD FITS file. (the default is None.)
-        opdMap : numpy.ndarray, optional
+        opd_map : numpy.ndarray, optional
             OPD map data. (the default is None.)
 
         Returns
@@ -266,21 +272,26 @@ class OpdMetrology:
 
         # Do the spherical Zernike fitting for the OPD map
         # Only fit the first three terms (z1-z3): piston, x-tilt, y-tilt
-        zk, opd, opdx, opdy = self.getZkFromOpd(
-            opdFitsFile=opdFitsFile, opdMap=opdMap, znTerms=3, obscuration=0
+        zk, opd, opd_x, opd_y = self.get_zk_from_opd(
+            opd_fits_file=opd_fits_file, opd_map=opd_map, zk_terms=3, obscuration=0
         )
 
         # Find the index that the value of OPD is not 0
         idx = ~np.isnan(opd)
 
         # Remove the PTT
-        opd[idx] -= ZernikeEval(zk, opdx[idx], opdy[idx])
+        opd[idx] -= ZernikeEval(zk, opd_x[idx], opd_y[idx])
 
-        return opd, opdx, opdy
+        return opd, opd_x, opd_y
 
-    def calcPSSN(
-        self, wavelengthInUm, opdFitsFile=None, opdMap=None, zen=0, debugLevel=0
-    ):
+    def calc_pssn(
+        self,
+        wavelength_in_um: float,
+        opd_fits_file: str | None = None,
+        opd_map: np.ndarray | None = None,
+        zen: int = 0,
+        debug_level: int = 0,
+    ) -> float:
         """Calculate the PSSN based on OPD map.
 
         PSSN: Normalized point source sensitivity.
@@ -288,15 +299,15 @@ class OpdMetrology:
 
         Parameters
         ----------
-        wavelengthInUm : float
+        wavelength_in_um : float
             Wavelength in microns.
-        opdFitsFile : str, optional
+        opd_fits_file : str, optional
             OPD FITS file. Units need to be microns. (the default is None.)
-        opdMap : numpy.ndarray, optional
+        opd_map : numpy.ndarray, optional
             OPD map data. Units need to be microns. (the default is None.)
         zen : float, optional
-            elescope zenith angle in degree. (the default is 0.)
-        debugLevel : int, optional
+            Telescope zenith angle in degree. (the default is 0.)
+        debug_level : int, optional
             Debug level. The higher value gives more information. (the default
             is 0.)
 
@@ -309,21 +320,23 @@ class OpdMetrology:
         # Before calc_pssn,
         # (1) Remove PTT (piston, x-tilt, y-tilt),
         # (2) Make sure outside of pupil are all zeros
-        opdRmPTT = self.rmPTTfromOPD(opdFitsFile=opdFitsFile, opdMap=opdMap)[0]
+        opd_rm_ptt = self.rm_piston_tip_tilt_from_opd(
+            opd_fits_file=opd_fits_file, opd_map=opd_map
+        )[0]
 
         # Calculate the normalized point source sensitivity (PSSN)
-        pssn = calc_pssn(opdRmPTT, wavelengthInUm, zen=zen, debugLevel=debugLevel)
+        pssn = calc_pssn(opd_rm_ptt, wavelength_in_um, zen=zen, debug_level=debug_level)
 
         return pssn
 
-    def calcGQvalue(self, valueList):
+    def calc_gq_value(self, value_list: list[float] | np.ndarray) -> float:
         """Calculate the GQ value.
 
         GQ: Gaussian quadrature
 
         Parameters
         ----------
-        valueList : list or numpy.ndarray
+        value_list : list or numpy.ndarray
             List of value (PSSN, effective FWHM, dm5, ellipticity).
 
         Returns
@@ -338,16 +351,16 @@ class OpdMetrology:
         """
 
         # Check the lengths of weighting ratio and value list are the same
-        if len(self.wt) != len(valueList):
+        if len(self.wt) != len(value_list):
             raise ValueError("Length of wt ratio != length of value list.")
 
         # Calculate the effective value on Gaussain quardure plane
-        valueArray = np.array(valueList, dtype=float)
-        GQvalue = np.sum(self.wt * valueArray)
+        value_array = np.array(value_list, dtype=float)
+        gq_value = np.sum(self.wt * value_array)
 
-        return GQvalue
+        return gq_value
 
-    def calcFWHMeff(self, pssn):
+    def calc_fwhm_eff(self, pssn: float) -> float:
         """Calculate the effective FWHM.
 
         FWHM: Full width at half maximum.
@@ -372,7 +385,7 @@ class OpdMetrology:
         # Follow page 7 (section 7.2 FWHM) in document-17242 for more
         # information.
         eta = 1.086
-        FWHMatm = 0.6
-        FWHMeff = eta * FWHMatm * np.sqrt(1 / pssn - 1)
+        fwhm_atm = 0.6
+        fwhm_eff = eta * fwhm_atm * np.sqrt(1 / pssn - 1)
 
-        return FWHMeff
+        return fwhm_eff

@@ -19,32 +19,38 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+__all__ = ["plot_fwhm_of_iters"]
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-def _saveFig(plt, saveToFilePath=None, dpi=None):
+def _save_fig(
+    plt: plt, save_to_file_path: str | None = None, dpi: int | None = None
+) -> None:
     """Save the figure.
 
     Parameters
     ----------
     plt : module
         Module of matplotlib.pyplot.
-    saveToFilePath : str, optional
+    save_to_file_path : str, optional
         File path to save the figure. If None, the figure will be showed. (the
         default is None.)
     dpi : int, optional
         The resolution in dots per inch. (the default is None.)
     """
 
-    if saveToFilePath is not None:
-        plt.savefig(saveToFilePath, dpi=dpi)
+    if save_to_file_path is not None:
+        plt.savefig(save_to_file_path, dpi=dpi)
         plt.close()
     else:
         plt.show()
 
 
-def plotFwhmOfIters(pssnFiles, saveToFilePath=None, dpi=None):
+def plot_fwhm_of_iters(
+    pssn_files: list[str], save_to_file_path: str | None = None, dpi: int | None = None
+) -> None:
     """Plot the FWHM of iteration.
 
     FWHM: Full width at half maximum.
@@ -52,9 +58,9 @@ def plotFwhmOfIters(pssnFiles, saveToFilePath=None, dpi=None):
 
     Parameters
     ----------
-    pssnFiles : list
+    pssn_files : list
         List of PSSN files.
-    saveToFilePath : str, optional
+    save_to_file_path : str, optional
         File path to save the figure. If None, the figure will be showed. (the
         default is None.)
     dpi : int, optional
@@ -63,28 +69,28 @@ def plotFwhmOfIters(pssnFiles, saveToFilePath=None, dpi=None):
 
     # Collect the FWHM data. The row is the FWHM for each field. The final row
     # is the GQ FWHM. The column is the iterations.
-    numOfIter = len(pssnFiles)
+    num_of_iter = len(pssn_files)
 
-    numOfFwhmData = 0
-    fwhmDataAll = np.array([])
-    for pssnFile in pssnFiles:
-        fwhmData = np.loadtxt(pssnFile)[1, :]
-        if numOfFwhmData == 0:
-            numOfFwhmData = len(fwhmData)
+    num_of_fwhm_data = 0
+    fwhm_data_all = np.array([])
+    for pssn_file in pssn_files:
+        fwhm_data = np.loadtxt(pssn_file)[1, :]
+        if num_of_fwhm_data == 0:
+            num_of_fwhm_data = len(fwhm_data)
 
-        fwhmDataAll = np.append(fwhmDataAll, fwhmData)
+        fwhm_data_all = np.append(fwhm_data_all, fwhm_data)
 
-    reshapedFwhmData = fwhmDataAll.reshape((numOfIter, numOfFwhmData)).T
+    reshaped_fwhm_data = fwhm_data_all.reshape((num_of_iter, num_of_fwhm_data)).T
 
     # Plot the figure
     plt.figure()
-    plt.plot(reshapedFwhmData[:-1, :].T, "bx-")
-    plt.plot(reshapedFwhmData[-1, :], "ro-", label="GQ FWHM_eff")
+    plt.plot(reshaped_fwhm_data[:-1, :].T, "bx-")
+    plt.plot(reshaped_fwhm_data[-1, :], "ro-", label="GQ FWHM_eff")
     plt.xlabel("Iteration")
     plt.ylabel("Arcsec")
     plt.legend()
 
-    _saveFig(plt, saveToFilePath=saveToFilePath, dpi=dpi)
+    _save_fig(plt, save_to_file_path=save_to_file_path, dpi=dpi)
 
 
 if __name__ == "__main__":

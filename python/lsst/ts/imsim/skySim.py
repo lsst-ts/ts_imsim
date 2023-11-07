@@ -22,15 +22,16 @@
 import astropy
 import numpy as np
 from astroplan import Observer
-from lsst.ts.imsim.utils.utility import getCamera
+from lsst.ts.imsim.obsMetadata import ObsMetadata
+from lsst.ts.imsim.utils import get_camera
 
 
 class SkySim:
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialization of sky simulator class."""
 
         # Star ID
-        self.starId = np.array([], dtype=int)
+        self.star_id = np.array([], dtype=int)
 
         # Star RA
         self.ra = np.array([])
@@ -44,24 +45,24 @@ class SkySim:
         # Camera
         self._camera = None
 
-    def setCamera(self, instName):
+    def set_camera(self, inst_name: str) -> None:
         """Set the camera.
 
         Parameters
         ----------
-        instName : `str`
+        inst_name : `str`
             Instrument name. Valid options are 'lsstfam' or 'lsst'.
         """
 
-        self._camera = getCamera(instName)
+        self._camera = get_camera(inst_name)
 
-    def calcParallacticAngle(self, obsMetadata):
+    def calc_parallactic_angle(self, obs_metadata: ObsMetadata) -> float:
         """Calculate the parallactic angle so we know the
         sky rotation angle on alt-az mount for the observation.
 
         Parameters
         ----------
-        obsMetadata : lsst.ts.imsim.ObsMetadata
+        obs_metadata : lsst.ts.imsim.ObsMetadata
             ObsMetadata dataclass object with observation information.
 
         Returns
@@ -69,45 +70,53 @@ class SkySim:
         float
             Parallactic Angle in degrees.
         """
-        time = astropy.time.Time(obsMetadata.mjd, format="mjd")
+        time = astropy.time.Time(obs_metadata.mjd, format="mjd")
         rubin = Observer.at_site("cerro pachon")
         boresight = astropy.coordinates.SkyCoord(
-            f"{obsMetadata.ra}d", f"{obsMetadata.dec}d", frame="icrs"
+            f"{obs_metadata.ra}d", f"{obs_metadata.dec}d", frame="icrs"
         )
 
         return rubin.parallactic_angle(time, boresight).deg
 
-    def addStarByRaDecInDeg(self, starId, raInDeg, decInDeg, mag):
+    def add_star_by_ra_dec_in_deg(
+        self,
+        star_id: int | list[int] | np.ndarray,
+        ra_in_deg: float | list[float] | np.ndarray,
+        dec_in_deg: float | list[float] | np.ndarray,
+        mag: float | list[float] | np.ndarray,
+    ) -> None:
         """Add the star information by (ra, dec) in degrees.
 
         Parameters
         ----------
-        starId : int, list[int], or numpy.ndarray[int]
+        star_id : int, list[int], or numpy.ndarray[int]
             Star Id.
-        raInDeg : float, list, or numpy.ndarray
+        ra_in_deg : float, list, or numpy.ndarray
             Star ra in degree.
-        decInDeg : float, list, or numpy.ndarray
+        dec_in_deg : float, list, or numpy.ndarray
             Star dec in degree.
         mag : float, list, or numpy.ndarray
             Star magnitude.
         """
 
         # Check the inputs are list or not, and change the type if necessary
-        starIdList = self._changeToListIfNecessary(starId)
-        raInDegList = self._changeToListIfNecessary(raInDeg)
-        decInDegList = self._changeToListIfNecessary(decInDeg)
-        magList = self._changeToListIfNecessary(mag)
+        star_id_list = self._change_to_list_if_necessary(star_id)
+        ra_in_deg_list = self._change_to_list_if_necessary(ra_in_deg)
+        dec_in_deg_list = self._change_to_list_if_necessary(dec_in_deg)
+        mag_list = self._change_to_list_if_necessary(mag)
 
         # Add the stars
-        for ii in range(len(starIdList)):
-            intStarId = int(starIdList[ii])
-            if self._isUniqStarId(intStarId):
-                self.starId = np.append(self.starId, intStarId)
-                self.ra = np.append(self.ra, raInDegList[ii])
-                self.dec = np.append(self.dec, decInDegList[ii])
-                self.mag = np.append(self.mag, magList[ii])
+        for ii in range(len(star_id_list)):
+            int_star_id = int(star_id_list[ii])
+            if self._is_uniq_star_id(int_star_id):
+                self.star_id = np.append(self.star_id, int_star_id)
+                self.ra = np.append(self.ra, ra_in_deg_list[ii])
+                self.dec = np.append(self.dec, dec_in_deg_list[ii])
+                self.mag = np.append(self.mag, mag_list[ii])
 
-    def _changeToListIfNecessary(self, variable):
+    def _change_to_list_if_necessary(
+        self, variable: int | float | list | np.ndarray
+    ) -> list[int | float]:
         """Change the data type to list.
 
         Parameters
@@ -126,12 +135,12 @@ class SkySim:
         else:
             return variable
 
-    def _isUniqStarId(self, starId):
+    def _is_uniq_star_id(self, star_id: int) -> bool:
         """Check the star ID is unique or not.
 
         Parameters
         ----------
-        starId : int
+        star_id : int
             Star Id.
 
         Returns
@@ -140,26 +149,26 @@ class SkySim:
             True if the unique Id.
         """
 
-        if starId in self.starId:
-            isUnique = False
-            print("StarId=%d is not unique." % starId)
+        if star_id in self.star_id:
+            is_unique = False
+            print("StarId=%d is not unique." % star_id)
         else:
-            isUnique = True
+            is_unique = True
 
-        return isUnique
+        return is_unique
 
-    def addStarByFile(self, readFilePath, skiprows=0):
+    def add_star_by_file(self, read_file_path: str, skip_rows: int = 0) -> None:
         """Add the star data by reading the file.
 
         Parameters
         ----------
-        readFilePath : str
+        read_file_path : str
             Star data file path.
-        skiprows : int, optional
+        skip_rows : int, optional
             Skip the first "skiprows" lines. (the default is 0.)
         """
 
-        data = np.loadtxt(readFilePath, skiprows=skiprows)
+        data = np.loadtxt(read_file_path, skiprows=skip_rows)
 
         # Only consider the non-empty data
         if len(data) != 0:
@@ -168,14 +177,14 @@ class SkySim:
                 data = np.expand_dims(data, axis=0)
 
             for star in data:
-                self.addStarByRaDecInDeg(star[0], star[1], star[2], star[3])
+                self.add_star_by_ra_dec_in_deg(star[0], star[1], star[2], star[3])
 
-    def exportSkyToFile(self, outputFilePath):
+    def export_sky_to_file(self, output_file_path: str) -> None:
         """Export the star information into the file.
 
         Parameters
         ----------
-        outputFilePath : str
+        output_file_path : str
             Output file path.
         """
 
@@ -183,15 +192,15 @@ class SkySim:
         content = "# Id\t Ra\t\t Dec\t\t Mag\n"
 
         # Add the star information
-        for ii in range(len(self.starId)):
+        for ii in range(len(self.star_id)):
             content += "%d\t %3.6f\t %3.6f\t %3.6f\n" % (
-                self.starId[ii],
+                self.star_id[ii],
                 self.ra[ii],
                 self.dec[ii],
                 self.mag[ii],
             )
 
         # Write into file
-        fid = open(outputFilePath, "w")
-        fid.write(content)
-        fid.close()
+        file_out = open(output_file_path, "w")
+        file_out.write(content)
+        file_out.close()

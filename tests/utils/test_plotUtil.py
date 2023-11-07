@@ -22,31 +22,33 @@
 import os
 import unittest
 
-from lsst.ts.imsim.utils.plotUtil import plotFwhmOfIters
-from lsst.ts.imsim.utils.utility import getModulePath
+from lsst.ts.imsim.utils.plotUtil import plot_fwhm_of_iters
+from lsst.ts.imsim.utils.utility import get_module_path
 
 
 class TestPlotUtil(unittest.TestCase):
     """Test the PlotUtil functions."""
 
     def setUp(self):
-        modulePath = getModulePath()
-        self.testData = os.path.join(modulePath, "tests", "testData")
-        self.outFigFilePath = os.path.join(modulePath, "output", "img", "testFig.png")
+        module_path = get_module_path()
+        self.test_data = os.path.join(module_path, "tests", "testData")
+        self.out_fig_file_pat = os.path.join(
+            module_path, "output", "img", "testFig.png"
+        )
 
     def tearDown(self):
-        if os.path.exists(self.outFigFilePath):
-            os.remove(self.outFigFilePath)
+        if os.path.exists(self.out_fig_file_pat):
+            os.remove(self.out_fig_file_pat)
 
-    def testPlotFwhmOfIters(self):
-        iterDataDir = os.path.join(self.testData, "iterData")
-        pssnFiles = [
-            os.path.join(iterDataDir, "iter%d" % num, "img", "PSSN.txt")
+    def test_plot_fwhm_of_iters(self):
+        iter_data_dir = os.path.join(self.test_data, "iterData")
+        pssn_files = [
+            os.path.join(iter_data_dir, "iter%d" % num, "img", "PSSN.txt")
             for num in range(5)
         ]
 
-        plotFwhmOfIters(pssnFiles, saveToFilePath=self.outFigFilePath)
-        self.assertTrue(os.path.exists(self.outFigFilePath))
+        plot_fwhm_of_iters(pssn_files, save_to_file_path=self.out_fig_file_pat)
+        self.assertTrue(os.path.exists(self.out_fig_file_pat))
 
 
 if __name__ == "__main__":

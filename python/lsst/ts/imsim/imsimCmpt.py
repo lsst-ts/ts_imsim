@@ -20,17 +20,21 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
+from typing import Any
 
 import numpy as np
 import yaml
 from astropy.io import fits
+from lsst.afw import cameraGeom
+from lsst.ts.imsim.obsMetadata import ObsMetadata
 from lsst.ts.imsim.opdMetrology import OpdMetrology
-from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
-from lsst.ts.imsim.utils.utility import (
+from lsst.ts.imsim.skySim import SkySim
+from lsst.ts.imsim.utils import (
     ModifiedEnvironment,
-    getConfigDir,
-    getZkFromFile,
-    makeDir,
+    SensorWavefrontError,
+    get_config_dir,
+    get_zk_from_file,
+    make_dir,
 )
 from lsst.ts.ofc.ofc_data.base_ofc_data import BaseOFCData
 from lsst.ts.wep.utils import runProgram
@@ -38,208 +42,210 @@ from scipy.ndimage import rotate
 
 
 class ImsimCmpt:
-    def __init__(self):
+    def __init__(self) -> None:
         """Class to take configurations for each imsim component and
         generate full imsim configuration files.
         """
         # Output directories
-        self._outputDir = None
-        self._outputImgDir = None
+        self._output_dir = None
+        self._output_img_dir = None
 
         # OPD information
-        self.opdFilePath = None
-        self.opdMetr = OpdMetrology()
+        self.opd_file_path = None
+        self.opd_metr = OpdMetrology()
 
         # Specify number of Zernikes
-        self.numOfZk = 19
+        self.num_of_zk = 19
 
         # AOS Degrees of Freedom
-        self.numOfDof = 50
-        self.dofInUm = np.zeros(self.numOfDof, dtype=float)
+        self.num_of_dof = 50
+        self.dof_in_um = np.zeros(self.num_of_dof, dtype=float)
 
     @property
-    def outputDir(self):
-        return self._outputDir
+    def output_dir(self) -> str:
+        return self._output_dir
 
-    @outputDir.setter
-    def outputDir(self, newOutputDir):
+    @output_dir.setter
+    def output_dir(self, new_output_dir: str) -> None:
         """
         Set the closed loop output directory and make it if it
         does not yet exits.
 
         Parameters
         ----------
-        newOutputDir : str
+        new_output_dir : str
             Path for output image directory.
         """
-        makeDir(newOutputDir)
-        self._outputDir = newOutputDir
+        make_dir(new_output_dir)
+        self._output_dir = new_output_dir
 
     @property
-    def outputImgDir(self):
-        return self._outputImgDir
+    def output_img_dir(self) -> str:
+        return self._output_img_dir
 
-    @outputImgDir.setter
-    def outputImgDir(self, newOutputImgDir):
+    @output_img_dir.setter
+    def output_img_dir(self, new_output_img_dir: str) -> None:
         """
         Set the output image directory and make it if it
         does not yet exits.
 
         Parameters
         ----------
-        newOutputImgDir : str
+        new_output_img_dir : str
             Path for output image directory.
         """
-        makeDir(newOutputImgDir)
-        self._outputImgDir = newOutputImgDir
+        make_dir(new_output_img_dir)
+        self._output_img_dir = new_output_img_dir
 
-    def _verifyPointerFile(self, filePointerInfo, configSections):
+    def _verify_pointer_file(
+        self, file_pointer_info: dict, config_sections: list[str]
+    ) -> None:
         """Verify that pointer file has filepaths for all needed
         sections of a complete imsim configuration file.
 
         Parameters
         ----------
-        filePointerInfo : dict
+        file_pointer_info : dict
             Dictionary holding pointer types as keys and file path
             information as values.
-        configSections : list
+        config_sections : list
             List of required submodules for ImSim configuration.
 
         Raises
         ------
         ValueError
-            Raised when filePointerInfo is missing a required submodule.
+            Raised when file_pointer_info is missing a required submodule.
         """
-        filePointerKeys = list(filePointerInfo.keys())
-        for sectionName in configSections:
-            if sectionName not in filePointerKeys:
+        file_pointer_keys = list(file_pointer_info.keys())
+        for section_name in config_sections:
+            if section_name not in file_pointer_keys:
                 raise ValueError(
-                    f"Config pointer file missing filepath for {sectionName}."
+                    f"Config pointer file missing filepath for {section_name}."
                 )
 
-    def assembleConfigYaml(
+    def assemble_config_yaml(
         self,
-        obsMetadata,
-        configPointerFile,
-        instName,
-        requiredModulesFile=None,
-    ):
+        obs_metadata: ObsMetadata,
+        config_pointer_file: str,
+        inst_name: str,
+        required_modules_file: str | None = None,
+    ) -> dict[str, Any]:
         """
         Parameters
         ----------
-        obsMetadata : lsst.ts.imsim.ObsMetadata
+        obs_metadata : lsst.ts.imsim.ObsMetadata
             ObsMetadata dataclass object with observation information.
-        configPointerFile : str
+        config_pointer_file : str
             The location of the config pointer file that specifies
             the location of configurations files for each imsim
             component.
-        instName : str
+        inst_name : str
             Instrument name.
-        requiredModulesFile : str or None
+        required_modules_file : str or None
             Path to yaml file with required imsim modules. If None,
             then will use policy/requiredModulesDefault.yaml.
             (The default is None.)
         """
 
-        if requiredModulesFile is None:
-            requiredModulesFile = os.path.join(
-                getConfigDir(), "requiredModulesDefault.yaml"
+        if required_modules_file is None:
+            required_modules_file = os.path.join(
+                get_config_dir(), "requiredModulesDefault.yaml"
             )
 
-        obsInfoText = self.convertObsMetadataToText(obsMetadata)
+        obs_info_text = self.convert_obs_metadata_to_text(obs_metadata)
 
-        configSections = ["input", "gal", "image", "psf", "stamp", "output"]
+        config_sections = ["input", "gal", "image", "psf", "stamp", "output"]
 
-        with open(configPointerFile, "r") as f:
-            filePointerInfo = yaml.safe_load(f)
-        self._verifyPointerFile(filePointerInfo, configSections)
+        with open(config_pointer_file, "r") as f:
+            file_pointer_info = yaml.safe_load(f)
+        self._verify_pointer_file(file_pointer_info, config_sections)
 
-        with open(requiredModulesFile, "r") as requiredModules:
-            requiredModulesText = requiredModules.read()
+        with open(required_modules_file, "r") as required_modules:
+            required_modules_text = required_modules.read()
 
         # Assemble full configuration as text because of the
         # aliases in the individual yaml components that
         # fill in values from "evalVariables".
-        fullConfigText = ""
-        fullConfigText += requiredModulesText + "\n"
-        fullConfigText += obsInfoText + "\n"
+        full_config_text = ""
+        full_config_text += required_modules_text + "\n"
+        full_config_text += obs_info_text + "\n"
 
         # Treat input section first differently since it has multiple parts
-        inputSectionText = "input:\n"
-        for subsection in ["atm_psf", "sky_model", "telescope", "vignetting"]:
+        input_section_text = "input:\n"
+        for sub_section in ["atm_psf", "sky_model", "telescope", "vignetting"]:
             with open(
-                filePointerInfo["input"][subsection].format(**os.environ), "r"
-            ) as subFile:
-                for line in subFile.readlines():
-                    inputSectionText += "  " + line
-        fullConfigText += inputSectionText + "\n"
+                file_pointer_info["input"][sub_section].format(**os.environ), "r"
+            ) as sub_file:
+                for line in sub_file.readlines():
+                    input_section_text += "  " + line
+        full_config_text += input_section_text + "\n"
         # Now move on to other sections skipping input section
-        for sectionName in configSections:
-            if sectionName == "input":
+        for section_name in config_sections:
+            if section_name == "input":
                 continue
             else:
                 with open(
-                    filePointerInfo[sectionName].format(**os.environ), "r"
-                ) as sectionFile:
-                    fullConfigText += sectionFile.read() + "\n"
+                    file_pointer_info[section_name].format(**os.environ), "r"
+                ) as section_file:
+                    full_config_text += section_file.read() + "\n"
             # Handle output specially since we need to add header info and OPD
-            if sectionName == "output":
-                fullConfigText += f"  dir: {self.outputImgDir}\n\n"
+            if section_name == "output":
+                full_config_text += f"  dir: {self.output_img_dir}\n\n"
                 # Add additional header text
-                fullConfigText += self.addConfigHeader(obsMetadata) + "\n"
+                full_config_text += self.add_config_header(obs_metadata) + "\n"
                 # Add OPD
-                fullConfigText += self.formatOpdText(obsMetadata, instName)
+                full_config_text += self.format_opd_text(obs_metadata, inst_name)
 
         # Assemble as yaml
-        fullConfigYaml = yaml.safe_load(fullConfigText)
+        full_config_yaml = yaml.safe_load(full_config_text)
 
         # Add in OFC corrections in um and arcsec
-        dofInUm = self.dofInUm
-        fullConfigYaml["input"]["telescope"]["fea"]["aos_dof"] = {
-            "dof": (dofInUm).tolist(),
+        dof_in_um = self.dof_in_um
+        full_config_yaml["input"]["telescope"]["fea"]["aos_dof"] = {
+            "dof": dof_in_um.tolist(),
             "type": "List",
         }
-        return fullConfigYaml
+        return full_config_yaml
 
-    def convertObsMetadataToText(self, obsMetadata):
+    def convert_obs_metadata_to_text(self, obs_metadata: ObsMetadata) -> str:
         """
         Write out the evalVariables section of the config file.
 
         Parameters
         ----------
-        obsMetadata : lsst.ts.imsim.ObsMetadata
+        obs_metadata : lsst.ts.imsim.ObsMetadata
             ObsMetadata dataclass object with observation information.
 
         Returns
         -------
         str
-            evalVariables for ImSim config
+            eval_variables for ImSim config
         """
-        obsVariablesText = "eval_variables:\n"
-        obsVariablesText += "  cboresight:\n"
-        obsVariablesText += "    type: RADec\n"
-        obsVariablesText += f"    ra: &ra {obsMetadata.ra} deg\n"
-        obsVariablesText += f"    dec: &dec {obsMetadata.dec} deg\n"
-        obsVariablesText += f"  sband: &band {obsMetadata.band}\n"
-        obsVariablesText += f"  azenith: &zenith {obsMetadata.zenith} deg\n"
-        obsVariablesText += f"  artp: &rtp {obsMetadata.rotatorAngle} deg\n"
-        obsVariablesText += f"  fexptime: &exptime {obsMetadata.expTime}\n"
-        obsVariablesText += f"  fmjd: &mjd {obsMetadata.mjd}\n"
-        obsVariablesText += f"  frawSeeing: &rawSeeing {obsMetadata.rawSeeing}\n"
-        obsVariablesText += f"  iseqnum: &seqnum {obsMetadata.seqNum}\n"
-        obsVariablesText += f"  sobsid: &obsid {obsMetadata.obsId}\n"
+        obs_variables_text = "eval_variables:\n"
+        obs_variables_text += "  cboresight:\n"
+        obs_variables_text += "    type: RADec\n"
+        obs_variables_text += f"    ra: &ra {obs_metadata.ra} deg\n"
+        obs_variables_text += f"    dec: &dec {obs_metadata.dec} deg\n"
+        obs_variables_text += f"  sband: &band {obs_metadata.band}\n"
+        obs_variables_text += f"  azenith: &zenith {obs_metadata.zenith} deg\n"
+        obs_variables_text += f"  artp: &rtp {obs_metadata.rotator_angle} deg\n"
+        obs_variables_text += f"  fexptime: &exptime {obs_metadata.exp_time}\n"
+        obs_variables_text += f"  fmjd: &mjd {obs_metadata.mjd}\n"
+        obs_variables_text += f"  frawSeeing: &rawSeeing {obs_metadata.raw_seeing}\n"
+        obs_variables_text += f"  iseqnum: &seqnum {obs_metadata.seq_num}\n"
+        obs_variables_text += f"  sobsid: &obsid {obs_metadata.obs_id}\n"
 
-        return obsVariablesText
+        return obs_variables_text
 
-    def formatOpdText(self, obsMetadata, instName):
+    def format_opd_text(self, obs_metadata: ObsMetadata, inst_name: str) -> str:
         """
         Write out the OPD section of the config file.
 
         Parameters
         ----------
-        obsMetadata : lsst.ts.imsim.ObsMetadata
+        obs_metadata : lsst.ts.imsim.ObsMetadata
             ObsMetadata dataclass object with observation information.
-        instName: str
+        inst_name: str
             Name of the instrument
 
         Returns
@@ -247,30 +253,30 @@ class ImsimCmpt:
         str
             OPD information for ImSim config
         """
-        opdSectionText = "  opd:\n"
-        opdSectionText += "    file_name: opd.fits\n"
-        opdSectionText += "    nx: 255\n"
-        opdSectionText += "    rotTelPos: *rtp\n"
-        opdSectionText += "    jmax: 28\n"
-        opdSectionText += "    eps: 0.61\n"
-        opdSectionText += "    projection: gnomonic\n"
-        opdSectionText += f"    wavelength: {BaseOFCData().eff_wavelength[obsMetadata.band.upper()]*1e3}\n"
-        opdSectionText += "    fields:\n"
+        opd_section_text = "  opd:\n"
+        opd_section_text += "    file_name: opd.fits\n"
+        opd_section_text += "    nx: 255\n"
+        opd_section_text += "    rotTelPos: *rtp\n"
+        opd_section_text += "    jmax: 28\n"
+        opd_section_text += "    eps: 0.61\n"
+        opd_section_text += "    projection: gnomonic\n"
+        opd_section_text += f"    wavelength: {BaseOFCData().eff_wavelength[obs_metadata.band.upper()]*1e3}\n"
+        opd_section_text += "    fields:\n"
 
         # Get the locations for the OPD from OPD Metrology
-        self.opdMetr.setWgtAndFieldXyOfGQ(instName)
-        for thx, thy in zip(self.opdMetr.fieldX, self.opdMetr.fieldY):
-            opdSectionText += f"      - {{thx: {thx} deg, thy: {thy} deg}}\n"
+        self.opd_metr.set_wgt_and_field_xy_of_gq(inst_name)
+        for thx, thy in zip(self.opd_metr.field_x, self.opd_metr.field_y):
+            opd_section_text += f"      - {{thx: {thx} deg, thy: {thy} deg}}\n"
 
-        return opdSectionText
+        return opd_section_text
 
-    def addConfigHeader(self, obsMetadata):
+    def add_config_header(self, obs_metadata: ObsMetadata) -> str:
         """
         Write out the header section of the config file.
 
         Parameters
         ----------
-        obsMetadata : lsst.ts.imsim.ObsMetadata
+        obs_metadata : lsst.ts.imsim.ObsMetadata
             ObsMetadata dataclass object with observation information.
 
         Returns
@@ -278,27 +284,29 @@ class ImsimCmpt:
         str
             Header information for ImSim config
         """
-        headerText = "  header:\n"
-        headerText += f"    mjd: *mjd\n"
-        headerText += f"    observationStartMJD: {obsMetadata.mjd - (15/(60*60*24))}\n"
-        headerText += f"    seqnum: *seqnum\n"
-        headerText += f"    band: *band\n"
-        headerText += f"    fieldRA: {obsMetadata.ra}\n"
-        headerText += f"    fieldDec: {obsMetadata.dec}\n"
-        headerText += f"    rotTelPos: {obsMetadata.rotatorAngle}\n"
-        headerText += f"    airmass: {1.0/np.cos(obsMetadata.zenith)}\n"
-        headerText += f"    focusZ: {obsMetadata.focusZ}\n"
-        headerText += f"    rawSeeing: {obsMetadata.rawSeeing}\n"
+        header_text = "  header:\n"
+        header_text += f"    mjd: *mjd\n"
+        header_text += (
+            f"    observationStartMJD: {obs_metadata.mjd - (15/(60*60*24))}\n"
+        )
+        header_text += f"    seqnum: *seqnum\n"
+        header_text += f"    band: *band\n"
+        header_text += f"    fieldRA: {obs_metadata.ra}\n"
+        header_text += f"    fieldDec: {obs_metadata.dec}\n"
+        header_text += f"    rotTelPos: {obs_metadata.rotator_angle}\n"
+        header_text += f"    airmass: {1.0/np.cos(obs_metadata.zenith)}\n"
+        header_text += f"    focusZ: {obs_metadata.focus_z}\n"
+        header_text += f"    rawSeeing: {obs_metadata.raw_seeing}\n"
 
-        return headerText
+        return header_text
 
-    def runImsim(self, configFilePath):
+    def run_imsim(self, config_file_path: str) -> None:
         """
         Run imSim with the given configuration file.
 
         Parameters
         ----------
-        configFilePath : str
+        config_file_path : str
             Path to the imSim configuration yaml file.
         """
         # For mysterious reasons, having the KMP_INIT_AT_FORK environment
@@ -308,24 +316,28 @@ class ImsimCmpt:
         # of ts_wep before ever getting to this method, so we can't just unset
         # it in the environment ahead of time.
         with ModifiedEnvironment(KMP_INIT_AT_FORK=None):
-            runProgram(f"galsim {configFilePath}")
+            runProgram(f"galsim {config_file_path}")
 
-    def writeYamlAndRunImsim(self, configPath, configYaml):
+    def write_yaml_and_run_imsim(
+        self, config_path: str, config_yaml: dict[str, Any]
+    ) -> None:
         """Write yaml config file and run Imsim.
 
         Parameters
         ----------
-        configPath : str
+        config_path : str
             Path to write config yaml file.
-        configYaml : dict
+        config_yaml : dict
             Dictionary that contains imsim config details to write to yaml.
         """
 
-        with open(configPath, "w") as file:
-            yaml.safe_dump(configYaml, file)
-        self.runImsim(configPath)
+        with open(config_path, "w") as file:
+            yaml.safe_dump(config_yaml, file)
+        self.run_imsim(config_path)
 
-    def addSourcesToConfig(self, configYaml, instCatPath, useCcdImg=True):
+    def add_sources_to_config(
+        self, config_yaml: dict[str, Any], inst_cat_path: str, use_ccd_img: bool = True
+    ) -> dict[str, Any]:
         """Add source information to config. If using CCD it will add
         the instance catalog details. If only using OPD it will remove
         the instance catalog info so that we are not generating
@@ -333,11 +345,11 @@ class ImsimCmpt:
 
         Parameters
         ----------
-        configYaml : dict
+        config_yaml : dict
             Dictionary that contains imsim config details to write to yaml.
-        instCatPath : str
+        inst_cat_path : str
             Path to instance catalog file.
-        useCcdImg : bool, optional
+        use_ccd_img : bool, optional
             When outputting CCD images this is set to True so that the instance
             catalog information is included in the configuration. For OPD only
             this should be set to False. (The default is True.)
@@ -348,29 +360,29 @@ class ImsimCmpt:
             Updated yaml configuration.
         """
 
-        if useCcdImg:
-            configYaml["image"].pop("nobjects")
-            configYaml["image"]["world_pos"] = {"type": "InstCatWorldPos"}
-            configYaml["gal"] = {"type": "InstCatObj"}
-            configYaml["input"]["instance_catalog"] = {
-                "file_name": instCatPath,
+        if use_ccd_img:
+            config_yaml["image"].pop("nobjects")
+            config_yaml["image"]["world_pos"] = {"type": "InstCatWorldPos"}
+            config_yaml["gal"] = {"type": "InstCatObj"}
+            config_yaml["input"]["instance_catalog"] = {
+                "file_name": inst_cat_path,
                 "sed_dir": "$os.environ.get('SIMS_SED_LIBRARY_DIR')",
             }
         else:
-            configYaml["image"]["nobjects"] = 0
+            config_yaml["image"]["nobjects"] = 0
             # Only create one empty amplifier file and one OPD.fits file
             # when running OPD only
-            configYaml["output"]["nfiles"] = 1
+            config_yaml["output"]["nfiles"] = 1
 
-        return configYaml
+        return config_yaml
 
-    def genInstanceCatalog(self, skySim):
+    def gen_instance_catalog(self, sky_sim: SkySim) -> str:
         """
         Generate the instance catalog.
 
         Parameters
         ----------
-        skySim : lsst.ts.imsim.skySim.SkySim
+        sky_sim : lsst.ts.imsim.skySim.SkySim
             The SkySim object with the stars to simulate.
 
         Returns
@@ -380,16 +392,16 @@ class ImsimCmpt:
         """
 
         content = ""
-        content += self.genInstCatStars(skySim)
+        content += self.gen_inst_cat_stars(sky_sim)
         return content
 
-    def genInstCatStars(self, skySim):
+    def gen_inst_cat_stars(self, sky_sim: SkySim) -> str:
         """
         Add stars to the instance catalog.
 
         Parameters
         ----------
-        skySim : lsst.ts.imsim.skySim.SkySim
+        sky_sim : lsst.ts.imsim.skySim.SkySim
             The SkySim object with the stars to simulate.
 
         Returns
@@ -398,68 +410,71 @@ class ImsimCmpt:
             Instance catalog text for the stars in the SkySim catalog.
         """
         content = ""
-        for id, ra, dec, mag in zip(skySim.starId, skySim.ra, skySim.dec, skySim.mag):
-            content += self.generateStar(id, ra, dec, mag)
+        for id, ra, dec, mag in zip(
+            sky_sim.star_id, sky_sim.ra, sky_sim.dec, sky_sim.mag
+        ):
+            content += self.generate_star(id, ra, dec, mag)
 
         return content
 
-    def generateStar(
+    def generate_star(
         self,
-        starId,
-        ra,
-        dec,
-        magNorm,
-        sedName="flatSED/sed_flat.txt.gz",
-        redshift=0,
-        gamma1=0,
-        gamma2=0,
-        kappa=0,
-        deltaRa=0,
-        deltaDec=0,
-        sourceType="point",
-    ):
+        star_id: int,
+        ra: float,
+        dec: float,
+        mag_norm: float,
+        sed_name: str = "flatSED/sed_flat.txt.gz",
+        redshift: float = 0,
+        gamma_1: float = 0,
+        gamma_2: float = 0,
+        kappa: float = 0,
+        delta_ra: float = 0,
+        delta_dec: float = 0,
+        source_type: str = "point",
+    ) -> str:
         """Generate the star source.
 
         Parameters
         ----------
-        starId : int
+        star_id : int
             Star Id.
         ra : float
             The right ascension of the center of the object or image in
             decimal degrees.
         dec : float
             The declination of the center of the object in decimal degrees.
-        magNorm : float
+        mag_norm : float
             The normalization of the flux of the object in AB magnitudes
             at (500 nm)/(1+z) (which is roughly equivalent to V (AB) or
             g (AB)).
-        sedName : str, optional
+        sed_name : str, optional
             The name of the SED file with a file path that is relative to the
-            data directory in PhoSim.
+            $SIMS_SED_LIBRARY_DIR directory environment variable
+            required for imSim..
             (The default is "flatSED/sed_flat.txt.gz")
         redshift : float, optional
             The redshift (or blueshift) of the object. Note that the SED does
             not need to be redshifted if using this. (the default is 0.)
-        gamma1 : float, optional
+        gamma_1 : float, optional
             The value of the shear parameter gamma1 used in weak lensing.
             (the default is 0.)
-        gamma2 : float, optional
+        gamma_2 : float, optional
             The value of the shear parameter gamma2 used in weak lensing.
             (the default is 0.)
         kappa : float, optional
             The value of the magnification parameter in weak lensing. (the
             default is 0.)
-        deltaRa : float, optional
+        delta_ra : float, optional
             The value of the declination offset in radians. This can be used
             either for weak lensing or objects that moved from another
             exposure if you do not want to change the source position in the
             first two columns. (the default is 0.)
-        deltaDec : float, optional
+        delta_dec : float, optional
             The value of the declination offset in radians. This can be used
             either for weak lensing or objects that moved from another
             exposure if you do not want to change the source position in the
             first two columns. (the default is 0.)
-        sourceType : str, optional
+        source_type : str, optional
             The name of the spatial model to be used as defined below. (the
             default is "point".)
 
@@ -470,27 +485,31 @@ class ImsimCmpt:
         """
 
         content = "object %2d\t%9.6f\t%9.6f %9.6f %s " % (
-            starId,
+            star_id,
             ra,
             dec,
-            magNorm,
-            sedName,
+            mag_norm,
+            sed_name,
         )
         content += "%.1f %.1f %.1f %.1f %.1f %.1f %s none none \n" % (
             redshift,
-            gamma1,
-            gamma2,
+            gamma_1,
+            gamma_2,
             kappa,
-            deltaRa,
-            deltaDec,
-            sourceType,
+            delta_ra,
+            delta_dec,
+            source_type,
         )
 
         return content
 
-    def analyzeOpdData(
-        self, instName, zkFileName="opd.zer", rotOpdInDeg=0.0, pssnFileName="PSSN.txt"
-    ):
+    def analyze_opd_data(
+        self,
+        inst_name: str,
+        zk_file_name: str = "opd.zer",
+        rot_opd_in_deg: float = 0.0,
+        pssn_file_name: str = "PSSN.txt",
+    ) -> None:
         """Analyze the OPD data.
 
         Rotate OPD to simulate the output by rotated camera. When anaylzing the
@@ -501,65 +520,67 @@ class ImsimCmpt:
 
         Parameters
         ----------
-        instName : `str`
+        inst_name : `str`
             Instrument name.
-        zkFileName : str, optional
+        zk_file_name : str, optional
             OPD in zk file name. (the default is "opd.zer".)
-        rotOpdInDeg : float, optional
+        rot_opd_in_deg : float, optional
             Rotate OPD in degree in the counter-clockwise direction. (the
             default is 0.0.)
-        pssnFileName : str, optional
+        pssn_file_name : str, optional
             PSSN file name. (the default is "PSSN.txt".)
         """
 
         # Set the weighting ratio and field positions of OPD
-        if instName == "lsst":
-            self.opdMetr.setDefaultLsstWfsGQ()
+        if inst_name == "lsst":
+            self.opd_metr.set_default_lsst_wfs_gq()
         else:
-            self.opdMetr.setWgtAndFieldXyOfGQ(instName)
-        numOpd = len(self.opdMetr.fieldX)
+            self.opd_metr.set_wgt_and_field_xy_of_gq(inst_name)
+        num_opd = len(self.opd_metr.field_x)
 
-        self.opdFilePath = os.path.join(self.outputImgDir, "opd.fits")
-        self._writeOpdZkFile(zkFileName, rotOpdInDeg, numOpd)
-        self._writeOpdPssnFile(pssnFileName, numOpd)
+        self.opd_file_path = os.path.join(self.output_img_dir, "opd.fits")
+        self._write_opd_zk_file(zk_file_name, rot_opd_in_deg, num_opd)
+        self._write_opd_pssn_file(pssn_file_name, num_opd)
 
-    def _writeOpdZkFile(self, zkFileName, rotOpdInDeg, numOpd):
+    def _write_opd_zk_file(
+        self, zk_file_name: str, rot_opd_in_deg: float, num_opd: int
+    ) -> None:
         """Write the OPD in zk file.
 
         OPD: optical path difference.
 
         Parameters
         ----------
-        zkFileName : str
+        zk_file_name : str
             OPD in zk file name.
-        rotOpdInDeg : float
+        rot_opd_in_deg : float
             Rotate OPD in degree in the counter-clockwise direction.
-        numOpd : int
+        num_opd : int
             Number of OPD positions calculated.
         """
 
-        filePath = os.path.join(self.outputImgDir, zkFileName)
-        opdData = self._mapOpdToZk(rotOpdInDeg, numOpd)
-        fileTxt = (
+        file_path = os.path.join(self.output_img_dir, zk_file_name)
+        opd_data = self._map_opd_to_zk(rot_opd_in_deg, num_opd)
+        file_txt = (
             "# The followings are OPD in rotation angle of %.2f degree in nm from z4 to z22:\n"
-            % (rotOpdInDeg)
+            % rot_opd_in_deg
         )
-        for sensorId, opdZk in zip(self.opdMetr.sensorIds, opdData):
-            zkStr = f"{sensorId}: {opdZk}\n"
-            fileTxt += zkStr
-        with open(filePath, "w") as file:
-            file.write(fileTxt)
+        for sensor_id, opd_zk in zip(self.opd_metr.sensor_ids, opd_data):
+            zk_str = f"{sensor_id}: {opd_zk}\n"
+            file_txt += zk_str
+        with open(file_path, "w") as file:
+            file.write(file_txt)
 
-    def _mapOpdToZk(self, rotOpdInDeg, numOpd):
+    def _map_opd_to_zk(self, rot_opd_in_deg: float, num_opd: int) -> np.ndarray:
         """Map the OPD to the basis of annular Zernike polynomial (Zk).
 
         OPD: optical path difference.
 
         Parameters
         ----------
-        rotOpdInDeg : float
+        rot_opd_in_deg : float
             Rotate OPD in degree in the counter-clockwise direction.
-        numOpd : int
+        num_opd : int
             Number of OPD positions calculated.
 
         Returns
@@ -572,35 +593,35 @@ class ImsimCmpt:
 
         # Map the OPD to the Zk basis and do the collection
         # Get the number of OPD locations by looking at length of fieldX
-        opdData = np.zeros((numOpd, self.numOfZk))
-        for idx in range(numOpd):
-            opd = fits.getdata(self.opdFilePath, idx)
+        opd_data = np.zeros((num_opd, self.num_of_zk))
+        for idx in range(num_opd):
+            opd = fits.getdata(self.opd_file_path, idx)
 
             # Rotate OPD if needed
-            if rotOpdInDeg != 0:
-                opdRot = opd.copy()
+            if rot_opd_in_deg != 0:
+                opd_rot = opd.copy()
                 # Since to rotate the opd we need to substitue the nan values
                 # for zeros, we need to find the minimum value of the opd
                 # excluding the nan values. Then after the rotation we will discard
                 # the values that are smaller than the minimum value.
                 # Note that we use order = 0 to avoid interpolation errors.
-                minValue = np.nanmin(np.abs(opdRot))
-                opdRot[np.isnan(opdRot)] = 0.0
-                opdRot = rotate(opdRot, rotOpdInDeg, reshape=False, order = 0)
-                opdRot[np.abs(opdRot) <= minValue] = np.nan
+                min_value = np.nanmin(np.abs(opd_rot))
+                opd_rot[np.isnan(opd_rot)] = 0.0
+                opd_rot = rotate(opd_rot, rot_opd_in_deg, reshape=False, order=0)
+                opd_rot[np.abs(opd_rot) <= min_value] = np.nan
             else:
-                opdRot = opd
+                opd_rot = opd
 
             # z1 to z22 (22 terms)
-            zk = self.opdMetr.getZkFromOpd(opdMap=opdRot)[0]
+            zk = self.opd_metr.get_zk_from_opd(opd_map=opd_rot)[0]
 
             # Only need to collect z4 to z22
-            initIdx = 3
-            opdData[idx, :] = zk[initIdx : initIdx + self.numOfZk]
+            init_idx = 3
+            opd_data[idx, :] = zk[init_idx : init_idx + self.num_of_zk]
 
-        return opdData
+        return opd_data
 
-    def _writeOpdPssnFile(self, pssnFileName, numOpd):
+    def _write_opd_pssn_file(self, pssn_file_name: str, num_opd: int) -> None:
         """Write the OPD PSSN in file.
 
         OPD: Optical path difference.
@@ -608,31 +629,31 @@ class ImsimCmpt:
 
         Parameters
         ----------
-        pssnFileName : str
+        pssn_file_name : str
             PSSN file name.
-        numOpd : int
+        num_opd : int
             Number of OPD positions calculated.
         """
 
         # Calculate the PSSN
-        pssnList, gqEffPssn = self._calcPssnOpd(numOpd)
+        pssn_list, gq_eff_pssn = self._calc_pssn_opd(num_opd)
 
         # Calculate the FWHM
-        effFwhmList, gqEffFwhm = self._calcEffFwhmOpd(pssnList)
+        eff_fwhm_list, gq_eff_fwhm = self._calc_eff_fwhm_opd(pssn_list)
 
         # Append the list to write the data into file
-        pssnList.append(gqEffPssn)
-        effFwhmList.append(gqEffFwhm)
+        pssn_list.append(gq_eff_pssn)
+        eff_fwhm_list.append(gq_eff_fwhm)
 
         # Stack the data
-        data = np.vstack((pssnList, effFwhmList))
+        data = np.vstack((pssn_list, eff_fwhm_list))
 
         # Write to file
-        filePath = os.path.join(self.outputImgDir, pssnFileName)
+        file_path = os.path.join(self.output_img_dir, pssn_file_name)
         header = "The followings are PSSN and FWHM (in arcsec) data. The final number is the GQ value."
-        np.savetxt(filePath, data, header=header)
+        np.savetxt(file_path, data, header=header)
 
-    def _calcPssnOpd(self, numOpd):
+    def _calc_pssn_opd(self, num_opd: int) -> tuple[list[float], float]:
         """Calculate the PSSN of OPD.
 
         OPD: Optical path difference.
@@ -641,7 +662,7 @@ class ImsimCmpt:
 
         Parameters
         ----------
-        numOpd : int
+        num_opd : int
             Number of OPD positions calculated.
 
         Returns
@@ -652,21 +673,21 @@ class ImsimCmpt:
             GQ effective PSSN.
         """
 
-        pssnList = []
-        for idx in range(numOpd):
-            wavelengthInUm = fits.getheader(self.opdFilePath, idx)["WAVELEN"] * 1e-3
+        pssn_list = []
+        for idx in range(num_opd):
+            wavelength_in_um = fits.getheader(self.opd_file_path, idx)["WAVELEN"] * 1e-3
             # OPD data needs to be in microns. Imsim output is nm.
-            pssn = self.opdMetr.calcPSSN(
-                wavelengthInUm, opdMap=fits.getdata(self.opdFilePath, idx) * 1e-3
+            pssn = self.opd_metr.calc_pssn(
+                wavelength_in_um, opd_map=fits.getdata(self.opd_file_path, idx) * 1e-3
             )
-            pssnList.append(pssn)
+            pssn_list.append(pssn)
 
         # Calculate the GQ effectice PSSN
-        gqEffPssn = self.opdMetr.calcGQvalue(pssnList)
+        gq_eff_pssn = self.opd_metr.calc_gq_value(pssn_list)
 
-        return pssnList, gqEffPssn
+        return pssn_list, gq_eff_pssn
 
-    def _calcEffFwhmOpd(self, pssnList):
+    def _calc_eff_fwhm_opd(self, pssn_list: list[float]) -> tuple[list[float], float]:
         """Calculate the effective FWHM of OPD.
 
         FWHM: Full width and half maximum.
@@ -675,7 +696,7 @@ class ImsimCmpt:
 
         Parameters
         ----------
-        pssnList : list
+        pssn_list : list
             List of PSSN.
 
         Returns
@@ -687,28 +708,33 @@ class ImsimCmpt:
         """
 
         # Calculate the list of effective FWHM
-        effFwhmList = []
-        for pssn in pssnList:
-            effFwhm = self.opdMetr.calcFWHMeff(pssn)
-            effFwhmList.append(effFwhm)
+        eff_fwhm_list = []
+        for pssn in pssn_list:
+            eff_fwhm = self.opd_metr.calc_fwhm_eff(pssn)
+            eff_fwhm_list.append(eff_fwhm)
 
         # Calculate the GQ effectice FWHM
-        gqEffFwhm = self.opdMetr.calcGQvalue(effFwhmList)
+        gq_eff_fwhm = self.opd_metr.calc_gq_value(eff_fwhm_list)
 
-        return effFwhmList, gqEffFwhm
+        return eff_fwhm_list, gq_eff_fwhm
 
-    def mapOpdDataToListOfWfErr(self, opdZkFileName, sensorIdList, sensorNameList):
+    def map_opd_data_to_list_of_wf_err(
+        self,
+        opd_zk_file_name: str,
+        sensor_id_list: list[int],
+        sensor_name_list: list[str],
+    ) -> list[SensorWavefrontError]:
         """Map the OPD data to the list of wavefront error.
 
         OPD: Optical path difference.
 
         Parameters
         ----------
-        opdZkFileName : str
+        opd_zk_file_name : str
             OPD zk file name.
-        sensorIdList : list
+        sensor_id_list : list
             Reference sensor ID list.
-        sensorNameList : list
+        sensor_name_list : list
             Reference sensor name list.
 
         Returns
@@ -717,21 +743,21 @@ class ImsimCmpt:
             List of SensorWavefrontError object.
         """
 
-        opdZk = getZkFromFile(os.path.join(self.outputImgDir, opdZkFileName))
+        opd_zk = get_zk_from_file(os.path.join(self.output_img_dir, opd_zk_file_name))
 
-        listOfWfErr = []
-        for sensorId, sensorName in zip(sensorIdList, sensorNameList):
-            sensorWavefrontData = SensorWavefrontError(numOfZk=self.numOfZk)
-            sensorWavefrontData.sensorId = sensorId
-            sensorWavefrontData.sensorName = sensorName
+        list_of_wf_err = []
+        for sensor_id, sensor_name in zip(sensor_id_list, sensor_name_list):
+            sensor_wavefront_data = SensorWavefrontError(num_of_zk=self.num_of_zk)
+            sensor_wavefront_data.sensor_id = sensor_id
+            sensor_wavefront_data.sensor_name = sensor_name
             # imSim outputs OPD in nanometers so need to change to microns
             # to be consistent with what WEP expects.
-            sensorWavefrontData.annularZernikePoly = opdZk[sensorId] / 1e3
-            listOfWfErr.append(sensorWavefrontData)
+            sensor_wavefront_data.annular_zernike_poly = opd_zk[sensor_id] / 1e3
+            list_of_wf_err.append(sensor_wavefront_data)
 
-        return listOfWfErr
+        return list_of_wf_err
 
-    def getOpdGqEffFwhmFromFile(self, pssnFileName):
+    def get_opd_gq_eff_fwhm_from_file(self, pssn_file_name: str) -> float:
         """Get the OPD GQ effective FWHM from file.
 
         OPD: Optical path difference.
@@ -741,7 +767,7 @@ class ImsimCmpt:
 
         Parameters
         ----------
-        pssnFileName : str
+        pssn_file_name : str
             PSSN file name.
 
         Returns
@@ -750,12 +776,14 @@ class ImsimCmpt:
             OPD GQ effective FWHM.
         """
 
-        data = self._getDataOfPssnFile(pssnFileName)
-        gqEffFwhm = data[1, -1]
+        data = self._get_data_of_pssn_file(pssn_file_name)
+        gq_eff_fwhm = data[1, -1]
 
-        return gqEffFwhm
+        return gq_eff_fwhm
 
-    def getListOfFwhmSensorData(self, pssnFileName, sensorIdList):
+    def get_list_of_fwhm_sensor_data(
+        self, pssn_file_name: str, sensor_id_list: list[int]
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Get the list of FWHM sensor data based on the OPD PSSN file.
 
         FWHM: Full width at half maximum.
@@ -764,36 +792,36 @@ class ImsimCmpt:
 
         Parameters
         ----------
-        pssnFileName : str
+        pssn_file_name : str
             PSSN file name.
-        sensorIdList : list
+        sensor_id_list : list
             Reference sensor id list.
 
         Returns
         -------
-        fwhmCollection : `np.ndarray [object]`
+        np.ndarray [object]
             Numpy array with fwhm data. This is a numpy array of arrays. The
             data type is `object` because each element may have different
             number of elements.
-        sensor_id: `np.ndarray`
+        np.ndarray
             Numpy array with sensor ids.
         """
 
         # Get the FWHM data from the PSSN file
         # The first row is the PSSN and the second one is the FWHM
         # The final element in each row is the GQ value
-        data = self._getDataOfPssnFile(pssnFileName)
-        fwhmData = data[1, :-1]
+        data = self._get_data_of_pssn_file(pssn_file_name)
+        fwhm_data = data[1, :-1]
 
-        sensor_id = np.array(sensorIdList, dtype=int)
+        sensor_id = np.array(sensor_id_list, dtype=int)
 
-        fwhmCollection = np.array([], dtype=object)
-        for fwhm in fwhmData:
-            fwhmCollection = np.append(fwhmCollection, fwhm)
+        fwhm_collection = np.array([], dtype=object)
+        for fwhm in fwhm_data:
+            fwhm_collection = np.append(fwhm_collection, fwhm)
 
-        return fwhmCollection, sensor_id
+        return fwhm_collection, sensor_id
 
-    def getOpdPssnFromFile(self, pssnFileName):
+    def get_opd_pssn_from_file(self, pssn_file_name: str) -> np.ndarray:
         """Get the OPD PSSN from file.
 
         OPD: Optical path difference.
@@ -801,7 +829,7 @@ class ImsimCmpt:
 
         Parameters
         ----------
-        pssnFileName : str
+        pssn_file_name : str
             PSSN file name.
 
         Returns
@@ -810,19 +838,19 @@ class ImsimCmpt:
             PSSN.
         """
 
-        data = self._getDataOfPssnFile(pssnFileName)
+        data = self._get_data_of_pssn_file(pssn_file_name)
         pssn = data[0, :-1]
 
         return pssn
 
-    def _getDataOfPssnFile(self, pssnFileName):
+    def _get_data_of_pssn_file(self, pssn_file_name: str) -> np.ndarray:
         """Get the data of the PSSN file.
 
         PSSN: Normalized point source sensitivity.
 
         Parameters
         ----------
-        pssnFileName : str
+        pssn_file_name : str
             PSSN file name.
 
         Returns
@@ -831,14 +859,18 @@ class ImsimCmpt:
             Data of the PSSN file.
         """
 
-        filePath = os.path.join(self.outputImgDir, pssnFileName)
-        data = np.loadtxt(filePath)
+        file_path = os.path.join(self.output_img_dir, pssn_file_name)
+        data = np.loadtxt(file_path)
 
         return data
 
-    def reorderAndSaveWfErrFile(
-        self, listOfWfErr, refSensorNameList, lsstCamera, zkFileName="wfs.zer"
-    ):
+    def reorder_and_save_wf_err_file(
+        self,
+        list_of_wf_err: list[SensorWavefrontError],
+        ref_sensor_name_list: list[str],
+        camera: cameraGeom.Camera,
+        zk_file_name: str = "wfs.zer",
+    ) -> None:
         """Reorder the wavefront error in the wavefront error list according to
         the reference sensor name list and save to a file.
 
@@ -847,48 +879,50 @@ class ImsimCmpt:
 
         Parameters
         ----------
-        listOfWfErr : list [lsst.ts.wep.ctrlIntf.SensorWavefrontData]
+        list_of_wf_err : list [lsst.ts.wep.ctrlIntf.SensorWavefrontData]
             List of SensorWavefrontData object.
-        refSensorNameList : list
+        ref_sensor_name_list : list
             Reference sensor name list.
-        lsstCamera : lsst.afw.cameraGeom.Camera
-            Lsst instrument.
-        zkFileName : str, optional
+        camera : lsst.afw.cameraGeom.Camera
+            Instrument.
+        zk_file_name : str, optional
             Wavefront error file name. (the default is "wfs.zer".)
         """
 
         # Get the sensor name that in the wavefront error map
-        wfErrMap = self._transListOfWfErrToMap(listOfWfErr, lsstCamera)
-        nameListInWfErrMap = list(wfErrMap.keys())
+        wf_err_map = self._trans_list_of_wf_err_to_map(list_of_wf_err, camera)
+        name_list_in_wf_err_map = list(wf_err_map.keys())
 
         # Reorder the wavefront error map based on the reference sensor name
         # list.
-        reorderedWfErrMap = dict()
-        for sensorName in refSensorNameList:
-            if sensorName in nameListInWfErrMap:
-                wfErr = wfErrMap[sensorName]
+        reordered_wf_err_map = dict()
+        for sensor_name in ref_sensor_name_list:
+            if sensor_name in name_list_in_wf_err_map:
+                wf_err = wf_err_map[sensor_name]
             else:
-                wfErr = np.zeros(self.numOfZk)
-            reorderedWfErrMap[sensorName] = wfErr
+                wf_err = np.zeros(self.num_of_zk)
+            reordered_wf_err_map[sensor_name] = wf_err
 
         # Save the file
-        filePath = os.path.join(self.outputImgDir, zkFileName)
-        fileTxt = "# The followings are ZK in um from z4 to z22:\n"
-        for key, val in reorderedWfErrMap.items():
-            zkStr = f"{lsstCamera[key].getId()}: {val}\n"
-            fileTxt += zkStr
-        with open(filePath, "w") as file:
-            file.write(fileTxt)
+        file_path = os.path.join(self.output_img_dir, zk_file_name)
+        file_txt = "# The followings are ZK in um from z4 to z22:\n"
+        for key, val in reordered_wf_err_map.items():
+            zk_str = f"{camera[key].getId()}: {val}\n"
+            file_txt += zk_str
+        with open(file_path, "w") as file:
+            file.write(file_txt)
 
-    def _transListOfWfErrToMap(self, listOfWfErr, lsstCamera):
+    def _trans_list_of_wf_err_to_map(
+        self, list_of_wf_err: list[SensorWavefrontError], camera: cameraGeom.Camera
+    ) -> dict[str, np.ndarray]:
         """Transform the list of wavefront error to map.
 
         Parameters
         ----------
-        listOfWfErr : list [lsst.ts.wep.ctrlIntf.SensorWavefrontData]
+        list_of_wf_err : list [lsst.ts.wep.ctrlIntf.SensorWavefrontData]
             List of SensorWavefrontData object.
-        lsstCamera : lsst.afw.cameraGeom.Camera
-            Lsst instrument.
+        camera : lsst.afw.cameraGeom.Camera
+            Instrument.
 
         Returns
         -------
@@ -898,27 +932,29 @@ class ImsimCmpt:
             [numpy.ndarray] is the averaged wavefront error (z4-z22) in um.
         """
 
-        mapSensorNameAndId = dict(
-            [(detector.getId(), detector.getName()) for detector in lsstCamera]
+        map_sensor_name_and_id = dict(
+            [(detector.getId(), detector.getName()) for detector in camera]
         )
 
-        wfErrMap = dict()
-        for sensorWavefrontData in listOfWfErr:
-            sensorId = sensorWavefrontData.sensorId
-            sensorName = mapSensorNameAndId[sensorId]
+        wf_err_map = dict()
+        for sensor_wf_data in list_of_wf_err:
+            sensor_id = sensor_wf_data.sensor_id
+            sensor_name = map_sensor_name_and_id[sensor_id]
 
-            avgErrInUm = sensorWavefrontData.annularZernikePoly
+            avg_err_in_um = sensor_wf_data.annular_zernike_poly
 
-            wfErrMap[sensorName] = avgErrInUm
+            wf_err_map[sensor_name] = avg_err_in_um
 
-        return wfErrMap
+        return wf_err_map
 
-    def _getWfErrValuesAndStackToMatrix(self, wfErrMap):
+    def _get_wf_err_values_and_stack_to_matrix(
+        self, wf_err_map: dict[str, np.ndarray]
+    ) -> np.ndarray:
         """Get the wavefront errors and stack them to be a matrix.
 
         Parameters
         ----------
-        wfErrMap : dict
+        wf_err_map : dict
             Calculated wavefront error. The dictionary key [str] is the
             abbreviated sensor name (e.g. R22_S11). The dictionary item
             [numpy.ndarray] is the averaged wavefront error (z4-z22) in um.
@@ -931,24 +967,26 @@ class ImsimCmpt:
             wfErrMap.
         """
 
-        valueMatrix = np.empty((0, self.numOfZk))
-        for wfErr in wfErrMap.values():
-            valueMatrix = np.vstack((valueMatrix, wfErr))
+        value_matrix = np.empty((0, self.num_of_zk))
+        for wf_err in wf_err_map.values():
+            value_matrix = np.vstack((value_matrix, wf_err))
 
-        return valueMatrix
+        return value_matrix
 
-    def saveDofInUmFileForNextIter(self, dofInUmFileName="dofPertInNextIter.mat"):
+    def save_dof_in_um_file_for_next_iter(
+        self, dof_in_um_file_name: str = "dofPertInNextIter.mat"
+    ) -> None:
         """Save the DOF in um data to file for the next iteration.
 
         DOF: degree of freedom.
 
         Parameters
         ----------
-        dofInUmFileName : str, optional
+        dof_in_um_file_name : str, optional
             File name to save the DOF in um. (the default is
             "dofPertInNextIter.mat".)
         """
 
-        filePath = os.path.join(self.outputDir, dofInUmFileName)
+        file_path = os.path.join(self.output_dir, dof_in_um_file_name)
         header = "The followings are the DOF in um:"
-        np.savetxt(filePath, np.transpose(self.dofInUm), header=header)
+        np.savetxt(file_path, np.transpose(self.dof_in_um), header=header)

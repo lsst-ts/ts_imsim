@@ -23,356 +23,388 @@ import os
 import shutil
 import unittest
 
+import galsim
 import numpy as np
 import yaml
-import galsim
 from lsst.ts.imsim.imsimCmpt import ImsimCmpt
 from lsst.ts.imsim.obsMetadata import ObsMetadata
 from lsst.ts.imsim.skySim import SkySim
 from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
 from lsst.ts.imsim.utils.utility import (
-    getCamera,
-    getConfigDir,
-    getModulePath,
-    getZkFromFile,
+    get_camera,
+    get_config_dir,
+    get_module_path,
+    get_zk_from_file,
 )
 
 
 class TestImsimCmpt(unittest.TestCase):
     """Test the imsim configuration module."""
 
-    maxDiff = None
+    max_diff = None
 
     def setUp(self):
-        self.obsMetadataTest = ObsMetadata(ra=0.0, dec=0.0, band="r", mjd=59580.0, rawSeeing=0.5)
-        self.configPointerDefaultLsstCam = os.path.join(
-            getConfigDir(), "lsstCamDefaultPointer.yaml"
+        self.obs_metadata_test = ObsMetadata(
+            ra=0.0, dec=0.0, band="r", mjd=59580.0, raw_seeing=0.5
+        )
+        self.config_pointer_default_lsst_cam = os.path.join(
+            get_config_dir(), "lsstCamDefaultPointer.yaml"
         )
         with open(
             os.path.join(
-                getModulePath(),
+                get_module_path(),
                 "tests",
                 "testData",
                 "imsimConfig",
                 "imsimConfigLsstCam.yaml",
             ),
             "r",
-        ) as testFile:
-            self.fullTestYaml = yaml.safe_load(testFile)
-        self.imsimCmpt = ImsimCmpt()
+        ) as test_file:
+            self.full_test_yaml = yaml.safe_load(test_file)
+        self.imsim_cmpt = ImsimCmpt()
 
         # Set the output directories
-        self.outputDir = os.path.join(getModulePath(), "tests", "tmp")
-        self.outputImgDir = os.path.join(self.outputDir, "img")
-        self.opdFilePath = os.path.join(self._getOpdFileDirOfLsstCam(), "opd.fits")
+        self.output_dir = os.path.join(get_module_path(), "tests", "tmp")
+        self.output_img_dir = os.path.join(self.output_dir, "img")
+        self.opd_file_path = os.path.join(
+            self._get_opd_file_dir_of_lsst_cam(), "opd.fits"
+        )
 
-        self.imsimCmpt.outputDir = self.outputDir
-        self.imsimCmpt.outputImgDir = self.outputImgDir
-        self.imsimCmpt.opdFilePath = self.opdFilePath
+        self.imsim_cmpt.output_dir = self.output_dir
+        self.imsim_cmpt.output_img_dir = self.output_img_dir
+        self.imsim_cmpt.opd_file_path = self.opd_file_path
 
         # Set the file name of analyzed OPD data
-        self.zkFileName = "opd.zer"
-        self.pssnFileName = "PSSN.txt"
+        self.zk_file_name = "opd.zer"
+        self.pssn_file_name = "PSSN.txt"
 
         # Create SkySim object
-        self.skySim = SkySim()
+        self.sky_sim = SkySim()
 
     def tearDown(self):
-        shutil.rmtree(self.outputDir)
+        shutil.rmtree(self.output_dir)
 
-    def _mapSensorNameAndId(self, sensorNameList):
-        camera = getCamera("lsst")
+    def _map_sensor_name_and_id(self, sensor_name_list):
+        camera = get_camera("lsst")
         return dict(
             [
                 (camera[detector].getName(), camera[detector].getId())
-                for detector in sensorNameList
+                for detector in sensor_name_list
             ]
         )
 
-    def testSetOutputDir(self):
-        self.assertTrue(os.path.exists(self.imsimCmpt.outputDir))
+    def test_set_output_dir(self):
+        self.assertTrue(os.path.exists(self.imsim_cmpt.output_dir))
 
-    def testSetOutputImgDir(self):
-        self.assertTrue(os.path.exists(self.imsimCmpt.outputImgDir))
+    def test_set_output_img_dir(self):
+        self.assertTrue(os.path.exists(self.imsim_cmpt.output_img_dir))
 
-    def testVerifyPointerFileRaisesError(self):
-        requiredKeys = ["input", "gal", "image", "psf", "stamp", "output"]
-        pointerWithoutInput = {key: "" for key in requiredKeys[1:]}
+    def test_verify_pointer_file_raises_error(self):
+        required_keys = ["input", "gal", "image", "psf", "stamp", "output"]
+        pointer_without_input = {key: "" for key in required_keys[1:]}
         with self.assertRaises(ValueError) as context:
-            self.imsimCmpt._verifyPointerFile(pointerWithoutInput, requiredKeys)
+            self.imsim_cmpt._verify_pointer_file(pointer_without_input, required_keys)
         self.assertEqual(
             str(context.exception), "Config pointer file missing filepath for input."
         )
 
-    def testAssembleConfig(self):
-        fullConfigYaml = self.imsimCmpt.assembleConfigYaml(
-            self.obsMetadataTest, self.configPointerDefaultLsstCam, "lsst"
+    def test_assemble_config(self):
+        full_config_yaml = self.imsim_cmpt.assemble_config_yaml(
+            self.obs_metadata_test, self.config_pointer_default_lsst_cam, "lsst"
         )
-        self.fullTestYaml["output"]["dir"] = self.imsimCmpt.outputImgDir
-        self.assertDictEqual(fullConfigYaml, self.fullTestYaml)
+        self.full_test_yaml["output"]["dir"] = self.imsim_cmpt.output_img_dir
+        self.assertDictEqual(full_config_yaml, self.full_test_yaml)
 
-    def testConvertObsMetadataToText(self):
-        obsVariablesText = self.imsimCmpt.convertObsMetadataToText(self.obsMetadataTest)
+    def test_convert_obs_metadata_to_text(self):
+        obs_variables_text = self.imsim_cmpt.convert_obs_metadata_to_text(
+            self.obs_metadata_test
+        )
         with open(
-            os.path.join(getConfigDir(), "obsVariablesDefault.yaml"), "r"
+            os.path.join(get_config_dir(), "obsVariablesDefault.yaml"), "r"
         ) as file:
-            defaultVars = yaml.safe_load(file)
-        self.assertDictEqual(yaml.safe_load(obsVariablesText), defaultVars)
+            default_vars = yaml.safe_load(file)
+        self.assertDictEqual(yaml.safe_load(obs_variables_text), default_vars)
 
-    def testFormatOpdTextLsstCam(self):
-        opdText = self.imsimCmpt.formatOpdText(self.obsMetadataTest, "lsst")
-        self.assertTrue(opdText.startswith("  opd:"))
+    def test_format_opd_text_lsst_cam(self):
+        opd_text = self.imsim_cmpt.format_opd_text(self.obs_metadata_test, "lsst")
+        self.assertTrue(opd_text.startswith("  opd:"))
         self.assertTrue(
-            opdText.endswith(
+            opd_text.endswith(
                 "- {thx: -1.1902777777777778 deg, thy: 1.1902777777777778 deg}\n"
             )
         )
 
-    def testAddConfigHeader(self):
-        obsInfoText = self.imsimCmpt.convertObsMetadataToText(self.obsMetadataTest)
-        headerText = self.imsimCmpt.addConfigHeader(self.obsMetadataTest)
-        headerYaml = yaml.safe_load(str(obsInfoText + "\n" + "output:\n" + headerText))
-        for key in list(headerYaml["output"]["header"].keys()):
+    def test_add_config_header(self):
+        obs_info_text = self.imsim_cmpt.convert_obs_metadata_to_text(
+            self.obs_metadata_test
+        )
+        header_text = self.imsim_cmpt.add_config_header(self.obs_metadata_test)
+        header_yaml = yaml.safe_load(
+            str(obs_info_text + "\n" + "output:\n" + header_text)
+        )
+        for key in list(header_yaml["output"]["header"].keys()):
             self.assertEqual(
-                headerYaml["output"]["header"][key],
-                self.fullTestYaml["output"]["header"][key],
+                header_yaml["output"]["header"][key],
+                self.full_test_yaml["output"]["header"][key],
             )
 
-    def testGenInstanceCatalog(self):
-        self.skySim.addStarByFile(
-            os.path.join(getModulePath(), "tests", "testData", "sky", "wfsSglStar.txt")
+    def test_gen_instance_catalog(self):
+        self.sky_sim.add_star_by_file(
+            os.path.join(
+                get_module_path(), "tests", "testData", "sky", "wfsSglStar.txt"
+            )
         )
-        instCat = self.imsimCmpt.genInstanceCatalog(self.skySim)
-        expectedCat = "object  0\t 1.196000\t 1.176000 17.000000 "
-        expectedCat += (
+        inst_cat = self.imsim_cmpt.gen_instance_catalog(self.sky_sim)
+        expected_cat = "object  0\t 1.196000\t 1.176000 17.000000 "
+        expected_cat += (
             "flatSED/sed_flat.txt.gz 0.0 0.0 0.0 0.0 0.0 0.0 point none none \n"
         )
-        self.assertEqual(instCat, expectedCat)
+        self.assertEqual(inst_cat, expected_cat)
 
-    def testGenInstCatStars(self):
-        self.skySim.addStarByFile(
-            os.path.join(getModulePath(), "tests", "testData", "sky", "wfsSglStar.txt")
+    def test_gen_inst_cat_stars(self):
+        self.sky_sim.add_star_by_file(
+            os.path.join(
+                get_module_path(), "tests", "testData", "sky", "wfsSglStar.txt"
+            )
         )
-        instCat = self.imsimCmpt.genInstCatStars(self.skySim)
-        expectedCat = "object  0\t 1.196000\t 1.176000 17.000000 "
-        expectedCat += (
+        inst_cat = self.imsim_cmpt.gen_inst_cat_stars(self.sky_sim)
+        expected_cat = "object  0\t 1.196000\t 1.176000 17.000000 "
+        expected_cat += (
             "flatSED/sed_flat.txt.gz 0.0 0.0 0.0 0.0 0.0 0.0 point none none \n"
         )
-        self.assertEqual(instCat, expectedCat)
+        self.assertEqual(inst_cat, expected_cat)
 
-    def testGenerateStar(self):
-        starId = 0
+    def test_generate_star(self):
+        star_id = 0
         ra = 1.0
         dec = 1.0
-        magNorm = 2.0
-        sedName = "flat.txt"
-        content = self.imsimCmpt.generateStar(starId, ra, dec, magNorm, sedName)
-        ansContent = "object  0\t 1.000000\t 1.000000  2.000000 "
-        ansContent += "flat.txt 0.0 0.0 0.0 0.0 0.0 0.0 point "
-        ansContent += "none none \n"
-        self.assertEqual(content, ansContent)
+        mag_norm = 2.0
+        sed_name = "flat.txt"
+        content = self.imsim_cmpt.generate_star(star_id, ra, dec, mag_norm, sed_name)
+        ans_content = "object  0\t 1.000000\t 1.000000  2.000000 "
+        ans_content += "flat.txt 0.0 0.0 0.0 0.0 0.0 0.0 point "
+        ans_content += "none none \n"
+        self.assertEqual(content, ans_content)
 
-    def testAnalyzeOpdData(self):
-        self._analyzeLsstCamOpdData()
+    def test_analyze_opd_data(self):
+        self._analyze_lsst_cam_opd_data()
 
-        zkFilePath = os.path.join(self.outputImgDir, self.zkFileName)
-        pssnFilePath = os.path.join(self.outputImgDir, self.pssnFileName)
-        self.assertTrue(os.path.exists(zkFilePath))
-        self.assertTrue(os.path.exists(pssnFilePath))
+        zk_file_path = os.path.join(self.output_img_dir, self.zk_file_name)
+        pssn_file_path = os.path.join(self.output_img_dir, self.pssn_file_name)
+        self.assertTrue(os.path.exists(zk_file_path))
+        self.assertTrue(os.path.exists(pssn_file_path))
 
-        zk = getZkFromFile(zkFilePath)
-        ansZkFilePath = os.path.join(self._getOpdFileDirOfLsstCam(), "opd.zer")
-        ansZk = getZkFromFile(ansZkFilePath)
+        zk = get_zk_from_file(zk_file_path)
+        ans_zk_file_path = os.path.join(self._get_opd_file_dir_of_lsst_cam(), "opd.zer")
+        ans_zk = get_zk_from_file(ans_zk_file_path)
 
         for det in [191, 195, 199, 203]:
-            delta = np.sum(np.abs(zk[det] - ansZk[det]))
+            delta = np.sum(np.abs(zk[det] - ans_zk[det]))
             self.assertLess(delta, 1e-10)
 
-        pssnData = np.loadtxt(pssnFilePath)
-        pssn = pssnData[0, :]
-        ansPssnFilePath = os.path.join(self._getOpdFileDirOfLsstCam(), "PSSN.txt")
-        ansPssnData = np.loadtxt(ansPssnFilePath)
-        ansPssn = ansPssnData[0, :]
+        pssn_data = np.loadtxt(pssn_file_path)
+        pssn = pssn_data[0, :]
+        ans_pssn_file_path = os.path.join(
+            self._get_opd_file_dir_of_lsst_cam(), "PSSN.txt"
+        )
+        ans_pssn_data = np.loadtxt(ans_pssn_file_path)
+        ans_pssn = ans_pssn_data[0, :]
 
-        delta = np.sum(np.abs(pssn - ansPssn))
+        delta = np.sum(np.abs(pssn - ans_pssn))
         self.assertLess(delta, 1e-10)
 
-    def testRotateOpdData(self):
+    def test_rotate_opd_data(self):
         """Test the rotation of OPD data."""
         rotation_angle = 20.0
-        numOpd = 4
+        num_opd = 4
 
-        zerinkes_rotation_0 = self.imsimCmpt._mapOpdToZk(
-            rotOpdInDeg=0.0,
-            numOpd=numOpd,
-        )*1e-3
+        zerinkes_rotation_0 = (
+            self.imsim_cmpt._map_opd_to_zk(
+                rot_opd_in_deg=0.0,
+                num_opd=num_opd,
+            )
+            * 1e-3
+        )
 
-        zerinkes_rotation_20 = self.imsimCmpt._mapOpdToZk(
-            rotOpdInDeg=rotation_angle,
-            numOpd=numOpd,
-        )*1e-3
+        zerinkes_rotation_20 = (
+            self.imsim_cmpt._map_opd_to_zk(
+                rot_opd_in_deg=rotation_angle,
+                num_opd=num_opd,
+            )
+            * 1e-3
+        )
 
-        for idx in range(numOpd):
+        for idx in range(num_opd):
             padded_zernikes = np.pad(zerinkes_rotation_20[idx, :], (4, 0))
 
             galsim_zernikes = galsim.zernike.Zernike(
                 padded_zernikes,
-                R_outer=4.18, # Outer radius obscuration
-                R_inner=2.558, # Inner radius obscuration
+                R_outer=4.18,  # Outer radius obscuration
+                R_inner=2.558,  # Inner radius obscuration
             )
 
-            np.testing.assert_almost_equal(galsim_zernikes.rotate(np.deg2rad(-rotation_angle)).coef[4:], zerinkes_rotation_0[idx, :], decimal = 1)
+            np.testing.assert_almost_equal(
+                galsim_zernikes.rotate(np.deg2rad(-rotation_angle)).coef[4:],
+                zerinkes_rotation_0[idx, :],
+                decimal=1,
+            )
 
-    def _analyzeLsstCamOpdData(self, rotOpdInDeg=0.0):
+    def _analyze_lsst_cam_opd_data(self, rot_opd_in_deg=0.0):
         shutil.copy(
-            os.path.join(self._getOpdFileDirOfLsstCam(), "opd.fits"),
-            self.imsimCmpt.outputImgDir,
+            os.path.join(self._get_opd_file_dir_of_lsst_cam(), "opd.fits"),
+            self.imsim_cmpt.output_img_dir,
         )
-        self.imsimCmpt.analyzeOpdData(
+        self.imsim_cmpt.analyze_opd_data(
             "lsst",
-            zkFileName=self.zkFileName,
-            rotOpdInDeg=rotOpdInDeg,
-            pssnFileName=self.pssnFileName,
+            zk_file_name=self.zk_file_name,
+            rot_opd_in_deg=rot_opd_in_deg,
+            pssn_file_name=self.pssn_file_name,
         )
 
-    def _getOpdFileDirOfLsstCam(self):
-        opdFileDir = os.path.join(getModulePath(), "tests", "testData", "opd")
+    def _get_opd_file_dir_of_lsst_cam(self):
+        opd_file_dir = os.path.join(get_module_path(), "tests", "testData", "opd")
 
-        return opdFileDir
+        return opd_file_dir
 
-    def testGetOpdGqEffFwhmFromFile(self):
-        self._analyzeLsstCamOpdData()
+    def test_get_opd_gq_eff_fwhm_from_file(self):
+        self._analyze_lsst_cam_opd_data()
 
-        gqEffFwhm = self.imsimCmpt.getOpdGqEffFwhmFromFile(self.pssnFileName)
-        ansPssnFilePath = os.path.join(self._getOpdFileDirOfLsstCam(), "PSSN.txt")
-        ansPssnData = np.loadtxt(ansPssnFilePath)
-        ansGqEffFwhm = ansPssnData[1, -1]
-        self.assertAlmostEqual(gqEffFwhm, ansGqEffFwhm, places=3)
+        gq_eff_fwhm = self.imsim_cmpt.get_opd_gq_eff_fwhm_from_file(self.pssn_file_name)
+        ans_pssn_file_path = os.path.join(
+            self._get_opd_file_dir_of_lsst_cam(), "PSSN.txt"
+        )
+        ans_pssn_data = np.loadtxt(ans_pssn_file_path)
+        ans_gq_eff_fwhm = ans_pssn_data[1, -1]
+        self.assertAlmostEqual(gq_eff_fwhm, ans_gq_eff_fwhm, places=3)
 
-    def _getRefSensorNameList(self):
-        refSensorNameList = [
+    def _get_ref_sensor_name_list(self):
+        ref_sensor_name_list = [
             "R00_SW0",
             "R44_SW0",
             "R04_SW0",
             "R40_SW0",
         ]
 
-        return refSensorNameList
+        return ref_sensor_name_list
 
-    def testMapOpdDataToListOfWfErr(self):
-        self._analyzeLsstCamOpdData()
+    def test_map_opd_data_to_list_of_wf_err(self):
+        self._analyze_lsst_cam_opd_data()
 
-        refSensorNameList = self._getRefSensorNameList()
-        mapSensorNameAndId = self._mapSensorNameAndId(refSensorNameList)
-        ansSensorIdList = list(mapSensorNameAndId.values())
+        ref_sensor_name_list = self._get_ref_sensor_name_list()
+        map_sensor_name_and_id = self._map_sensor_name_and_id(ref_sensor_name_list)
+        ans_sensor_id_list = list(map_sensor_name_and_id.values())
 
-        listOfWfErr = self.imsimCmpt.mapOpdDataToListOfWfErr(
-            self.zkFileName, ansSensorIdList, refSensorNameList
+        list_of_wf_err = self.imsim_cmpt.map_opd_data_to_list_of_wf_err(
+            self.zk_file_name, ans_sensor_id_list, ref_sensor_name_list
         )
 
-        self.assertEqual(len(listOfWfErr), len(refSensorNameList))
+        self.assertEqual(len(list_of_wf_err), len(ref_sensor_name_list))
 
-        opdZk = getZkFromFile(
-            os.path.join(self.imsimCmpt.outputImgDir, self.zkFileName)
+        opd_zk = get_zk_from_file(
+            os.path.join(self.imsim_cmpt.output_img_dir, self.zk_file_name)
         )
-        mapSensorNameAndId = self._mapSensorNameAndId(refSensorNameList)
-        for wfErr, refSensorName in zip(listOfWfErr, refSensorNameList):
-            sensorId = wfErr.sensorId
-            sensorName = wfErr.sensorName
-            self.assertEqual(sensorName, refSensorName)
-            self.assertEqual(sensorId, mapSensorNameAndId[refSensorName])
+        map_sensor_name_and_id = self._map_sensor_name_and_id(ref_sensor_name_list)
+        for wf_err, ref_sensor_name in zip(list_of_wf_err, ref_sensor_name_list):
+            sensor_id = wf_err.sensor_id
+            sensor_name = wf_err.sensor_name
+            self.assertEqual(sensor_name, ref_sensor_name)
+            self.assertEqual(sensor_id, map_sensor_name_and_id[ref_sensor_name])
 
-            zkInWfErr = wfErr.annularZernikePoly
+            zk_in_wf_err = wf_err.annular_zernike_poly
             # imSim outputs OPD in nanometers so need to change to microns
             # to be consistent with what WEP expects.
-            delta = np.sum(np.abs(zkInWfErr - opdZk[sensorId] / 1e3))
+            delta = np.sum(np.abs(zk_in_wf_err - opd_zk[sensor_id] / 1e3))
             self.assertEqual(delta, 0)
 
-    def testGetListOfFwhmSensorData(self):
-        self._analyzeLsstCamOpdData()
-        refSensorNameList = self._getRefSensorNameList()
-        mapSensorNameAndId = self._mapSensorNameAndId(refSensorNameList)
-        ansSensorIdList = list(mapSensorNameAndId.values())
+    def test_get_list_of_fwhm_sensor_data(self):
+        self._analyze_lsst_cam_opd_data()
+        ref_sensor_name_list = self._get_ref_sensor_name_list()
+        map_sensor_name_and_id = self._map_sensor_name_and_id(ref_sensor_name_list)
+        ans_sensor_id_list = list(map_sensor_name_and_id.values())
 
         (
             sensor_data_fwhm,
             sensor_data_sensor_id,
-        ) = self.imsimCmpt.getListOfFwhmSensorData(self.pssnFileName, ansSensorIdList)
-        self.assertEqual(len(sensor_data_fwhm), len(ansSensorIdList))
+        ) = self.imsim_cmpt.get_list_of_fwhm_sensor_data(
+            self.pssn_file_name, ans_sensor_id_list
+        )
+        self.assertEqual(len(sensor_data_fwhm), len(ans_sensor_id_list))
 
-        ansData = self.imsimCmpt._getDataOfPssnFile(self.pssnFileName)
-        ansFwhmData = ansData[1, :-1]
+        ans_data = self.imsim_cmpt._get_data_of_pssn_file(self.pssn_file_name)
+        ans_fwhm_data = ans_data[1, :-1]
 
-        for data_fwhm, sensor_id, ansSensorId, ansFwhm in zip(
-            sensor_data_fwhm, sensor_data_sensor_id, ansSensorIdList, ansFwhmData
+        for data_fwhm, sensor_id, ans_sensor_id, ans_fwhm in zip(
+            sensor_data_fwhm, sensor_data_sensor_id, ans_sensor_id_list, ans_fwhm_data
         ):
-            self.assertEqual(sensor_id, ansSensorId)
-            self.assertEqual(data_fwhm, ansFwhm)
+            self.assertEqual(sensor_id, ans_sensor_id)
+            self.assertEqual(data_fwhm, ans_fwhm)
 
-    def testGetOpdPssnFromFile(self):
-        self._analyzeLsstCamOpdData()
+    def test_get_opd_pssn_from_file(self):
+        self._analyze_lsst_cam_opd_data()
 
         # The correctness of values have been tested at the test case of
         # testAnalyzeOpdData
-        pssn = self.imsimCmpt.getOpdPssnFromFile(self.pssnFileName)
+        pssn = self.imsim_cmpt.get_opd_pssn_from_file(self.pssn_file_name)
         self.assertEqual(len(pssn), 4)
 
-    def testReorderAndSaveWfErrFile(self):
-        listOfWfErr = self._prepareListOfWfErr()
+    def test_reorder_and_save_wf_err_file(self):
+        list_of_wf_err = self._prepare_list_of_wf_err()
 
-        refSensorNameList = self._getRefSensorNameList()
-        mapSensorNameAndId = self._mapSensorNameAndId(refSensorNameList)
-        sensorIdList = list(mapSensorNameAndId.values())
+        ref_sensor_name_list = self._get_ref_sensor_name_list()
+        map_sensor_name_and_id = self._map_sensor_name_and_id(ref_sensor_name_list)
+        sensor_id_list = list(map_sensor_name_and_id.values())
 
-        zkFileName = "testZk.zer"
-        camera = getCamera("lsst")
-        self.imsimCmpt.reorderAndSaveWfErrFile(
-            listOfWfErr, refSensorNameList, camera, zkFileName=zkFileName
+        zk_file_name = "testZk.zer"
+        camera = get_camera("lsst")
+        self.imsim_cmpt.reorder_and_save_wf_err_file(
+            list_of_wf_err, ref_sensor_name_list, camera, zk_file_name=zk_file_name
         )
 
-        zkFilePath = os.path.join(self.imsimCmpt.outputImgDir, zkFileName)
-        zkInFile = getZkFromFile(zkFilePath)
+        zk_file_path = os.path.join(self.imsim_cmpt.output_img_dir, zk_file_name)
+        zk_in_file = get_zk_from_file(zk_file_path)
 
-        numOfZk = self.imsimCmpt.numOfZk
-        self.assertEqual(len(zkInFile), len(refSensorNameList))
+        num_of_zk = self.imsim_cmpt.num_of_zk
+        self.assertEqual(len(zk_in_file), len(ref_sensor_name_list))
         self.assertEqual(
-            len(zkInFile[sensorIdList[0]]),
-            numOfZk,
+            len(zk_in_file[sensor_id_list[0]]),
+            num_of_zk,
         )
 
-        self.assertEqual(np.sum(zkInFile[191]), 0)
-        self.assertEqual(np.sum(zkInFile[203]), 0)
+        self.assertEqual(np.sum(zk_in_file[191]), 0)
+        self.assertEqual(np.sum(zk_in_file[203]), 0)
 
-        delta = np.sum(np.abs(zkInFile[195] - listOfWfErr[0].annularZernikePoly))
+        delta = np.sum(np.abs(zk_in_file[195] - list_of_wf_err[0].annular_zernike_poly))
         self.assertLess(delta, 1e-7)
 
-        delta = np.sum(np.abs(zkInFile[199] - listOfWfErr[1].annularZernikePoly))
+        delta = np.sum(np.abs(zk_in_file[199] - list_of_wf_err[1].annular_zernike_poly))
         self.assertLess(delta, 1e-7)
 
-    def _prepareListOfWfErr(self):
-        numOfZk = self.imsimCmpt.numOfZk
+    def _prepare_list_of_wf_err(self):
+        num_of_zk = self.imsim_cmpt.num_of_zk
 
-        sensorIdList = [195, 199]
-        listOfWfErr = []
-        for sensorId in sensorIdList:
-            sensorWavefrontData = SensorWavefrontError()
-            sensorWavefrontData.sensorId = sensorId
+        sensor_id_list = [195, 199]
+        list_of_wf_err = []
+        for sensor_id in sensor_id_list:
+            sensor_wavefront_data = SensorWavefrontError()
+            sensor_wavefront_data.sensor_id = sensor_id
 
-            wfErr = np.random.rand(numOfZk)
-            sensorWavefrontData.annularZernikePoly = wfErr
+            wf_err = np.random.rand(num_of_zk)
+            sensor_wavefront_data.annular_zernike_poly = wf_err
 
-            listOfWfErr.append(sensorWavefrontData)
+            list_of_wf_err.append(sensor_wavefront_data)
 
-        return listOfWfErr
+        return list_of_wf_err
 
-    def testSaveDofInUmFileForNextIter(self):
-        self.imsimCmpt.dofInUm = np.arange(50)
-        dofInUmFileName = "dofPertInNextIter.mat"
-        self.imsimCmpt.saveDofInUmFileForNextIter(dofInUmFileName=dofInUmFileName)
+    def test_save_dof_in_um_file_for_next_iter(self):
+        self.imsim_cmpt.dof_in_um = np.arange(50)
+        dof_in_um_file_name = "dofPertInNextIter.mat"
+        self.imsim_cmpt.save_dof_in_um_file_for_next_iter(
+            dof_in_um_file_name=dof_in_um_file_name
+        )
 
-        filePath = os.path.join(self.outputDir, dofInUmFileName)
+        filePath = os.path.join(self.output_dir, dof_in_um_file_name)
         self.assertTrue(os.path.exists(filePath))
 
         data = np.loadtxt(filePath)
-        delta = np.sum(np.abs(self.imsimCmpt.dofInUm - data))
+        delta = np.sum(np.abs(self.imsim_cmpt.dof_in_um - data))
         self.assertEqual(delta, 0)

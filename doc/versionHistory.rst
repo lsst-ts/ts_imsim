@@ -7,6 +7,14 @@ Version History
 ##################
 
 -------------
+0.6.0
+-------------
+
+* Change from camelCase to snake_case.
+* Add typing.
+* Rename opdOnly to turn_off_wavefront_estimates.
+
+-------------
 0.5.4
 -------------
 
