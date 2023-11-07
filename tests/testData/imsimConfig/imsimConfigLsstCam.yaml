@@ -273,7 +273,6 @@ psf:
 
 stamp:
   draw_method: phot
-  rawSeeing: *rawSeeing
   photon_ops:
     -
       type: PupilAnnulusSampler
