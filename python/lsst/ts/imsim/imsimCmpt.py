@@ -47,8 +47,8 @@ class ImsimCmpt:
         generate full imsim configuration files.
         """
         # Output directories
-        self._outputDir = None
-        self._outputImgDir = None
+        self._output_dir = None
+        self._output_img_dir = None
 
         # OPD information
         self.opd_file_path = None
@@ -63,7 +63,7 @@ class ImsimCmpt:
 
     @property
     def output_dir(self) -> str:
-        return self._outputDir
+        return self._output_dir
 
     @output_dir.setter
     def output_dir(self, new_output_dir: str) -> None:
@@ -77,11 +77,11 @@ class ImsimCmpt:
             Path for output image directory.
         """
         make_dir(new_output_dir)
-        self._outputDir = new_output_dir
+        self._output_dir = new_output_dir
 
     @property
     def output_img_dir(self) -> str:
-        return self._outputImgDir
+        return self._output_img_dir
 
     @output_img_dir.setter
     def output_img_dir(self, new_output_img_dir: str) -> None:
@@ -95,7 +95,7 @@ class ImsimCmpt:
             Path for output image directory.
         """
         make_dir(new_output_img_dir)
-        self._outputImgDir = new_output_img_dir
+        self._output_img_dir = new_output_img_dir
 
     def _verify_pointer_file(
         self, file_pointer_info: dict, config_sections: list[str]

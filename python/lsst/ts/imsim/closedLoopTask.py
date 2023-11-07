@@ -599,7 +599,7 @@ class ClosedLoopTask:
                 field_idx=field_idx,
                 filter_name=obs_metadata.band.upper(),
                 gain=-1,
-                rotation_angle=-obs_metadata.rotator_angle,
+                rot=-obs_metadata.rotator_angle,
             )
 
             # Set the new aggregated DOF to phosimCmpt
@@ -1138,7 +1138,6 @@ tasks:
         if self.use_ccd_img:
             self.generate_butler(butler_root_path, inst_name)
             self.generate_ref_catalog(
-                inst_name=inst_name,
                 butler_root_path=butler_root_path,
                 path_sky_file=path_sky_file,
                 filter_type_name=filter_type_name,
@@ -1257,7 +1256,7 @@ config.dataset_config.ref_dataset_name='ref_cat'
         inst_name : str
             Instrument name.
         """
-        output_img_dir = self.imsimCmpt.outputImgDir
+        output_img_dir = self.imsim_cmpt.output_img_dir
         files = " ".join(glob(os.path.join(output_img_dir, "amp*")))
 
         if inst_name in ["lsst", "lsstfam"]:
