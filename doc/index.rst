@@ -19,6 +19,19 @@ Run the Rubin Observatory Active Optics System (AOS) in a closed loop with ImSim
 
 The badges above navigate to the GitHub repository for the ``ts_imsim`` code and Jenkins CI jobs.
 
+.. _User_Documentation:
+
+User Documentation
+==================
+
+Observatory operators and other interested parties should consult the user guide for insights into WEP operations.
+
+.. toctree::
+    user-guide/user-guide
+    :maxdepth: 1
+
+.. _Development_Documentation:
+
 Development Documentation
 =========================
 

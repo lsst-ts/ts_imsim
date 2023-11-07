@@ -1,5 +1,5 @@
 # ts_imsim
-Package to create Rubin AOS simulations with imsim
+Package to create Rubin AOS simulations with imSim
 
 ## Needed Packages
 
@@ -16,7 +16,7 @@ Package to create Rubin AOS simulations with imsim
 
 1. Install and Setup the WEP and OFC packages first.
 
-2. Setup the ImSim environment by `eups`:
+2. Setup the imSim environment by `eups`:
 
 ```bash
 cd $ts_imsim_directory
