@@ -1,7 +1,7 @@
 .. _Developer_Guide:
 
 ###################
-``ts_imsim`` Developer Guide
+Developer Guide
 ###################
 
 `ts_imsim` is a package designed to create Rubin Observatory Active Optics Sysytem (AOS) simulations using `imSim <https://github.com/LSSTDESC/imSim>`_.
@@ -46,7 +46,7 @@ This module contains utility functions that are used in main imsim module.
 * **metroTool**: OPD metrology related functions.
 * **plotUtil**: Functions to plot summary information on closed loop results.
 * **SensorWavefrontError**: Class to contain the wavefront errors for a single sensor.
-* **utility**: I/O utility functions and ModifiedEnvironment class to help with mac OS port.
+* **utility**: I/O utility functions and **ModifiedEnvironment** class to help with mac OS port.
 
 .. _ts_imsim_API:
 

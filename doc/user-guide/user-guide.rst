@@ -1,7 +1,7 @@
 .. _User_Guide:
 
 #####################
-`ts_imsim` User Guide
+User Guide
 #####################
 
 The `ts_imsim` closed loop is designed to run as an executable through the command line as `imgClosedLoop.py`.
@@ -32,11 +32,11 @@ Install ts_imsim
 
 3. Setup the imSim environment by `eups`:
 
-```bash
-cd $ts_imsim_directory
-setup -k -r .
-scons
-```
+.. code-block:: bash
+
+    cd $ts_imsim_directory
+    setup -k -r .
+    scons
 
 .. _Using ts_imsim:
 
@@ -50,7 +50,9 @@ The closed loop is available from the command line after running `scons` with th
 
 A sample command to run 5 iterations of the closed loop with the lsst wavefront sensors is:
 
-`imgClosedLoop.py --output cwfs_imsim_output/ --iter_num 5 --config_pointer_file ts_imsim/policy/config/lsstCamNoPertPointer.yaml --turn_off_atmosphere --turn_off_sky_background`
+.. code-block:: python
+
+    imgClosedLoop.py --output cwfs_imsim_output/ --iter_num 5 --config_pointer_file ts_imsim/policy/config/lsstCamNoPertPointer.yaml --turn_off_atmosphere --turn_off_sky_background
 
 where the following minimal set of command line options are used:
 
@@ -76,7 +78,7 @@ In the `policy/config` directory of `ts_imsim` there are folders for each of the
 * **input**: Models describing the telescope and atmosphere.
 * **opd**: Optional. Provides information needed to create an output file showing the optical path difference at chosen locations in the focal plane.
 * **output**: Define output files and image readout properties.
-* **psf**: Describe the psf model for the image.
+* **psf**: Describe the point spread function (PSF) model for the image.
 * **stamp**: Describe the construction of a stamp for a single object.
 
 Pointer Files
