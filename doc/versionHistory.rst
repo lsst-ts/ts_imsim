@@ -7,6 +7,12 @@ Version History
 ##################
 
 -------------
+0.6.2
+-------------
+
+* Change bending modes to legacy bending modes until ts_ofc is updated.
+
+-------------
 0.6.1
 -------------
 
