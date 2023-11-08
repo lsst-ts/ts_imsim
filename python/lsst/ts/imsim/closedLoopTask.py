@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+__all__ = ["ClosedLoopTask"]
+
 import logging
 import os
 import shutil
@@ -48,10 +50,9 @@ from lsst.ts.wep.utils import rotMatrix, runProgram
 
 
 class ClosedLoopTask:
+    """Initialization of the closed loop task class to
+    run the simulation with imSim."""
     def __init__(self) -> None:
-        """Initilization of the closed loop task class to
-        run the simulation with imSim."""
-
         self.log = logging.getLogger(type(self).__name__)
 
         # Sky simulator

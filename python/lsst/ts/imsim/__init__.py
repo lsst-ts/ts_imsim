@@ -19,23 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["ObsMetadata"]
-
-from dataclasses import dataclass
-
-
-@dataclass
-class ObsMetadata:
-    """Class for storing observation metadata."""
-
-    ra: float  # ra in degrees
-    dec: float  # dec in degrees
-    band: str
-    zenith: float = 0.0
-    rotator_angle: float = 0.0
-    exp_time: float = 30.0
-    mjd: float = 59580.0
-    seq_num: int = 1
-    raw_seeing: int = 0.5
-    obs_id: str = """$f"IM_P_{astropy.time.Time(mjd, format='mjd').strftime('%Y%m%d')}_{seqnum:06d}" """
-    focus_z: float = 0.0  # Defocal distance in mm
+from .closedLoopTask import *
+from .imsimCmpt import *
+from .obsMetadata import *
+from .opdMetrology import *
+from .skySim import *

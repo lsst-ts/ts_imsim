@@ -7,6 +7,12 @@ Version History
 ##################
 
 -------------
+0.6.1
+-------------
+
+* Add documentation with user and developer guides.
+
+-------------
 0.6.0
 -------------
 

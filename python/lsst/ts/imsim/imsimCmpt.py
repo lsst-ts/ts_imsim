@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+__all__ = ["ImsimCmpt"]
+
 import os
 from typing import Any
 
@@ -42,10 +44,10 @@ from scipy.ndimage import rotate
 
 
 class ImsimCmpt:
+    """Class to take configurations for each imsim component and
+    generate full imsim configuration files.
+    """
     def __init__(self) -> None:
-        """Class to take configurations for each imsim component and
-        generate full imsim configuration files.
-        """
         # Output directories
         self._output_dir = None
         self._output_img_dir = None

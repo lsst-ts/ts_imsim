@@ -1,0 +1,13 @@
+@startuml
+package "ts_ofc" #DDDDDD {
+  class OFCCalculation
+}
+
+CloseLoopTask o-- SkySim
+CloseLoopTask o-- OFCCalculation
+CloseLoopTask o-- ImsimCmpt
+CloseLoopTask o-- OpdMetrology
+CloseLoopTask *-- ObsMetadata
+ImsimCmpt *-- ObsMetadata
+ImsimCmpt o-- OpdMetrology
+@enduml
