@@ -58,6 +58,15 @@ class TestOpdMetrology(unittest.TestCase):
         wgt = self.metr.wt
         self.assertEqual(len(wgt), 189)
 
+    def test_set_wgt_and_field_xy_of_gq_com_cam(self):
+        self.metr.set_wgt_and_field_xy_of_gq("comcam")
+
+        field_x = self.metr.field_x
+        self.assertEqual(len(field_x), 9)
+
+        wgt = self.metr.wt
+        self.assertEqual(len(wgt), 9)
+
     def test_set_wgt_and_field_xy_of_gq_err(self):
         self.assertRaises(
             RuntimeError, self.metr.set_wgt_and_field_xy_of_gq, "NoThisInstName"

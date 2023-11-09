@@ -34,7 +34,7 @@ import os
 import numpy as np
 import yaml
 from lsst.afw import cameraGeom
-from lsst.obs.lsst import LsstCam
+from lsst.obs.lsst import LsstCam, LsstComCam
 from lsst.utils import getPackageDir
 from numpy import ndarray
 
@@ -95,9 +95,11 @@ def get_camera(inst_name: str) -> cameraGeom.Camera:
     # Check the input
     if (inst_name == "lsstfam") or (inst_name == "lsst"):
         return LsstCam().getCamera()
+    elif inst_name == "comcam":
+        return LsstComCam().getCamera()
     else:
         raise ValueError(
-            f"This instrument name ({inst_name}) is not supported. Must be 'lsstfam' or 'lsst'."
+            f"This instrument name ({inst_name}) is not supported. Must be 'lsstfam', 'lsst', or 'comcam'."
         )
 
 
