@@ -1019,6 +1019,7 @@ tasks:
         rot_cam_in_deg: float,
         boresight: list[float],
         mjd: float,
+        star_mag: float,
         base_output_dir: str,
         path_sky_file: str,
         do_erase_dir_content: bool,
@@ -1047,6 +1048,8 @@ tasks:
             Boresight [ra, dec] in degree.
         mjd : float
             MJD of the observation.
+        star_mag : float
+            Magnitude of stars if using default sky file.
         base_output_dir : str
             Base output directory.
         path_sky_file : str
@@ -1104,7 +1107,7 @@ tasks:
 
         # Configure the components
         self.config_sky_sim(
-            inst_name, obs_metadata, path_sky_file=path_sky_file, star_mag=15
+            inst_name, obs_metadata, path_sky_file=path_sky_file, star_mag=star_mag
         )
         self.config_ofc_calc(inst_name)
         self.imsim_cmpt = ImsimCmpt()
@@ -1390,6 +1393,13 @@ config.dataset_config.ref_dataset_name='ref_cat'
 
         parser.add_argument(
             "--mjd", type=float, default=59580, help="Starting MJD of observation."
+        )
+
+        parser.add_argument(
+            "--star_mag",
+            type=float,
+            default=15.0,
+            help="Magnitude of stars if using default sky_file. The default is 15.",
         )
 
         parser.add_argument(

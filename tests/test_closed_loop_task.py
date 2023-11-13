@@ -191,6 +191,7 @@ class TestclosedLoopTask(unittest.TestCase):
         self.assertEqual(args.raw_seeing, 0.5)
         self.assertFalse(args.turn_off_sky_background)
         self.assertFalse(args.turn_off_atmosphere)
+        self.assertEqual(args.star_mag, 15.0)
 
     def test_get_sensor_name_list_of_field_lsst_wfs(self):
         sensor_name_list = self.closed_loop_task.get_sensor_name_list_of_fields("lsst")

@@ -47,6 +47,7 @@ if __name__ == "__main__":
         args.rot_cam,
         args.boresight_deg,
         args.mjd,
+        args.star_mag,
         args.output,
         args.sky_file,
         args.clobber,
