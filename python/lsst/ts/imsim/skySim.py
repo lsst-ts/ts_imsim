@@ -30,6 +30,7 @@ from lsst.ts.imsim.utils import get_camera
 
 class SkySim:
     """Initialization of sky simulator class."""
+
     def __init__(self) -> None:
         # Star ID
         self.star_id = np.array([], dtype=int)
