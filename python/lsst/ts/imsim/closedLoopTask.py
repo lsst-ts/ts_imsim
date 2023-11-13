@@ -52,6 +52,7 @@ from lsst.ts.wep.utils import rotMatrix, runProgram
 class ClosedLoopTask:
     """Initialization of the closed loop task class to
     run the simulation with imSim."""
+
     def __init__(self) -> None:
         self.log = logging.getLogger(type(self).__name__)
 
@@ -556,9 +557,7 @@ class ClosedLoopTask:
             self.log.info("GQ effective FWHM is %.4f." % gq_eff_fwhm)
 
             # Set the FWHM data
-            fwhm, sensor_id = self.imsim_cmpt.get_list_of_fwhm_sensor_data(
-                opd_pssn_file_name, ref_sensor_id_list
-            )
+            fwhm = self.imsim_cmpt.get_list_of_fwhm_sensor_data(opd_pssn_file_name)
 
             self.imsim_cmpt.reorder_and_save_wf_err_file(
                 list_of_wf_err,
@@ -575,32 +574,16 @@ class ClosedLoopTask:
             sensor_names = np.array(
                 [sensor_wfe.sensor_name for sensor_wfe in list_of_wf_err]
             )
-            field_idx = np.array(
-                [
-                    self.ofc_calc.ofc_data.field_idx[sensor_name]
-                    for sensor_name in sensor_names
-                ]
-            )
 
-            fwhm_dict = {x: y for x, y in zip(sensor_id, fwhm)}
-            ofc_fwhm = np.array(
-                [fwhm_dict[sensor_wfe.sensor_id] for sensor_wfe in list_of_wf_err]
-            )
-
-            if cam_type == CamType.LsstCam:
-                # For the wavefront sensors the sensor ids
-                # are different than the corresponding field row
-                # index in the sensitivity matrix.
-                self.ofc_calc.set_fwhm_data(ofc_fwhm, field_idx)
-            else:
-                self.ofc_calc.set_fwhm_data(fwhm, sensor_id)
+            # Pass data to OFC
+            self.ofc_calc.set_fwhm_data(fwhm, sensor_names)
 
             self.ofc_calc.calculate_corrections(
                 wfe=wfe,
-                field_idx=field_idx,
+                sensor_names=sensor_names,
                 filter_name=obs_metadata.band.upper(),
                 gain=-1,
-                rot=-obs_metadata.rotator_angle,
+                rotation_angle=-obs_metadata.rotator_angle,
             )
 
             # Set the new aggregated DOF to phosimCmpt
@@ -1142,15 +1125,6 @@ tasks:
                 butler_root_path=butler_root_path,
                 path_sky_file=path_sky_file,
                 filter_type_name=filter_type_name,
-            )
-
-        if inst_name == "lsst":
-            # Append equal weights for CWFS fields to OFC data
-            # Assign equal normalized weights to each of the
-            # four corner wavefront sensor pairs.
-            self.ofc_calc.ofc_data.normalized_image_quality_weight = np.append(
-                self.ofc_calc.ofc_data.normalized_image_quality_weight,
-                [0.25, 0.25, 0.25, 0.25],
             )
 
         self._run_sim(

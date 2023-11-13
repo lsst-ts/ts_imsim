@@ -1,5 +1,4 @@
 stamp:
-  rawSeeing: *rawSeeing
   draw_method: phot
   photon_ops:
     -

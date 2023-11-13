@@ -37,6 +37,7 @@ class OpdMetrology:
 
     OPD: Optical path difference.
     """
+
     def __init__(self) -> None:
         self._wt = np.array([])
         self.field_x = np.array([])
@@ -140,13 +141,15 @@ class OpdMetrology:
             self.set_default_lsst_wfs_gq()
             return
 
-        instrument_path = getConfigDirOfc() / inst_name
+        weight_dir_path = getConfigDirOfc() / "image_quality_weights"
+        path_wgt_file = weight_dir_path / f"{inst_name}_weights.yaml"
 
-        if not instrument_path.exists():
-            raise RuntimeError(f"OFC instrument path does not exist: {instrument_path}")
+        if not path_wgt_file.exists():
+            raise RuntimeError(
+                f"OFC instrument weights path does not exist: {weight_dir_path}"
+            )
 
         # Set the weighting ratio
-        path_wgt_file = instrument_path / "imgQualWgt.yaml"
         with open(path_wgt_file, "r") as file:
             wgt = yaml.safe_load(file)
         wgt_values = np.array(list(wgt.values()), dtype=float)

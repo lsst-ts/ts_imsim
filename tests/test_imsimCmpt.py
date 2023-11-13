@@ -318,25 +318,15 @@ class TestImsimCmpt(unittest.TestCase):
 
     def test_get_list_of_fwhm_sensor_data(self):
         self._analyze_lsst_cam_opd_data()
-        ref_sensor_name_list = self._get_ref_sensor_name_list()
-        map_sensor_name_and_id = self._map_sensor_name_and_id(ref_sensor_name_list)
-        ans_sensor_id_list = list(map_sensor_name_and_id.values())
 
-        (
-            sensor_data_fwhm,
-            sensor_data_sensor_id,
-        ) = self.imsim_cmpt.get_list_of_fwhm_sensor_data(
-            self.pssn_file_name, ans_sensor_id_list
+        (sensor_data_fwhm) = self.imsim_cmpt.get_list_of_fwhm_sensor_data(
+            self.pssn_file_name
         )
-        self.assertEqual(len(sensor_data_fwhm), len(ans_sensor_id_list))
 
         ans_data = self.imsim_cmpt._get_data_of_pssn_file(self.pssn_file_name)
         ans_fwhm_data = ans_data[1, :-1]
 
-        for data_fwhm, sensor_id, ans_sensor_id, ans_fwhm in zip(
-            sensor_data_fwhm, sensor_data_sensor_id, ans_sensor_id_list, ans_fwhm_data
-        ):
-            self.assertEqual(sensor_id, ans_sensor_id)
+        for data_fwhm, ans_fwhm in zip(sensor_data_fwhm, ans_fwhm_data):
             self.assertEqual(data_fwhm, ans_fwhm)
 
     def test_get_opd_pssn_from_file(self):

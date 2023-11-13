@@ -47,6 +47,7 @@ class ImsimCmpt:
     """Class to take configurations for each imsim component and
     generate full imsim configuration files.
     """
+
     def __init__(self) -> None:
         # Output directories
         self._output_dir = None
@@ -784,7 +785,7 @@ class ImsimCmpt:
         return gq_eff_fwhm
 
     def get_list_of_fwhm_sensor_data(
-        self, pssn_file_name: str, sensor_id_list: list[int]
+        self, pssn_file_name: str
     ) -> tuple[np.ndarray, np.ndarray]:
         """Get the list of FWHM sensor data based on the OPD PSSN file.
 
@@ -805,8 +806,6 @@ class ImsimCmpt:
             Numpy array with fwhm data. This is a numpy array of arrays. The
             data type is `object` because each element may have different
             number of elements.
-        np.ndarray
-            Numpy array with sensor ids.
         """
 
         # Get the FWHM data from the PSSN file
@@ -815,13 +814,11 @@ class ImsimCmpt:
         data = self._get_data_of_pssn_file(pssn_file_name)
         fwhm_data = data[1, :-1]
 
-        sensor_id = np.array(sensor_id_list, dtype=int)
-
         fwhm_collection = np.array([], dtype=object)
         for fwhm in fwhm_data:
             fwhm_collection = np.append(fwhm_collection, fwhm)
 
-        return fwhm_collection, sensor_id
+        return fwhm_collection
 
     def get_opd_pssn_from_file(self, pssn_file_name: str) -> np.ndarray:
         """Get the OPD PSSN from file.

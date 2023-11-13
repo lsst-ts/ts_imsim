@@ -7,6 +7,14 @@ Version History
 ##################
 
 -------------
+0.6.3
+-------------
+
+* Remove rawSeeing from stamp configuration yaml.
+* Patching to fix compatibility with ts_ofc double Zernikes update.
+* Rotation in closed loop now available and converging.
+
+-------------
 0.6.2
 -------------
 
