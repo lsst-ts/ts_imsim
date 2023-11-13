@@ -52,6 +52,7 @@ from lsst.ts.wep.utils import rotMatrix, runProgram
 class ClosedLoopTask:
     """Initialization of the closed loop task class to
     run the simulation with imSim."""
+
     def __init__(self) -> None:
         self.log = logging.getLogger(type(self).__name__)
 
@@ -556,9 +557,7 @@ class ClosedLoopTask:
             self.log.info("GQ effective FWHM is %.4f." % gq_eff_fwhm)
 
             # Set the FWHM data
-            fwhm, sensor_id = self.imsim_cmpt.get_list_of_fwhm_sensor_data(
-                opd_pssn_file_name, ref_sensor_id_list
-            )
+            fwhm = self.imsim_cmpt.get_list_of_fwhm_sensor_data(opd_pssn_file_name)
 
             self.imsim_cmpt.reorder_and_save_wf_err_file(
                 list_of_wf_err,
@@ -576,13 +575,8 @@ class ClosedLoopTask:
                 [sensor_wfe.sensor_name for sensor_wfe in list_of_wf_err]
             )
 
-            # Use the OFC estimates for the wavefront sensors simulated
-            fwhm_dict = {x: y for x, y in zip(sensor_id, fwhm)}
-            ofc_fwhm = np.array(
-                [fwhm_dict[sensor_wfe.sensor_id] for sensor_wfe in list_of_wf_err]
-            )
-
-            self.ofc_calc.set_fwhm_data(ofc_fwhm, sensor_names)
+            # Pass data to OFC
+            self.ofc_calc.set_fwhm_data(fwhm, sensor_names)
 
             self.ofc_calc.calculate_corrections(
                 wfe=wfe,
