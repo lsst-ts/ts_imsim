@@ -24,7 +24,7 @@
 import argparse
 import logging
 
-from lsst.ts.imsim.closedLoopTask import ClosedLoopTask
+from lsst.ts.imsim.closed_loop_task import ClosedLoopTask
 
 if __name__ == "__main__":
     # Set the parser

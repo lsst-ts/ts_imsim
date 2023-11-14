@@ -26,7 +26,7 @@ import lsst.obs.lsst as obs_lsst
 import numpy as np
 from astropy.io import fits
 from lsst.afw.cameraGeom import FIELD_ANGLE
-from lsst.ts.imsim.opdMetrology import OpdMetrology
+from lsst.ts.imsim import OpdMetrology
 from lsst.ts.imsim.utils.utility import get_module_path, get_zk_from_file
 
 

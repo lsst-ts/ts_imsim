@@ -24,7 +24,7 @@ __all__ = ["SkySim"]
 import astropy
 import numpy as np
 from astroplan import Observer
-from lsst.ts.imsim.obsMetadata import ObsMetadata
+from lsst.ts.imsim.obs_metadata import ObsMetadata
 from lsst.ts.imsim.utils import get_camera
 
 

@@ -24,7 +24,7 @@ import unittest
 
 from lsst.afw import cameraGeom
 from lsst.obs.lsst import LsstCam
-from lsst.ts.imsim.utils.utility import (
+from lsst.ts.imsim.utils import (
     ModifiedEnvironment,
     get_camera,
     get_config_dir,

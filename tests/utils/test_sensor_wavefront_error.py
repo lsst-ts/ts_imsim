@@ -22,7 +22,7 @@
 import unittest
 
 import numpy as np
-from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
+from lsst.ts.imsim.utils import SensorWavefrontError
 
 
 class TestSensorWavefrontError(unittest.TestCase):

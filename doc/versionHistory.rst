@@ -7,10 +7,12 @@ Version History
 ##################
 
 -------------
-0.6.4
+0.7.0
 -------------
 
 * Add T&S pre-commit settings to ts_imsim.
+* Change file names to snake_case.
+* Move imgClosedLoop to img_closed_loop.
 
 -------------
 0.6.3

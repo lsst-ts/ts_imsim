@@ -32,10 +32,10 @@ import astropy
 import numpy as np
 from lsst.afw.cameraGeom import FIELD_ANGLE, DetectorType
 from lsst.daf import butler as dafButler
-from lsst.ts.imsim.imsimCmpt import ImsimCmpt
-from lsst.ts.imsim.obsMetadata import ObsMetadata
-from lsst.ts.imsim.opdMetrology import OpdMetrology
-from lsst.ts.imsim.skySim import SkySim
+from lsst.ts.imsim.imsim_cmpt import ImsimCmpt
+from lsst.ts.imsim.obs_metadata import ObsMetadata
+from lsst.ts.imsim.opd_metrology import OpdMetrology
+from lsst.ts.imsim.sky_sim import SkySim
 from lsst.ts.imsim.utils import (
     SensorWavefrontError,
     get_camera,

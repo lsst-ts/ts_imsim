@@ -28,9 +28,9 @@ import numpy as np
 import yaml
 from astropy.io import fits
 from lsst.afw import cameraGeom
-from lsst.ts.imsim.obsMetadata import ObsMetadata
-from lsst.ts.imsim.opdMetrology import OpdMetrology
-from lsst.ts.imsim.skySim import SkySim
+from lsst.ts.imsim.obs_metadata import ObsMetadata
+from lsst.ts.imsim.opd_metrology import OpdMetrology
+from lsst.ts.imsim.sky_sim import SkySim
 from lsst.ts.imsim.utils import (
     ModifiedEnvironment,
     SensorWavefrontError,

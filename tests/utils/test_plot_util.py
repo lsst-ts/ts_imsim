@@ -22,8 +22,7 @@
 import os
 import unittest
 
-from lsst.ts.imsim.utils.plotUtil import plot_fwhm_of_iters
-from lsst.ts.imsim.utils.utility import get_module_path
+from lsst.ts.imsim.utils import get_module_path, plot_fwhm_of_iters
 
 
 class TestPlotUtil(unittest.TestCase):

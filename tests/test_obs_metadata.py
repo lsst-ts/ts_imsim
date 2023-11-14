@@ -21,7 +21,7 @@
 
 import unittest
 
-from lsst.ts.imsim.obsMetadata import ObsMetadata
+from lsst.ts.imsim import ObsMetadata
 
 
 class TestObsMetadata(unittest.TestCase):

@@ -19,8 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .closedLoopTask import *
-from .imsimCmpt import *
-from .obsMetadata import *
-from .opdMetrology import *
-from .skySim import *
+from .closed_loop_task import *
+from .imsim_cmpt import *
+from .obs_metadata import *
+from .opd_metrology import *
+from .sky_sim import *

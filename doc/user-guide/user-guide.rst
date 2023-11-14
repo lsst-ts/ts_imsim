@@ -4,7 +4,7 @@
 User Guide
 #####################
 
-The `ts_imsim` closed loop is designed to run as an executable through the command line as `imgClosedLoop.py`.
+The `ts_imsim` closed loop is designed to run as an executable through the command line as `img_closed_loop.py`.
 
 .. _Installing_ts_imsim:
 
@@ -46,13 +46,13 @@ Using `ts_imsim`
 Running the AOS Closed Loop
 ---------------------------
 
-The closed loop is available from the command line after running `scons` with the command `imgClosedLoop.py`.
+The closed loop is available from the command line after running `scons` with the command `img_closed_loop.py`.
 
 A sample command to run 5 iterations of the closed loop with the lsst wavefront sensors is:
 
 .. code-block:: python
 
-    imgClosedLoop.py --output cwfs_imsim_output/ --iter_num 5 --config_pointer_file ts_imsim/policy/config/lsstCamNoPertPointer.yaml --turn_off_atmosphere --turn_off_sky_background
+    img_closed_loop.py --output cwfs_imsim_output/ --iter_num 5 --config_pointer_file ts_imsim/policy/config/lsstCamNoPertPointer.yaml --turn_off_atmosphere --turn_off_sky_background
 
 where the following minimal set of command line options are used:
 
