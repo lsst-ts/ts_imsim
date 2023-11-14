@@ -5,18 +5,18 @@ This configuration only affects single-package Sphinx documentation builds.
 
 import os
 
-import lsst.ts.imsim
-from documenteer.conf.pipelinespkg import *
+import lsst.ts.imsim  # noqa
+from documenteer.conf.pipelinespkg import *  # noqa
 
 project = "ts_imsim"
-html_theme_options["logotext"] = project
+html_theme_options["logotext"] = project  # noqa
 html_title = project
 html_short_title = project
 doxylink = {}
 
 
 # Support the sphinx extension of plantuml
-extensions.append("sphinxcontrib.plantuml")
+extensions.append("sphinxcontrib.plantuml")  # noqa
 
 # Put the path to plantuml.jar
 plantuml_path = (

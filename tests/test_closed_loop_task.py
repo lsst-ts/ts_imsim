@@ -24,8 +24,7 @@ import os
 import tempfile
 import unittest
 
-from lsst.ts.imsim.closedLoopTask import ClosedLoopTask
-from lsst.ts.imsim.obsMetadata import ObsMetadata
+from lsst.ts.imsim import ClosedLoopTask, ObsMetadata
 from lsst.ts.imsim.utils.utility import get_module_path
 from lsst.ts.wep.utils import CamType, FilterType
 

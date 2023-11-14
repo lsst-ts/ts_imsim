@@ -26,11 +26,9 @@ import unittest
 import galsim
 import numpy as np
 import yaml
-from lsst.ts.imsim.imsimCmpt import ImsimCmpt
-from lsst.ts.imsim.obsMetadata import ObsMetadata
-from lsst.ts.imsim.skySim import SkySim
-from lsst.ts.imsim.utils.sensorWavefrontError import SensorWavefrontError
-from lsst.ts.imsim.utils.utility import (
+from lsst.ts.imsim import ImsimCmpt, ObsMetadata, SkySim
+from lsst.ts.imsim.utils import (
+    SensorWavefrontError,
     get_camera,
     get_config_dir,
     get_module_path,

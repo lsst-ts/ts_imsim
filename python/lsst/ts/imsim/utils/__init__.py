@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .metroTool import *
-from .plotUtil import *
-from .sensorWavefrontError import *
+from .metro_tool import *
+from .plot_util import *
+from .sensor_wavefront_error import *
 from .utility import *

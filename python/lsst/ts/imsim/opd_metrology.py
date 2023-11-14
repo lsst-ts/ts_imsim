@@ -21,8 +21,6 @@
 
 __all__ = ["OpdMetrology"]
 
-import os
-
 import numpy as np
 import yaml
 from astropy.io import fits

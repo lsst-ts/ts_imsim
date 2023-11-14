@@ -24,12 +24,13 @@ __all__ = ["SkySim"]
 import astropy
 import numpy as np
 from astroplan import Observer
-from lsst.ts.imsim.obsMetadata import ObsMetadata
+from lsst.ts.imsim.obs_metadata import ObsMetadata
 from lsst.ts.imsim.utils import get_camera
 
 
 class SkySim:
     """Initialization of sky simulator class."""
+
     def __init__(self) -> None:
         # Star ID
         self.star_id = np.array([], dtype=int)

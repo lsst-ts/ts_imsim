@@ -28,9 +28,9 @@ import numpy as np
 import yaml
 from astropy.io import fits
 from lsst.afw import cameraGeom
-from lsst.ts.imsim.obsMetadata import ObsMetadata
-from lsst.ts.imsim.opdMetrology import OpdMetrology
-from lsst.ts.imsim.skySim import SkySim
+from lsst.ts.imsim.obs_metadata import ObsMetadata
+from lsst.ts.imsim.opd_metrology import OpdMetrology
+from lsst.ts.imsim.sky_sim import SkySim
 from lsst.ts.imsim.utils import (
     ModifiedEnvironment,
     SensorWavefrontError,
@@ -288,12 +288,12 @@ class ImsimCmpt:
             Header information for ImSim config
         """
         header_text = "  header:\n"
-        header_text += f"    mjd: *mjd\n"
+        header_text += "    mjd: *mjd\n"
         header_text += (
             f"    observationStartMJD: {obs_metadata.mjd - (15/(60*60*24))}\n"
         )
-        header_text += f"    seqnum: *seqnum\n"
-        header_text += f"    band: *band\n"
+        header_text += "    seqnum: *seqnum\n"
+        header_text += "    band: *band\n"
         header_text += f"    fieldRA: {obs_metadata.ra}\n"
         header_text += f"    fieldDec: {obs_metadata.dec}\n"
         header_text += f"    rotTelPos: {obs_metadata.rotator_angle}\n"
@@ -605,8 +605,8 @@ class ImsimCmpt:
                 opd_rot = opd.copy()
                 # Since to rotate the opd we need to substitue the nan values
                 # for zeros, we need to find the minimum value of the opd
-                # excluding the nan values. Then after the rotation we will discard
-                # the values that are smaller than the minimum value.
+                # excluding the nan values. Then after the rotation we will
+                # discard the values that are smaller than the minimum value.
                 # Note that we use order = 0 to avoid interpolation errors.
                 min_value = np.nanmin(np.abs(opd_rot))
                 opd_rot[np.isnan(opd_rot)] = 0.0
