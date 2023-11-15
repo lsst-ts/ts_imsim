@@ -22,9 +22,7 @@
 import os
 import unittest
 
-from astroplan import FixedTarget, Observer
-from astropy.time import Time
-from lsst.ts.imsim import ObsMetadata, SkySim
+from lsst.ts.imsim import SkySim
 from lsst.ts.imsim.utils.utility import get_module_path
 
 
@@ -35,18 +33,6 @@ class TestSkySim(unittest.TestCase):
     def test_set_camera(self):
         self.sky_sim.set_camera("lsstfam")
         self.assertEqual(self.sky_sim._camera.getName(), "LSSTCam")
-
-    def test_calc_parallactic_angle(self):
-        sirius = FixedTarget.from_name("sirius")
-        t = Time(60000, format="mjd")
-        obs_metadata = ObsMetadata(
-            ra=sirius.ra.deg, dec=sirius.dec.deg, band="r", mjd=60000
-        )
-        rubin = Observer.at_site("cerro pachon")
-        self.assertEqual(
-            self.sky_sim.calc_parallactic_angle(obs_metadata),
-            rubin.parallactic_angle(t, sirius).deg,
-        )
 
     def test_add_star_by_ra_dec_in_deg(self):
         self.sky_sim.add_star_by_ra_dec_in_deg(1, 2, 3, 4)

@@ -31,7 +31,7 @@ eval_variables:
   # Zenith angle of the boresight.  Note that we don't attempt to set this self consistently
   # based on boresight+MJD; that's up to the user.  You can see down below which computations
   # explicitly depend on the zenith angle.
-  azenith: &zenith 0.0 deg
+  azenith: &zenith 41.407655 deg
   # Camera rotator angle.  AKA RotTelPos
   artp: &rtp 0.0 deg
 
@@ -296,7 +296,7 @@ output:
   # nfiles: 197  # WFS + all science
 
   header:
-    airmass: 1.0
+    airmass: 1.333293
     band: r
     fieldDec: 0.0
     fieldRA: 0.0

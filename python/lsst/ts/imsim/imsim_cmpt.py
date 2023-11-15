@@ -230,7 +230,7 @@ class ImsimCmpt:
         obs_variables_text += f"    ra: &ra {obs_metadata.ra} deg\n"
         obs_variables_text += f"    dec: &dec {obs_metadata.dec} deg\n"
         obs_variables_text += f"  sband: &band {obs_metadata.band}\n"
-        obs_variables_text += f"  azenith: &zenith {obs_metadata.zenith} deg\n"
+        obs_variables_text += f"  azenith: &zenith {obs_metadata.zenith:.6f} deg\n"
         obs_variables_text += f"  artp: &rtp {obs_metadata.rotator_angle} deg\n"
         obs_variables_text += f"  fexptime: &exptime {obs_metadata.exp_time}\n"
         obs_variables_text += f"  fmjd: &mjd {obs_metadata.mjd}\n"
@@ -297,7 +297,9 @@ class ImsimCmpt:
         header_text += f"    fieldRA: {obs_metadata.ra}\n"
         header_text += f"    fieldDec: {obs_metadata.dec}\n"
         header_text += f"    rotTelPos: {obs_metadata.rotator_angle}\n"
-        header_text += f"    airmass: {1.0/np.cos(obs_metadata.zenith)}\n"
+        header_text += (
+            f"    airmass: {1.0/np.cos(np.radians(obs_metadata.zenith)):.6f}\n"
+        )
         header_text += f"    focusZ: {obs_metadata.focus_z}\n"
         header_text += f"    rawSeeing: {obs_metadata.raw_seeing}\n"
 

@@ -21,10 +21,7 @@
 
 __all__ = ["SkySim"]
 
-import astropy
 import numpy as np
-from astroplan import Observer
-from lsst.ts.imsim.obs_metadata import ObsMetadata
 from lsst.ts.imsim.utils import get_camera
 
 
@@ -57,28 +54,6 @@ class SkySim:
         """
 
         self._camera = get_camera(inst_name)
-
-    def calc_parallactic_angle(self, obs_metadata: ObsMetadata) -> float:
-        """Calculate the parallactic angle so we know the
-        sky rotation angle on alt-az mount for the observation.
-
-        Parameters
-        ----------
-        obs_metadata : lsst.ts.imsim.ObsMetadata
-            ObsMetadata dataclass object with observation information.
-
-        Returns
-        -------
-        float
-            Parallactic Angle in degrees.
-        """
-        time = astropy.time.Time(obs_metadata.mjd, format="mjd")
-        rubin = Observer.at_site("cerro pachon")
-        boresight = astropy.coordinates.SkyCoord(
-            f"{obs_metadata.ra}d", f"{obs_metadata.dec}d", frame="icrs"
-        )
-
-        return rubin.parallactic_angle(time, boresight).deg
 
     def add_star_by_ra_dec_in_deg(
         self,

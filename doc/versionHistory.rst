@@ -7,6 +7,13 @@ Version History
 ##################
 
 -------------
+0.8.1
+-------------
+
+* Add correct zenith angle into imsim configuration files.
+* Add parallactic angle and zenith angle calculation into obsMetadata.
+
+-------------
 0.8.0
 -------------
 

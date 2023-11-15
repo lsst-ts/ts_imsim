@@ -109,10 +109,7 @@ class ClosedLoopTask:
         self.sky_sim = SkySim()
         self.sky_sim.set_camera(inst_name)
         if path_sky_file == "":
-            par_angle = self.sky_sim.calc_parallactic_angle(obs_metadata)
-            self._set_sky_sim_based_on_opd_field_pos(
-                inst_name, obs_metadata, par_angle, star_mag
-            )
+            self._set_sky_sim_based_on_opd_field_pos(inst_name, obs_metadata, star_mag)
         else:
             abs_sky_file_path = os.path.abspath(path_sky_file)
             self.sky_sim.add_star_by_file(abs_sky_file_path)
@@ -121,7 +118,6 @@ class ClosedLoopTask:
         self,
         inst_name: str,
         obs_metadata: ObsMetadata,
-        par_angle: float,
         star_mag: float,
     ) -> None:
         """Set the sky simulator based on the OPD field positions.
@@ -134,8 +130,6 @@ class ClosedLoopTask:
             Instrument name.
         obs_metadata : lsst.ts.imsim.ObsMetadata object
             Observation metadata.
-        par_angle : float
-            Parallactic angle.
         star_mag : float
             Star magnitude. This is to pretend there are the stars at OPD field
             positions.
@@ -173,7 +167,9 @@ class ClosedLoopTask:
         # https://lsstc.slack.com/archives/CHXKSF3HC/p1651863987821319?thread_ts=1651863934.274719&cid=CHXKSF3HC
         # that shows photons farthest from Zenith on sky appear on "top"
         # of focal plane.
-        rotation = rotMatrix(obs_metadata.rotator_angle - par_angle + 180)
+        rotation = rotMatrix(
+            obs_metadata.rotator_angle - obs_metadata.parallactic_angle + 180
+        )
         for ra_in_deg, dec_in_deg in zip(ra_in_deg_arr, dec_in_deg_arr):
             # It is noted that the field position might be < 0. But it is
             # not the same case for ra (0 <= ra <= 360).
