@@ -17,7 +17,7 @@ eval_variables:
   # Zenith angle of the boresight.  Note that we don't attempt to set this self consistently
   # based on boresight+MJD; that's up to the user.  You can see down below which computations
   # explicitly depend on the zenith angle.
-  azenith: &zenith 0.0 deg
+  azenith: &zenith 41.407655 deg
   # Camera rotator angle.  AKA RotTelPos
   artp: &rtp 0.0 deg
 

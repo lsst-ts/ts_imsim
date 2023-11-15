@@ -21,25 +21,54 @@
 
 import unittest
 
+from astroplan import FixedTarget, Observer
+from astropy.time import Time
 from lsst.ts.imsim import ObsMetadata
 
 
 class TestObsMetadata(unittest.TestCase):
     """Test the ObsMetadata dataclass."""
 
+    def setUp(self) -> None:
+        self.obs_meta_test = ObsMetadata(ra=0.0, dec=0.0, band="r")
+
     def test_obs_metadata(self):
-        obs_meta_test = ObsMetadata(ra=0.0, dec=0.0, band="r")
-        self.assertEqual(obs_meta_test.ra, 0.0)
-        self.assertEqual(obs_meta_test.dec, 0.0)
-        self.assertEqual(obs_meta_test.band, "r")
-        self.assertEqual(obs_meta_test.zenith, 0.0)
-        self.assertEqual(obs_meta_test.rotator_angle, 0.0)
-        self.assertEqual(obs_meta_test.exp_time, 30.0)
-        self.assertEqual(obs_meta_test.raw_seeing, 0.5)
-        self.assertEqual(obs_meta_test.mjd, 59580.0)
-        self.assertEqual(obs_meta_test.seq_num, 1)
+        self.assertEqual(self.obs_meta_test.ra, 0.0)
+        self.assertEqual(self.obs_meta_test.dec, 0.0)
+        self.assertEqual(self.obs_meta_test.band, "r")
+        self.assertAlmostEqual(self.obs_meta_test.zenith, 41.407655076)
+        self.assertEqual(self.obs_meta_test.rotator_angle, 0.0)
+        self.assertEqual(self.obs_meta_test.exp_time, 30.0)
+        self.assertEqual(self.obs_meta_test.raw_seeing, 0.5)
+        self.assertEqual(self.obs_meta_test.mjd, 59580.0)
+        self.assertEqual(self.obs_meta_test.seq_num, 1)
         self.assertEqual(
-            obs_meta_test.obs_id,
+            self.obs_meta_test.obs_id,
             "$f\"IM_P_{astropy.time.Time(mjd, format='mjd').strftime('%Y%m%d')}_{seqnum:06d}\" ",
         )
-        self.assertEqual(obs_meta_test.focus_z, 0.0)
+        self.assertEqual(self.obs_meta_test.focus_z, 0.0)
+        self.assertAlmostEqual(self.obs_meta_test.parallactic_angle, 139.4727348)
+
+    def test_calc_parallactic_angle(self):
+        sirius = FixedTarget.from_name("sirius")
+        t = Time(60000, format="mjd")
+        obs_metadata = ObsMetadata(
+            ra=sirius.ra.deg, dec=sirius.dec.deg, band="r", mjd=60000
+        )
+        rubin = Observer.at_site("cerro pachon")
+        self.assertAlmostEqual(
+            obs_metadata.calc_parallactic_angle(),
+            rubin.parallactic_angle(t, sirius).deg,
+        )
+
+    def test_calc_zenith_angle(self):
+        sirius = FixedTarget.from_name("sirius")
+        t = Time(59580.0, format="mjd")
+        obs_metadata = ObsMetadata(
+            ra=sirius.ra.deg, dec=sirius.dec.deg, band="r", mjd=59580.0
+        )
+        rubin = Observer.at_site("cerro pachon")
+        self.assertAlmostEqual(
+            obs_metadata.calc_zenith_angle(),
+            90.0 - rubin.altaz(t, sirius).alt.deg,
+        )
