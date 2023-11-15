@@ -36,7 +36,6 @@ class TestObsMetadata(unittest.TestCase):
         self.assertEqual(self.obs_meta_test.ra, 0.0)
         self.assertEqual(self.obs_meta_test.dec, 0.0)
         self.assertEqual(self.obs_meta_test.band, "r")
-        self.assertAlmostEqual(self.obs_meta_test.zenith, 41.407655076)
         self.assertEqual(self.obs_meta_test.rotator_angle, 0.0)
         self.assertEqual(self.obs_meta_test.exp_time, 30.0)
         self.assertEqual(self.obs_meta_test.raw_seeing, 0.5)
@@ -47,6 +46,7 @@ class TestObsMetadata(unittest.TestCase):
             "$f\"IM_P_{astropy.time.Time(mjd, format='mjd').strftime('%Y%m%d')}_{seqnum:06d}\" ",
         )
         self.assertEqual(self.obs_meta_test.focus_z, 0.0)
+        self.assertAlmostEqual(self.obs_meta_test.zenith, 41.407655076)
         self.assertAlmostEqual(self.obs_meta_test.parallactic_angle, 139.4727348)
 
     def test_calc_parallactic_angle(self):

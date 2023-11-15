@@ -117,4 +117,7 @@ class ObsMetadata:
 
         observer, time, boresight = self.format_observation_info()
 
+        # Altitude refers to elevation angle up from horizon.
+        # To get zenith we need to convert to the angle down
+        # from zenith so we subtract altitude from 90 degrees.
         return 90.0 - observer.altaz(time, boresight).alt.deg
