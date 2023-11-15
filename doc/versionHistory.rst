@@ -7,6 +7,12 @@ Version History
 ##################
 
 -------------
+0.8.0
+-------------
+
+* Add star_mag to img_closed_loop to specify default star magnitude.
+
+-------------
 0.7.0
 -------------
 
