@@ -28,6 +28,7 @@ from astropy.io import fits
 from lsst.afw.cameraGeom import FIELD_ANGLE
 from lsst.ts.imsim import OpdMetrology
 from lsst.ts.imsim.utils.utility import get_module_path, get_zk_from_file
+from lsst.ts.wep.utils import CamType
 
 
 class TestOpdMetrology(unittest.TestCase):
@@ -50,7 +51,7 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertEqual(str(context.exception), "All weighting ratios should be >= 0.")
 
     def test_set_wgt_and_field_xy_of_gq_lsst_fam(self):
-        self.metr.set_wgt_and_field_xy_of_gq("lsstfam")
+        self.metr.set_wgt_and_field_xy_of_gq(CamType.LsstFamCam)
 
         field_x = self.metr.field_x
         self.assertEqual(len(field_x), 189)
@@ -59,7 +60,7 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertEqual(len(wgt), 189)
 
     def test_set_wgt_and_field_xy_of_gq_com_cam(self):
-        self.metr.set_wgt_and_field_xy_of_gq("comcam")
+        self.metr.set_wgt_and_field_xy_of_gq(CamType.ComCam)
 
         field_x = self.metr.field_x
         self.assertEqual(len(field_x), 9)
@@ -69,7 +70,7 @@ class TestOpdMetrology(unittest.TestCase):
 
     def test_set_wgt_and_field_xy_of_gq_err(self):
         self.assertRaises(
-            RuntimeError, self.metr.set_wgt_and_field_xy_of_gq, "NoThisInstName"
+            ValueError, self.metr.set_wgt_and_field_xy_of_gq, "NoThisInstName"
         )
 
     def test_set_default_lsst_wfs_gq(self):

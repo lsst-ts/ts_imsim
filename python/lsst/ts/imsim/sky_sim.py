@@ -23,6 +23,7 @@ __all__ = ["SkySim"]
 
 import numpy as np
 from lsst.ts.imsim.utils import get_camera
+from lsst.ts.wep.utils import CamType
 
 
 class SkySim:
@@ -44,16 +45,16 @@ class SkySim:
         # Camera
         self._camera = None
 
-    def set_camera(self, inst_name: str) -> None:
+    def set_camera(self, cam_type: CamType) -> None:
         """Set the camera.
 
         Parameters
         ----------
-        inst_name : `str`
-            Instrument name. Valid options are 'lsstfam' or 'lsst'.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
         """
 
-        self._camera = get_camera(inst_name)
+        self._camera = get_camera(cam_type)
 
     def add_star_by_ra_dec_in_deg(
         self,

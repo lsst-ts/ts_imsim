@@ -24,6 +24,7 @@ import unittest
 
 from lsst.ts.imsim import SkySim
 from lsst.ts.imsim.utils.utility import get_module_path
+from lsst.ts.wep.utils import CamType
 
 
 class TestSkySim(unittest.TestCase):
@@ -31,7 +32,7 @@ class TestSkySim(unittest.TestCase):
         self.sky_sim = SkySim()
 
     def test_set_camera(self):
-        self.sky_sim.set_camera("lsstfam")
+        self.sky_sim.set_camera(CamType.LsstFamCam)
         self.assertEqual(self.sky_sim._camera.getName(), "LSSTCam")
 
     def test_add_star_by_ra_dec_in_deg(self):

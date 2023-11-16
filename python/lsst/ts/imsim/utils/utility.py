@@ -35,6 +35,7 @@ import numpy as np
 import yaml
 from lsst.afw import cameraGeom
 from lsst.obs.lsst import LsstCam, LsstComCam
+from lsst.ts.wep.utils import CamType
 from lsst.utils import getPackageDir
 from numpy import ndarray
 
@@ -75,13 +76,13 @@ def get_config_dir() -> str:
     return os.path.join(get_policy_path(), "config")
 
 
-def get_camera(inst_name: str) -> cameraGeom.Camera:
+def get_camera(cam_type: CamType) -> cameraGeom.Camera:
     """Returns a lsst instrument for a given instrument name.
 
     Parameters
     ----------
-    inst_name : `str`
-        Instrument name. Valid options are 'lsstfam' or 'lsst'.
+    cam_type : lsst.ts.wep.utils.CamType
+        Camera type.
 
     Returns
     -------
@@ -90,16 +91,16 @@ def get_camera(inst_name: str) -> cameraGeom.Camera:
     Raises
     ------
     ValueError
-        If input `instName` is not valid.
+        If input `cam_type` is not valid.
     """
     # Check the input
-    if (inst_name == "lsstfam") or (inst_name == "lsst"):
+    if cam_type in [CamType.LsstCam, CamType.LsstFamCam]:
         return LsstCam().getCamera()
-    elif inst_name == "comcam":
+    elif cam_type == CamType.ComCam:
         return LsstComCam().getCamera()
     else:
         raise ValueError(
-            f"This instrument name ({inst_name}) is not supported. Must be 'lsstfam', 'lsst', or 'comcam'."
+            f"This CamType ({cam_type}) is not supported. Must be LsstCam, LsstFamCam or ComCam."
         )
 
 

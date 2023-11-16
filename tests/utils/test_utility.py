@@ -32,6 +32,7 @@ from lsst.ts.imsim.utils import (
     get_policy_path,
     get_zk_from_file,
 )
+from lsst.ts.wep.utils import CamType
 
 
 class TestUtility(unittest.TestCase):
@@ -50,15 +51,15 @@ class TestUtility(unittest.TestCase):
         )
 
     def test_get_camera(self):
-        lsst_fam_cam = get_camera("lsstfam")
+        lsst_fam_cam = get_camera(CamType.LsstFamCam)
         self.assertIsInstance(lsst_fam_cam, cameraGeom.Camera)
         self.assertEqual(lsst_fam_cam.getName(), LsstCam.getCamera().getName())
 
-        lsst_cam = get_camera("lsst")
+        lsst_cam = get_camera(CamType.LsstCam)
         self.assertIsInstance(lsst_cam, cameraGeom.Camera)
         self.assertEqual(lsst_cam.getName(), LsstCam.getCamera().getName())
 
-        com_cam = get_camera("comcam")
+        com_cam = get_camera(CamType.ComCam)
         self.assertIsInstance(com_cam, cameraGeom.Camera)
         self.assertEqual(com_cam.getName(), LsstComCam.getCamera().getName())
 

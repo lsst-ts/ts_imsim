@@ -7,6 +7,12 @@ Version History
 ##################
 
 -------------
+0.10.1
+-------------
+
+* Replace all inst_name calls with CamType.
+
+-------------
 0.10.0
 -------------
 

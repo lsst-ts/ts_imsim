@@ -39,7 +39,7 @@ from lsst.ts.imsim.utils import (
     make_dir,
 )
 from lsst.ts.ofc.ofc_data.base_ofc_data import BaseOFCData
-from lsst.ts.wep.utils import runProgram
+from lsst.ts.wep.utils import CamType, runProgram
 from scipy.ndimage import rotate
 
 
@@ -130,7 +130,7 @@ class ImsimCmpt:
         self,
         obs_metadata: ObsMetadata,
         config_pointer_file: str,
-        inst_name: str,
+        cam_type: CamType,
         required_modules_file: str | None = None,
     ) -> dict[str, Any]:
         """
@@ -142,8 +142,8 @@ class ImsimCmpt:
             The location of the config pointer file that specifies
             the location of configurations files for each imsim
             component.
-        inst_name : str
-            Instrument name.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
         required_modules_file : str or None
             Path to yaml file with required imsim modules. If None,
             then will use policy/requiredModulesDefault.yaml.
@@ -197,7 +197,7 @@ class ImsimCmpt:
                 # Add additional header text
                 full_config_text += self.add_config_header(obs_metadata) + "\n"
                 # Add OPD
-                full_config_text += self.format_opd_text(obs_metadata, inst_name)
+                full_config_text += self.format_opd_text(obs_metadata, cam_type)
 
         # Assemble as yaml
         full_config_yaml = yaml.safe_load(full_config_text)
@@ -240,7 +240,7 @@ class ImsimCmpt:
 
         return obs_variables_text
 
-    def format_opd_text(self, obs_metadata: ObsMetadata, inst_name: str) -> str:
+    def format_opd_text(self, obs_metadata: ObsMetadata, cam_type: CamType) -> str:
         """
         Write out the OPD section of the config file.
 
@@ -248,8 +248,8 @@ class ImsimCmpt:
         ----------
         obs_metadata : lsst.ts.imsim.ObsMetadata
             ObsMetadata dataclass object with observation information.
-        inst_name: str
-            Name of the instrument
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
 
         Returns
         -------
@@ -267,7 +267,7 @@ class ImsimCmpt:
         opd_section_text += "    fields:\n"
 
         # Get the locations for the OPD from OPD Metrology
-        self.opd_metr.set_wgt_and_field_xy_of_gq(inst_name)
+        self.opd_metr.set_wgt_and_field_xy_of_gq(cam_type)
         for thx, thy in zip(self.opd_metr.field_x, self.opd_metr.field_y):
             opd_section_text += f"      - {{thx: {thx} deg, thy: {thy} deg}}\n"
 
@@ -510,7 +510,7 @@ class ImsimCmpt:
 
     def analyze_opd_data(
         self,
-        inst_name: str,
+        cam_type: CamType,
         zk_file_name: str = "opd.zer",
         rot_opd_in_deg: float = 0.0,
         pssn_file_name: str = "PSSN.txt",
@@ -525,8 +525,8 @@ class ImsimCmpt:
 
         Parameters
         ----------
-        inst_name : `str`
-            Instrument name.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
         zk_file_name : str, optional
             OPD in zk file name. (the default is "opd.zer".)
         rot_opd_in_deg : float, optional
@@ -537,10 +537,10 @@ class ImsimCmpt:
         """
 
         # Set the weighting ratio and field positions of OPD
-        if inst_name == "lsst":
+        if cam_type == CamType.LsstCam:
             self.opd_metr.set_default_lsst_wfs_gq()
         else:
-            self.opd_metr.set_wgt_and_field_xy_of_gq(inst_name)
+            self.opd_metr.set_wgt_and_field_xy_of_gq(cam_type)
         num_opd = len(self.opd_metr.field_x)
 
         self.opd_file_path = os.path.join(self.output_img_dir, "opd.fits")

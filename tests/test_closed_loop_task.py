@@ -51,7 +51,7 @@ class TestclosedLoopTask(unittest.TestCase):
         )
 
     def test_config_sky_sim_no_sky_file_lsst(self):
-        self.closed_loop_task.config_sky_sim("lsst", self.obs_metadata)
+        self.closed_loop_task.config_sky_sim(CamType.LsstCam, self.obs_metadata)
 
         sky_sim = self.closed_loop_task.sky_sim
         self.assertEqual(len(sky_sim.star_id), 8)
@@ -61,7 +61,7 @@ class TestclosedLoopTask(unittest.TestCase):
             get_module_path(), "tests", "testData", "sky", "wfsStar.txt"
         )
         self.closed_loop_task.config_sky_sim(
-            "lsst", self.obs_metadata, path_sky_file=test_sky_file
+            CamType.LsstCam, self.obs_metadata, path_sky_file=test_sky_file
         )
 
         sky_sim = self.closed_loop_task.sky_sim
@@ -69,11 +69,11 @@ class TestclosedLoopTask(unittest.TestCase):
         self.assertEqual(sky_sim.mag[0], 15)
 
     def test_config_ofc_calc(self):
-        inst_name = "lsst"
-        self.closed_loop_task.config_ofc_calc(inst_name)
+        cam_type = CamType.LsstCam
+        self.closed_loop_task.config_ofc_calc(cam_type)
 
         ofc_calc = self.closed_loop_task.ofc_calc
-        self.assertEqual(ofc_calc.ofc_data.name, inst_name)
+        self.assertEqual(ofc_calc.ofc_data.name, "lsst")
 
     def test_map_filter_ref_to_g(self):
         # test that the reference filter
@@ -123,28 +123,6 @@ class TestclosedLoopTask(unittest.TestCase):
     def test_get_filter_type_err(self):
         self.assertRaises(
             ValueError, self.closed_loop_task.get_filter_type, "noThisFilterType"
-        )
-
-    def test_get_cam_type_and_inst_name_lsst(self):
-        cam_type, inst_name = self.closed_loop_task.get_cam_type_and_inst_name("lsst")
-        self.assertEqual(cam_type, CamType.LsstCam)
-        self.assertEqual(inst_name, "lsst")
-
-    def test_get_cam_type_and_inst_name_fam(self):
-        cam_type, inst_name = self.closed_loop_task.get_cam_type_and_inst_name(
-            "lsstfam"
-        )
-        self.assertEqual(cam_type, CamType.LsstFamCam)
-        self.assertEqual(inst_name, "lsstfam")
-
-    def test_get_cam_type_and_inst_name_comcam(self):
-        cam_type, inst_name = self.closed_loop_task.get_cam_type_and_inst_name("comcam")
-        self.assertEqual(cam_type, CamType.ComCam)
-        self.assertEqual(inst_name, "comcam")
-
-    def test_get_cam_type_and_inst_name_err(self):
-        self.assertRaises(
-            ValueError, self.closed_loop_task.get_cam_type_and_inst_name, "noThisInst"
         )
 
     def test_erase_directory_content(self):
@@ -206,7 +184,9 @@ class TestclosedLoopTask(unittest.TestCase):
         self.assertEqual(args.star_mag, 15.0)
 
     def test_get_sensor_name_list_of_field_lsst_wfs(self):
-        sensor_name_list = self.closed_loop_task.get_sensor_name_list_of_fields("lsst")
+        sensor_name_list = self.closed_loop_task.get_sensor_name_list_of_fields(
+            CamType.LsstCam
+        )
         self.assertEqual(len(sensor_name_list), 8)
 
         sensor_name_list_ans = [
@@ -222,7 +202,9 @@ class TestclosedLoopTask(unittest.TestCase):
         self.assertCountEqual(sensor_name_list, sensor_name_list_ans)
 
     def test_get_sensor_id_list_of_fields(self):
-        sensor_id_list = self.closed_loop_task.get_sensor_id_list_of_fields("lsst")
+        sensor_id_list = self.closed_loop_task.get_sensor_id_list_of_fields(
+            CamType.LsstCam
+        )
         self.assertEqual(len(sensor_id_list), 8)
 
         sensor_id_list_ans = [191, 192, 195, 196, 199, 200, 203, 204]
