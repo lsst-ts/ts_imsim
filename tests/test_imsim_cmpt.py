@@ -128,7 +128,7 @@ class TestImsimCmpt(unittest.TestCase):
         self.assertTrue(opd_text.startswith("  opd:"))
         self.assertTrue(
             opd_text.endswith(
-                "- {thx: -1.1902777777777778 deg, thy: 1.1902777777777778 deg}\n"
+                "- {thx: 1.1902777777777778 deg, thy: 1.1902777777777778 deg}\n"
             )
         )
 
@@ -242,7 +242,7 @@ class TestImsimCmpt(unittest.TestCase):
             )
 
             np.testing.assert_almost_equal(
-                galsim_zernikes.rotate(np.deg2rad(-rotation_angle)).coef[4:],
+                galsim_zernikes.rotate(np.deg2rad(rotation_angle)).coef[4:],
                 zerinkes_rotation_0[idx, :],
                 decimal=1,
             )

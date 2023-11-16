@@ -7,6 +7,13 @@ Version History
 ##################
 
 -------------
+0.9.0
+-------------
+
+* Remove ZCS coordinate system and transition to CCS.
+* Update bending modes to latest versions in batoid_rubin.
+
+-------------
 0.8.4
 -------------
 
