@@ -579,7 +579,7 @@ class ClosedLoopTask:
                 sensor_names=sensor_names,
                 filter_name=obs_metadata.band.upper(),
                 gain=-1,
-                rotation_angle=-obs_metadata.rotator_angle,
+                rotation_angle=obs_metadata.rotator_angle,
             )
 
             # Set the new aggregated DOF to phosimCmpt
