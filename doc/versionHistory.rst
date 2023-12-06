@@ -7,6 +7,12 @@ Version History
 ##################
 
 -------------
+0.8.3
+-------------
+
+* Update default MJD to avoid twilight.
+
+-------------
 0.8.2
 -------------
 

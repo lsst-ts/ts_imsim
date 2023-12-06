@@ -187,7 +187,7 @@ class TestclosedLoopTask(unittest.TestCase):
         args = parser.parse_known_args(args=args_to_test)[0]
         self.assertEqual(args.boresight_deg, [1.2, 2.3])
         self.assertEqual(args.sky_file, "")
-        self.assertEqual(args.mjd, 59580)
+        self.assertEqual(args.mjd, 60115.33)
         self.assertEqual(args.raw_seeing, 0.5)
         self.assertFalse(args.turn_off_sky_background)
         self.assertFalse(args.turn_off_atmosphere)

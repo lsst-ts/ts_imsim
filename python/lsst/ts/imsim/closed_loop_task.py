@@ -1388,7 +1388,7 @@ config.dataset_config.ref_dataset_name='ref_cat'
         )
 
         parser.add_argument(
-            "--mjd", type=float, default=59580, help="Starting MJD of observation."
+            "--mjd", type=float, default=60115.33, help="Starting MJD of observation."
         )
 
         parser.add_argument(
