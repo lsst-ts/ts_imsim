@@ -36,7 +36,7 @@ class ObsMetadata:
     band: str
     rotator_angle: float = 0.0
     exp_time: float = 30.0
-    mjd: float = 59580.0
+    mjd: float = 60115.33
     seq_num: int = 1
     raw_seeing: int = 0.5
     obs_id: str = """$f"IM_P_{astropy.time.Time(mjd, format='mjd').strftime('%Y%m%d')}_{seqnum:06d}" """

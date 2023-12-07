@@ -7,6 +7,12 @@ Version History
 ##################
 
 -------------
+0.8.4
+-------------
+
+* Update default MJD in obs_metadata to be consistent with default in closed_loop_task.
+
+-------------
 0.8.3
 -------------
 
