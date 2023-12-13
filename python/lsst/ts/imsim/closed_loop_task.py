@@ -571,6 +571,14 @@ class ClosedLoopTask:
                 [sensor_wfe.sensor_name for sensor_wfe in list_of_wf_err]
             )
 
+            # Only include the fwhm data from sensor we are simulating
+            # (e.g. only raft centers instead of full FAM).
+            if self.use_ccd_img:
+                fwhm_idx = [
+                    ref_sensor_name_list.index(sens_name) for sens_name in sensor_names
+                ]
+                fwhm = fwhm[fwhm_idx]
+
             # Pass data to OFC
             self.ofc_calc.set_fwhm_data(fwhm, sensor_names)
 
