@@ -24,8 +24,6 @@ telescope:
   # There's a whole suite of FEA perturbations available (same as ts_phosim)
   # Details in the telescope_loader.py file linked above.
   fea:
-    bend_dir: bend_legacy
-    fea_dir: fea_legacy
     m1m3_gravity:  # gravitational flexure of M1M3
       zenith: *zenith
     m1m3_temperature:

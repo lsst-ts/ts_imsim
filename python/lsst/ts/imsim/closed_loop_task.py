@@ -571,6 +571,14 @@ class ClosedLoopTask:
                 [sensor_wfe.sensor_name for sensor_wfe in list_of_wf_err]
             )
 
+            # Only include the fwhm data from sensor we are simulating
+            # (e.g. only raft centers instead of full FAM).
+            if self.use_ccd_img:
+                fwhm_idx = [
+                    ref_sensor_name_list.index(sens_name) for sens_name in sensor_names
+                ]
+                fwhm = fwhm[fwhm_idx]
+
             # Pass data to OFC
             self.ofc_calc.set_fwhm_data(fwhm, sensor_names)
 
@@ -579,7 +587,7 @@ class ClosedLoopTask:
                 sensor_names=sensor_names,
                 filter_name=obs_metadata.band.upper(),
                 gain=-1,
-                rotation_angle=-obs_metadata.rotator_angle,
+                rotation_angle=obs_metadata.rotator_angle,
             )
 
             # Set the new aggregated DOF to phosimCmpt
@@ -900,51 +908,14 @@ class ClosedLoopTask:
             )
 
             sensor_wavefront_data = SensorWavefrontError()
-            # Rotate from CCS to ZCS/PCS (Phosim Coordinate System)
-            rotated_name = self.rotate_det_name_ccs_to_zcs(
-                det_id_map[dataset.dataId["detector"]].getName()
-            )
-            sensor_wavefront_data.sensor_name = rotated_name
-            sensor_wavefront_data.sensor_id = det_name_map[rotated_name].getId()
+            sensor_name = det_id_map[dataset.dataId["detector"]].getName()
+            sensor_wavefront_data.sensor_name = sensor_name
+            sensor_wavefront_data.sensor_id = det_name_map[sensor_name].getId()
             sensor_wavefront_data.annular_zernike_poly = zer_coeff
 
             list_of_wf_err.append(sensor_wavefront_data)
 
         return list_of_wf_err
-
-    def rotate_det_name_ccs_to_zcs(self, det_name: str) -> str:
-        """Rotate the sensor name from CCS (Camera Coordinate System)
-        to the ZCS (Zemax Coordinate System) that OFC expects.
-
-        Parameters
-        ----------
-        det_name : str
-            Detector name in CCS.
-
-        Returns
-        -------
-        str
-            Detector expected at that location in ZCS.
-        """
-        raft, sensor = det_name.split("_")
-        cam_rx = int(raft[1]) - 2
-        cam_ry = int(raft[2]) - 2
-
-        zcs_rx = -cam_rx
-        zcs_ry = cam_ry
-
-        zcs_raft = f"R{zcs_rx + 2}{zcs_ry + 2}"
-
-        if sensor.startswith("SW"):
-            zcs_sensor = sensor
-        else:
-            cam_sx = int(sensor[1]) - 1
-            cam_sy = int(sensor[2]) - 1
-            zcs_sx = -cam_sx
-            zcs_sy = cam_sy
-            zcs_sensor = f"S{zcs_sx + 1}{zcs_sy + 1}"
-
-        return f"{zcs_raft}_{zcs_sensor}"
 
     def write_wep_configuration(
         self, inst_name: str, pipeline_yaml_path: str, filter_type_name: str

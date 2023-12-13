@@ -77,10 +77,6 @@ class OpdMetrology:
         self.wt = np.array([1.0, 1.0, 1.0, 1.0])
         wfs_field_x, wfs_field_y, sensor_ids = self.get_default_lsst_wfs_gq()
         self.field_x, self.field_y = (wfs_field_x, wfs_field_y)
-        # Convert from CCS to ZCS for current OFC
-        # TODO: Remove this conversion when ts_ofc
-        # sensitivity matrix is updated.
-        self.field_x = -1.0 * np.array(self.field_x)
         self.sensor_ids = sensor_ids
 
     def get_default_lsst_wfs_gq(self) -> tuple[list[float], list[float], list[int]]:
@@ -170,10 +166,6 @@ class OpdMetrology:
             field_x.append(np.degrees(det_center[1]))
         self.field_x = np.array(field_x)
         self.field_y = np.array(field_y)
-        # Convert from CCS to ZCS for current OFC
-        # TODO: Remove this conversion when ts_ofc
-        # sensitivity matrix is updated.
-        self.field_x = -1.0 * self.field_x
 
     def get_zk_from_opd(
         self,
@@ -181,7 +173,6 @@ class OpdMetrology:
         opd_map: np.ndarray | None = None,
         zk_terms: int = 22,
         obscuration: float = 0.61,
-        flip_lr: bool = True,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Get the wavefront error of OPD in the basis of annular Zernike
         polynomials.
@@ -199,12 +190,6 @@ class OpdMetrology:
             is 22.)
         obscuration : float, optional
             Obscuration of annular Zernike polynomial. (the default is 0.61.)
-        flip_lr : bool, optional
-            Flip the opd image in the left-right direction. Currently
-            this flip is needed in the closed loop because ts_ofc
-            has a sensitivity matrix in the Zemax Coordinate System
-            instead of the Camera Coordinate System. This will be removed
-            when ts_ofc changes to use the CCS. (the default is True.)
 
         Returns
         -------
@@ -228,9 +213,6 @@ class OpdMetrology:
             opd = fits.getdata(opd_fits_file)
         elif opd_map is not None:
             opd = opd_map.copy()
-        # TODO: Remove when OFC moves to CCS instead of ZCS
-        if flip_lr is True:
-            opd = np.fliplr(opd)
 
         # Check the x, y dimensions of OPD are the same
         if np.unique(opd.shape).size != 1:
