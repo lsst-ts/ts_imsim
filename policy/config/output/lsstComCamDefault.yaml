@@ -1,7 +1,6 @@
 output:
   type: LSST_CCD
-  nproc: 8    # Change this to work on multiple CCDs at once.
-  # nfiles: 1   # test
+  nproc: 9    # Change this to work on multiple CCDs at once.
   nfiles: 9 # Comcam
 
   header:
@@ -12,7 +11,7 @@ output:
 
   exptime: $exptime
 
-  cosmic_ray_rate: 0.0
+  cosmic_ray_rate: 0.0 # The rate of cosmic rays per second in a sensor.
 
   det_num:
     type: List
