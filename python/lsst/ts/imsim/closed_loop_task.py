@@ -146,7 +146,7 @@ class ClosedLoopTask:
         )
 
         opd_metr = OpdMetrology()
-        if inst_name in ["lsst", "lsstfam"]:
+        if inst_name in ["lsst", "lsstfam", "comcam"]:
             field_x, field_y = list(), list()
             camera = get_camera(inst_name)
             for name in self.get_sensor_name_list_of_fields(inst_name):
@@ -342,6 +342,8 @@ class ClosedLoopTask:
             return CamType.LsstCam, "lsst"
         elif inst == "lsstfam":
             return CamType.LsstFamCam, "lsstfam"
+        elif inst == "comcam":
+            return CamType.ComCam, "comcam"
         else:
             raise ValueError(f"This instrument ({inst}) is not supported.")
 
@@ -505,7 +507,7 @@ class ClosedLoopTask:
                     turn_off_sky_background=turn_off_sky_background,
                     turn_off_atmosphere=turn_off_atmosphere,
                 )
-            elif cam_type == CamType.LsstFamCam:
+            elif cam_type in [CamType.LsstFamCam, CamType.ComCam]:
                 for focus_z in [-1.5, 1.5]:
                     obs_metadata.seq_num += 1
                     obs_metadata.focus_z = focus_z
@@ -529,7 +531,7 @@ class ClosedLoopTask:
             )
 
             if self.use_ccd_img:
-                if cam_type in [CamType.LsstCam, CamType.LsstFamCam]:
+                if cam_type in [CamType.LsstCam, CamType.LsstFamCam, CamType.ComCam]:
                     list_of_wf_err = self._calc_wf_err_from_img(
                         obs_metadata,
                         butler_root_path=butler_root_path,
@@ -692,7 +694,7 @@ class ClosedLoopTask:
             self.imsim_cmpt.write_yaml_and_run_imsim(
                 imsim_config_path, imsim_config_yaml
             )
-        elif inst_name == "lsstfam":
+        elif inst_name in ["lsstfam", "comcam"]:
             if self.use_ccd_img:
                 # Run once for OPD
                 imsim_opd_config_path = os.path.join(
@@ -836,7 +838,10 @@ class ClosedLoopTask:
             estimation pipeline for each sensor.
         """
 
-        butler_inst_name = "Cam"
+        if inst_name in ["lsst", "lsstfam"]:
+            butler_inst_name = "Cam"
+        elif inst_name == "comcam":
+            butler_inst_name = "ComCam"
         if pipeline_file is None:
             pipeline_yaml = f"{inst_name}Pipeline.yaml"
             pipeline_yaml_path = os.path.join(butler_root_path, pipeline_yaml)
@@ -868,6 +873,14 @@ class ClosedLoopTask:
                 f'"visit.seq_num IN ({seq_num})" -j {num_pro}'
             )
         elif inst_name == "lsstfam":
+            runProgram(
+                f"pipetask run -b {butler_root_path} "
+                f"-i refcats,LSST{butler_inst_name}/raw/all,LSST{butler_inst_name}/calib/unbounded "
+                f"--instrument lsst.obs.lsst.Lsst{butler_inst_name} "
+                f"--register-dataset-types --output-run ts_imsim_{seq_num} -p {pipeline_yaml_path} -d "
+                f'"visit.seq_num IN ({seq_num-1}, {seq_num})" -j {num_pro}'
+            )
+        elif inst_name == "comcam":
             runProgram(
                 f"pipetask run -b {butler_root_path} "
                 f"-i refcats,LSST{butler_inst_name}/raw/all,LSST{butler_inst_name}/calib/unbounded "
@@ -933,7 +946,10 @@ class ClosedLoopTask:
             Filter type name: ref (or ''), u, g, r, i, z, or y.
         """
 
-        butler_inst_name = "Cam"
+        if inst_name in ["lsst", "lsstfam"]:
+            butler_inst_name = "Cam"
+        elif inst_name == "comcam":
+            butler_inst_name = "ComCam"
 
         # Remap reference filter
         filter_type_name = self.map_filter_ref_to_g(filter_type_name)
@@ -1128,9 +1144,14 @@ tasks:
 
         runProgram(f"butler create {butler_root_path}")
 
-        self.log.debug("Registering LsstCam")
+        if inst_name in ["lsst", "lsstfam"]:
+            butler_inst_name = "Cam"
+        elif inst_name == "comcam":
+            butler_inst_name = "ComCam"
+
+        self.log.debug(f"Registering Lsst{butler_inst_name}")
         runProgram(
-            f"butler register-instrument {butler_root_path} lsst.obs.lsst.LsstCam"
+            f"butler register-instrument {butler_root_path} lsst.obs.lsst.Lsst{butler_inst_name}"
         )
 
     def generate_ref_catalog(
@@ -1204,10 +1225,17 @@ config.dataset_config.ref_dataset_name='ref_cat'
         output_img_dir = self.imsim_cmpt.output_img_dir
         files = " ".join(glob(os.path.join(output_img_dir, "amp*")))
 
-        if inst_name in ["lsst", "lsstfam"]:
+        if inst_name in ["lsst", "lsstfam", "comcam"]:
             runProgram(f"butler ingest-raws {butler_root_path} {files}")
 
-        runProgram(f"butler define-visits {butler_root_path} lsst.obs.lsst.LsstCam")
+        if inst_name in ["lsst", "lsstfam"]:
+            butler_inst_name = "Cam"
+        elif inst_name == "comcam":
+            butler_inst_name = "ComCam"
+
+        runProgram(
+            f"butler define-visits {butler_root_path} lsst.obs.lsst.Lsst{butler_inst_name}"
+        )
 
     def erase_directory_content(self, target_dir: str) -> None:
         """Erase the directory content.
@@ -1244,7 +1272,7 @@ config.dataset_config.ref_dataset_name='ref_cat'
             "--inst",
             type=str,
             default="lsst",
-            help="Instrument to use: currently lsst or lsstfam. (default: lsst)",
+            help="Instrument to use: currently lsst, lsstfam, comcam. (default: lsst)",
         )
 
         parser.add_argument(

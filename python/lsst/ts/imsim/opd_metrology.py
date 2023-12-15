@@ -122,7 +122,7 @@ class OpdMetrology:
         ----------
         inst_name : `str`
             Instrument name.
-            Valid options are 'lsst' or 'lsstfam.
+            Valid options are 'lsst', 'lsstfam', or 'comcam'.
 
         Raises
         ------
@@ -150,9 +150,11 @@ class OpdMetrology:
         # Normalize weights
         self.wt = wgt_values / np.sum(wgt_values)
 
+        camera = get_camera(inst_name)
         if inst_name == "lsstfam":
-            camera = get_camera(inst_name)
             self.sensor_ids = np.arange(189)
+        elif inst_name == "comcam":
+            self.sensor_ids = np.arange(9)
         else:
             raise ValueError(f"Instrument {inst_name} is not supported in OPD mode.")
 
@@ -333,7 +335,6 @@ class OpdMetrology:
         ValueError
             Length of wt ratio != length of value list.
         """
-
         # Check the lengths of weighting ratio and value list are the same
         if len(self.wt) != len(value_list):
             raise ValueError("Length of wt ratio != length of value list.")

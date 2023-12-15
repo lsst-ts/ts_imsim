@@ -130,6 +130,18 @@ class TestclosedLoopTask(unittest.TestCase):
         self.assertEqual(cam_type, CamType.LsstCam)
         self.assertEqual(inst_name, "lsst")
 
+    def test_get_cam_type_and_inst_name_fam(self):
+        cam_type, inst_name = self.closed_loop_task.get_cam_type_and_inst_name(
+            "lsstfam"
+        )
+        self.assertEqual(cam_type, CamType.LsstFamCam)
+        self.assertEqual(inst_name, "lsstfam")
+
+    def test_get_cam_type_and_inst_name_comcam(self):
+        cam_type, inst_name = self.closed_loop_task.get_cam_type_and_inst_name("comcam")
+        self.assertEqual(cam_type, CamType.ComCam)
+        self.assertEqual(inst_name, "comcam")
+
     def test_get_cam_type_and_inst_name_err(self):
         self.assertRaises(
             ValueError, self.closed_loop_task.get_cam_type_and_inst_name, "noThisInst"

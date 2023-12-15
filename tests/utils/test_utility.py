@@ -23,7 +23,7 @@ import os
 import unittest
 
 from lsst.afw import cameraGeom
-from lsst.obs.lsst import LsstCam
+from lsst.obs.lsst import LsstCam, LsstComCam
 from lsst.ts.imsim.utils import (
     ModifiedEnvironment,
     get_camera,
@@ -57,6 +57,10 @@ class TestUtility(unittest.TestCase):
         lsst_cam = get_camera("lsst")
         self.assertIsInstance(lsst_cam, cameraGeom.Camera)
         self.assertEqual(lsst_cam.getName(), LsstCam.getCamera().getName())
+
+        com_cam = get_camera("comcam")
+        self.assertIsInstance(com_cam, cameraGeom.Camera)
+        self.assertEqual(com_cam.getName(), LsstComCam.getCamera().getName())
 
         with self.assertRaises(ValueError):
             get_camera("invalid")

@@ -7,6 +7,13 @@ Version History
 ##################
 
 -------------
+0.10.0
+-------------
+
+* Add comcam support.
+* Add new comcam configuration files.
+
+-------------
 0.9.0
 -------------
 
