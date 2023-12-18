@@ -1,10 +1,17 @@
-.. py:currentmodule:: lsst.ts.wep
+.. py:currentmodule:: lsst.ts.imsim
 
-.. _lsst.ts.wep-version_history:
+.. _lsst.ts.imsim-version_history:
 
 ##################
 Version History
 ##################
+
+-------------
+0.10.2
+-------------
+
+* Replace RAWSEEING in headers with SEEING to avoid FITS format error messages.
+* Fix versionHistory header.
 
 -------------
 0.10.1

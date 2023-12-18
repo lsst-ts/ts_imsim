@@ -301,7 +301,7 @@ class ImsimCmpt:
             f"    airmass: {1.0/np.cos(np.radians(obs_metadata.zenith)):.6f}\n"
         )
         header_text += f"    focusZ: {obs_metadata.focus_z}\n"
-        header_text += f"    rawSeeing: {obs_metadata.raw_seeing}\n"
+        header_text += f"    seeing: {obs_metadata.raw_seeing}\n"
 
         return header_text
 
