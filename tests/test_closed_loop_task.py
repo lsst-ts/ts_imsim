@@ -209,3 +209,20 @@ class TestclosedLoopTask(unittest.TestCase):
 
         sensor_id_list_ans = [191, 192, 195, 196, 199, 200, 203, 204]
         self.assertCountEqual(sensor_id_list, sensor_id_list_ans)
+
+    def test_get_butler_inst_name(self):
+        lsstcam_str = self.closed_loop_task._get_butler_inst_name(CamType.LsstCam)
+        lsstfam_str = self.closed_loop_task._get_butler_inst_name(CamType.LsstFamCam)
+        comcam_str = self.closed_loop_task._get_butler_inst_name(CamType.ComCam)
+
+        self.assertEqual(lsstcam_str, "Cam")
+        self.assertEqual(lsstfam_str, "Cam")
+        self.assertEqual(comcam_str, "ComCam")
+
+    def test_get_butler_inst_name_raise_err(self):
+        with self.assertRaises(ValueError) as context:
+            self.closed_loop_task._get_butler_inst_name(CamType.AuxTel)
+        self.assertEqual(
+            str(context.exception),
+            f"CamType {CamType.AuxTel} not one of LsstCam, LsstFamCam, ComCam.",
+        )

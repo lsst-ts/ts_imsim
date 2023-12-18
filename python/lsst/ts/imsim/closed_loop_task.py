@@ -778,6 +778,36 @@ class ClosedLoopTask:
 
         return list_of_wf_err
 
+    def _get_butler_inst_name(self, cam_type) -> str:
+        """Translate cam_type into suffix used by butler
+        in command line instructions.
+
+        Parameters
+        ----------
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
+
+        Returns
+        -------
+        str
+            Suffix attached to "LSST" to specify instrument to butler.
+
+        Raises
+        ------
+        ValueError
+            CamType must be one of LsstCam, LsstFamCam, ComCam.
+        """
+
+        if cam_type in [CamType.LsstCam, CamType.LsstFamCam]:
+            butler_inst_name = "Cam"
+        elif cam_type == CamType.ComCam:
+            butler_inst_name = "ComCam"
+        else:
+            errMsg = f"CamType {cam_type} not one of LsstCam, LsstFamCam, ComCam."
+            raise ValueError(errMsg)
+
+        return butler_inst_name
+
     def run_wep(
         self,
         seq_num: int,
@@ -813,10 +843,7 @@ class ClosedLoopTask:
             estimation pipeline for each sensor.
         """
 
-        if cam_type in [CamType.LsstCam, CamType.LsstFamCam]:
-            butler_inst_name = "Cam"
-        elif cam_type == CamType.ComCam:
-            butler_inst_name = "ComCam"
+        butler_inst_name = self._get_butler_inst_name(cam_type)
         if pipeline_file is None:
             pipeline_yaml = f"{getCamNameFromCamType(cam_type)}Pipeline.yaml"
             pipeline_yaml_path = os.path.join(butler_root_path, pipeline_yaml)
@@ -845,15 +872,7 @@ class ClosedLoopTask:
                 f"--register-dataset-types --output-run ts_imsim_{seq_num} -p {pipeline_yaml_path} -d "
                 f'"visit.seq_num IN ({seq_num})" -j {num_pro}'
             )
-        elif cam_type == CamType.LsstFamCam:
-            runProgram(
-                f"pipetask run -b {butler_root_path} "
-                f"-i refcats,LSST{butler_inst_name}/raw/all,LSST{butler_inst_name}/calib/unbounded "
-                f"--instrument lsst.obs.lsst.Lsst{butler_inst_name} "
-                f"--register-dataset-types --output-run ts_imsim_{seq_num} -p {pipeline_yaml_path} -d "
-                f'"visit.seq_num IN ({seq_num-1}, {seq_num})" -j {num_pro}'
-            )
-        elif cam_type == CamType.ComCam:
+        elif cam_type in (CamType.LsstFamCam, CamType.ComCam):
             runProgram(
                 f"pipetask run -b {butler_root_path} "
                 f"-i refcats,LSST{butler_inst_name}/raw/all,LSST{butler_inst_name}/calib/unbounded "
@@ -919,10 +938,7 @@ class ClosedLoopTask:
             Filter type name: ref (or ''), u, g, r, i, z, or y.
         """
 
-        if cam_type in [CamType.LsstCam, CamType.LsstFamCam]:
-            butler_inst_name = "Cam"
-        elif cam_type == CamType.ComCam:
-            butler_inst_name = "ComCam"
+        butler_inst_name = self._get_butler_inst_name(cam_type)
 
         # Remap reference filter
         filter_type_name = self.map_filter_ref_to_g(filter_type_name)
@@ -1118,10 +1134,7 @@ tasks:
 
         runProgram(f"butler create {butler_root_path}")
 
-        if cam_type in [CamType.LsstCam, CamType.LsstFamCam]:
-            butler_inst_name = "Cam"
-        elif cam_type == CamType.ComCam:
-            butler_inst_name = "ComCam"
+        butler_inst_name = self._get_butler_inst_name(cam_type)
 
         self.log.debug(f"Registering Lsst{butler_inst_name}")
         runProgram(
@@ -1202,10 +1215,7 @@ config.dataset_config.ref_dataset_name='ref_cat'
         if cam_type in [CamType.LsstCam, CamType.LsstFamCam, CamType.ComCam]:
             runProgram(f"butler ingest-raws {butler_root_path} {files}")
 
-        if cam_type in [CamType.LsstCam, CamType.LsstFamCam]:
-            butler_inst_name = "Cam"
-        elif cam_type == CamType.ComCam:
-            butler_inst_name = "ComCam"
+        butler_inst_name = self._get_butler_inst_name(cam_type)
 
         runProgram(
             f"butler define-visits {butler_root_path} lsst.obs.lsst.Lsst{butler_inst_name}"
