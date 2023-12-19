@@ -303,7 +303,7 @@ output:
     observationStartMJD: 59579.999826388895
     rotTelPos: 0.0
     seqnum: 1
-    rawSeeing: *rawSeeing
+    seeing: *rawSeeing
 
   camera: LsstCam
 
