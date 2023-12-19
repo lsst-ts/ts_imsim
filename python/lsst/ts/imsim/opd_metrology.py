@@ -27,7 +27,12 @@ from astropy.io import fits
 from lsst.afw.cameraGeom import FIELD_ANGLE
 from lsst.ts.imsim.utils import calc_pssn, get_camera
 from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
-from lsst.ts.wep.utils import ZernikeAnnularFit, ZernikeEval
+from lsst.ts.wep.utils import (
+    CamType,
+    ZernikeAnnularFit,
+    ZernikeEval,
+    getCamNameFromCamType,
+)
 
 
 class OpdMetrology:
@@ -99,7 +104,7 @@ class OpdMetrology:
         # These will be chosen at the center of the extra-intra
         # focal pairs of wavefront sensors.
         det_ids = [191, 195, 199, 203]
-        camera = get_camera("lsst")
+        camera = get_camera(CamType.LsstCam)
         field_x = []
         field_y = []
         det_map = camera.getIdMap()
@@ -113,16 +118,16 @@ class OpdMetrology:
 
         return field_x, field_y, det_ids
 
-    def set_wgt_and_field_xy_of_gq(self, inst_name: str) -> None:
+    def set_wgt_and_field_xy_of_gq(self, cam_type: CamType) -> None:
         """Set the GQ weighting ratio and field X, Y.
 
         GQ: Gaussian quadrature.
 
         Parameters
         ----------
-        inst_name : `str`
-            Instrument name.
-            Valid options are 'lsst', 'lsstfam', or 'comcam'.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
+            Valid CamTypes are LsstCam, LsstFamCam, ComCam.
 
         Raises
         ------
@@ -131,12 +136,14 @@ class OpdMetrology:
         """
 
         # Set camera and field ids for given instrument
-        if inst_name == "lsst":
+        if cam_type == CamType.LsstCam:
             self.set_default_lsst_wfs_gq()
             return
 
         weight_dir_path = getConfigDirOfc() / "image_quality_weights"
-        path_wgt_file = weight_dir_path / f"{inst_name}_weights.yaml"
+        path_wgt_file = (
+            weight_dir_path / f"{getCamNameFromCamType(cam_type)}_weights.yaml"
+        )
 
         if not path_wgt_file.exists():
             raise RuntimeError(
@@ -150,13 +157,13 @@ class OpdMetrology:
         # Normalize weights
         self.wt = wgt_values / np.sum(wgt_values)
 
-        camera = get_camera(inst_name)
-        if inst_name == "lsstfam":
+        camera = get_camera(cam_type)
+        if cam_type == CamType.LsstFamCam:
             self.sensor_ids = np.arange(189)
-        elif inst_name == "comcam":
+        elif cam_type == CamType.ComCam:
             self.sensor_ids = np.arange(9)
         else:
-            raise ValueError(f"Instrument {inst_name} is not supported in OPD mode.")
+            raise ValueError(f"CamType {cam_type} is not supported in OPD mode.")
 
         field_x = []
         field_y = []

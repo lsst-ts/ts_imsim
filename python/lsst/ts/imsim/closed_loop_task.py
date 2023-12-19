@@ -44,7 +44,7 @@ from lsst.ts.imsim.utils import (
     plot_fwhm_of_iters,
 )
 from lsst.ts.ofc import OFC, OFCData
-from lsst.ts.wep.utils import CamType, FilterType
+from lsst.ts.wep.utils import CamType, FilterType, getCamNameFromCamType, getCamType
 from lsst.ts.wep.utils import getConfigDir as getWepConfigDir
 from lsst.ts.wep.utils import rotMatrix, runProgram
 
@@ -75,7 +75,7 @@ class ClosedLoopTask:
 
     def config_sky_sim(
         self,
-        inst_name: str,
+        cam_type: CamType,
         obs_metadata: ObsMetadata,
         path_sky_file: str = "",
         star_mag: float = 15.0,
@@ -89,8 +89,8 @@ class ClosedLoopTask:
 
         Parameters
         ----------
-        inst_name : str
-            Instrument name.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
         obs_metadata : lsst.ts.imsim.ObsMetadata
             Observation metadata.
         path_sky_file : str, optional
@@ -107,16 +107,16 @@ class ClosedLoopTask:
         """
 
         self.sky_sim = SkySim()
-        self.sky_sim.set_camera(inst_name)
+        self.sky_sim.set_camera(cam_type)
         if path_sky_file == "":
-            self._set_sky_sim_based_on_opd_field_pos(inst_name, obs_metadata, star_mag)
+            self._set_sky_sim_based_on_opd_field_pos(cam_type, obs_metadata, star_mag)
         else:
             abs_sky_file_path = os.path.abspath(path_sky_file)
             self.sky_sim.add_star_by_file(abs_sky_file_path)
 
     def _set_sky_sim_based_on_opd_field_pos(
         self,
-        inst_name: str,
+        cam_type: CamType,
         obs_metadata: ObsMetadata,
         star_mag: float,
     ) -> None:
@@ -126,8 +126,8 @@ class ClosedLoopTask:
 
         Parameters
         ----------
-        inst_name : str
-            Instrument name.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
         obs_metadata : lsst.ts.imsim.ObsMetadata object
             Observation metadata.
         star_mag : float
@@ -146,10 +146,10 @@ class ClosedLoopTask:
         )
 
         opd_metr = OpdMetrology()
-        if inst_name in ["lsst", "lsstfam", "comcam"]:
+        if cam_type in [CamType.LsstCam, CamType.LsstFamCam, CamType.ComCam]:
             field_x, field_y = list(), list()
-            camera = get_camera(inst_name)
-            for name in self.get_sensor_name_list_of_fields(inst_name):
+            camera = get_camera(cam_type)
+            for name in self.get_sensor_name_list_of_fields(cam_type):
                 detector = camera.get(name)
                 x_rad, y_rad = detector.getCenter(FIELD_ANGLE)
                 x_deg, y_deg = np.rad2deg(x_rad), np.rad2deg(y_rad)
@@ -158,7 +158,7 @@ class ClosedLoopTask:
             opd_metr.field_x = field_x
             opd_metr.field_y = field_y
         else:
-            raise ValueError(f"This instrument name ({inst_name}) is not supported.")
+            raise ValueError(f"This CamType ({cam_type}) is not supported.")
 
         star_id = 0
         ra_in_deg_arr = np.array(opd_metr.field_x)
@@ -183,18 +183,18 @@ class ClosedLoopTask:
             )
             star_id += 1
 
-    def config_ofc_calc(self, inst_name: str) -> None:
+    def config_ofc_calc(self, cam_type: str) -> None:
         """Configure the OFC calculator.
 
         OFC: Optical feedback calculator.
 
         Parameters
         ----------
-        inst_name : str
-            Instrument name.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
         """
 
-        self.ofc_calc = OFC(OFCData(inst_name))
+        self.ofc_calc = OFC(OFCData(getCamNameFromCamType(cam_type)))
 
     def map_filter_ref_to_g(self, filter_type_name: str) -> str:
         """Map the reference filter to the G filter.
@@ -234,15 +234,15 @@ class ClosedLoopTask:
         if dec < -90 or dec > 90:
             raise ValueError("The declination (Dec) should be in [-90, 90].")
 
-    def get_sensor_name_list_of_fields(self, inst_name: str) -> list[str]:
+    def get_sensor_name_list_of_fields(self, cam_type: CamType) -> list[str]:
         """Get the list of sensor name of fields.
 
         The list will be sorted based on the field index.
 
         Parameters
         ----------
-        inst_name : enum 'InstName' in lsst.ts.ofc.Utility
-            Instrument name.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
 
         Returns
         -------
@@ -255,9 +255,11 @@ class ClosedLoopTask:
             This instrument name is not supported.
         """
 
-        camera = get_camera(inst_name)
+        camera = get_camera(cam_type)
         detector_type = (
-            DetectorType.WAVEFRONT if inst_name == "lsst" else DetectorType.SCIENCE
+            DetectorType.WAVEFRONT
+            if cam_type == CamType.LsstCam
+            else DetectorType.SCIENCE
         )
         return [
             detector.getName()
@@ -265,15 +267,15 @@ class ClosedLoopTask:
             if detector.getType() == detector_type
         ]
 
-    def get_sensor_id_list_of_fields(self, inst_name: str) -> list[int]:
+    def get_sensor_id_list_of_fields(self, cam_type: CamType) -> list[int]:
         """Get the list of sensor ids of fields.
 
         The list will be sorted based on the field index.
 
         Parameters
         ----------
-        inst_name : enum 'InstName' in lsst.ts.ofc.Utility
-            Instrument name.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
 
         Returns
         -------
@@ -286,10 +288,12 @@ class ClosedLoopTask:
             This instrument name is not supported.
         """
 
-        camera = get_camera(inst_name)
+        camera = get_camera(cam_type)
 
         detector_type = (
-            DetectorType.WAVEFRONT if inst_name == "lsst" else DetectorType.SCIENCE
+            DetectorType.WAVEFRONT
+            if cam_type == CamType.LsstCam
+            else DetectorType.SCIENCE
         )
         return [
             detector.getId()
@@ -316,36 +320,6 @@ class ClosedLoopTask:
         make_dir(output_dir, exist_ok=True)
 
         return output_dir
-
-    def get_cam_type_and_inst_name(self, inst: str) -> tuple[CamType, str]:
-        """Get the camera type and instrument name.
-
-        Parameters
-        ----------
-        inst : str
-            Instrument to use: currently only lsst.
-
-        Returns
-        -------
-        lsst.ts.wep.utils.enumUtils.CamType
-            Camera type.
-        str
-            Instrument name.
-
-        Raises
-        ------
-        ValueError
-            This instrument is not supported.
-        """
-
-        if inst == "lsst":
-            return CamType.LsstCam, "lsst"
-        elif inst == "lsstfam":
-            return CamType.LsstFamCam, "lsstfam"
-        elif inst == "comcam":
-            return CamType.ComCam, "comcam"
-        else:
-            raise ValueError(f"This instrument ({inst}) is not supported.")
 
     def get_filter_type(self, filter_type_name: str) -> FilterType:
         """Get the filter type.
@@ -386,7 +360,6 @@ class ClosedLoopTask:
     def _run_sim(
         self,
         cam_type: CamType,
-        inst_name: str,
         obs_metadata: ObsMetadata,
         base_output_dir: str,
         butler_root_path: str,
@@ -405,8 +378,6 @@ class ClosedLoopTask:
         ----------
         cam_type : enum 'CamType' in lsst.ts.wep.utility
             Camera type.
-        inst_name : enum 'InstName' in lsst.ts.ofc.Utility
-            Instrument name.
         obs_metadata : lsst.ts.imsim.ObsMetadata object
             Observation metadata.
         base_output_dir : str
@@ -443,8 +414,8 @@ class ClosedLoopTask:
         # If using wavefront sensors we measure one per pair
         # and the field
         if cam_type == CamType.LsstCam:
-            corner_sensor_name_list = self.get_sensor_name_list_of_fields(inst_name)
-            corner_sensor_id_list = self.get_sensor_id_list_of_fields(inst_name)
+            corner_sensor_name_list = self.get_sensor_name_list_of_fields(cam_type)
+            corner_sensor_id_list = self.get_sensor_id_list_of_fields(cam_type)
             ref_sensor_name_list = []
             ref_sensor_id_list = []
             for sens_name, sens_id in zip(
@@ -454,8 +425,8 @@ class ClosedLoopTask:
                     ref_sensor_name_list.append(sens_name)
                     ref_sensor_id_list.append(sens_id)
         else:
-            ref_sensor_name_list = self.get_sensor_name_list_of_fields(inst_name)
-            ref_sensor_id_list = self.get_sensor_id_list_of_fields(inst_name)
+            ref_sensor_name_list = self.get_sensor_name_list_of_fields(cam_type)
+            ref_sensor_id_list = self.get_sensor_id_list_of_fields(cam_type)
 
         # Common file and directory names
         opd_zk_file_name = "opd.zer"
@@ -499,7 +470,7 @@ class ClosedLoopTask:
             if cam_type == CamType.LsstCam:
                 self._generate_images(
                     obs_metadata,
-                    inst_name=inst_name,
+                    cam_type=cam_type,
                     sky_seed=sky_seed,
                     pert_seed=pert_seed,
                     num_pro=num_pro,
@@ -513,7 +484,7 @@ class ClosedLoopTask:
                     obs_metadata.focus_z = focus_z
                     self._generate_images(
                         obs_metadata,
-                        inst_name=inst_name,
+                        cam_type=cam_type,
                         sky_seed=sky_seed,
                         pert_seed=pert_seed,
                         num_pro=num_pro,
@@ -524,7 +495,7 @@ class ClosedLoopTask:
 
             # Analyze the OPD data
             self.imsim_cmpt.analyze_opd_data(
-                inst_name,
+                cam_type,
                 zk_file_name=opd_zk_file_name,
                 rot_opd_in_deg=obs_metadata.rotator_angle,
                 pssn_file_name=opd_pssn_file_name,
@@ -535,7 +506,7 @@ class ClosedLoopTask:
                     list_of_wf_err = self._calc_wf_err_from_img(
                         obs_metadata,
                         butler_root_path=butler_root_path,
-                        inst_name=inst_name,
+                        cam_type=cam_type,
                         num_pro=num_pro,
                         pipeline_file=pipeline_file,
                     )
@@ -560,7 +531,7 @@ class ClosedLoopTask:
             self.imsim_cmpt.reorder_and_save_wf_err_file(
                 list_of_wf_err,
                 ref_sensor_name_list,
-                get_camera(inst_name),
+                get_camera(cam_type),
                 zk_file_name=wfs_zk_file_name,
             )
 
@@ -617,7 +588,7 @@ class ClosedLoopTask:
     def _generate_images(
         self,
         obs_metadata: ObsMetadata,
-        inst_name: str,
+        cam_type: CamType,
         sky_seed: int = 42,
         pert_seed: int = 11,
         num_pro: int = 1,
@@ -631,8 +602,8 @@ class ClosedLoopTask:
         ----------
         obs_metadata : lsst.ts.imsim.ObsMetadata object
             Observation metadata.
-        inst_name : str
-            Instrument name.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
         sky_seed : int, optional
             Random seed for the sky background.
             (The default is 42.)
@@ -655,12 +626,16 @@ class ClosedLoopTask:
 
         # Generate the images
         if imsim_config_pointer_file is None:
-            if inst_name == "lsst":
-                imsim_config_pointer_file = os.path.join(
-                    get_config_dir(), "lsstCamDefaultPointer.yaml"
-                )
+            if cam_type == CamType.LsstCam:
+                default_pointer = "lsstCamDefaultPointer.yaml"
+            elif cam_type == CamType.LsstFamCam:
+                default_pointer = "lsstFamCamDefaultPointer.yaml"
+            elif cam_type == CamType.ComCam:
+                default_pointer = "lsstComCamDefaultPointer.yaml"
+            imsim_config_pointer_file = os.path.join(get_config_dir(), default_pointer)
+
         base_config_yaml = self.imsim_cmpt.assemble_config_yaml(
-            obs_metadata, imsim_config_pointer_file, inst_name
+            obs_metadata, imsim_config_pointer_file, cam_type
         )
 
         inst_cat = self.imsim_cmpt.gen_instance_catalog(self.sky_sim)
@@ -683,7 +658,7 @@ class ClosedLoopTask:
                     {"type": "Kolmogorov", "fwhm": 0.7}
                 )
 
-        if inst_name == "lsst":
+        if cam_type == CamType.LsstCam:
             imsim_config_yaml = self.imsim_cmpt.add_sources_to_config(
                 base_config_yaml, inst_cat_path, use_ccd_img=self.use_ccd_img
             )
@@ -694,7 +669,7 @@ class ClosedLoopTask:
             self.imsim_cmpt.write_yaml_and_run_imsim(
                 imsim_config_path, imsim_config_yaml
             )
-        elif inst_name in ["lsstfam", "comcam"]:
+        elif cam_type in [CamType.LsstFamCam, CamType.ComCam]:
             if self.use_ccd_img:
                 # Run once for OPD
                 imsim_opd_config_path = os.path.join(
@@ -759,7 +734,7 @@ class ClosedLoopTask:
         self,
         obs_metadata: ObsMetadata,
         butler_root_path: str,
-        inst_name: str,
+        cam_type: CamType,
         num_pro: int = 1,
         pipeline_file: str | None = None,
         filter_type_name: str = "",
@@ -772,8 +747,8 @@ class ClosedLoopTask:
             Observation metadata.
         butler_root_path : str
             Path to the butler repository.
-        inst_name : str
-            Instrument name.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
         num_pro : int, optional
             Number of processor to run DM pipeline. (the default is 1.)
         pipeline_file : str or None, optional
@@ -790,12 +765,12 @@ class ClosedLoopTask:
         """
 
         # Ingest images into butler gen3
-        self.ingest_data(butler_root_path=butler_root_path, inst_name=inst_name)
+        self.ingest_data(butler_root_path=butler_root_path, cam_type=cam_type)
 
         list_of_wf_err = self.run_wep(
             obs_metadata.seq_num,
             butler_root_path,
-            inst_name,
+            cam_type,
             num_pro=num_pro,
             pipeline_file=pipeline_file,
             filter_type_name=filter_type_name,
@@ -803,11 +778,41 @@ class ClosedLoopTask:
 
         return list_of_wf_err
 
+    def _get_butler_inst_name(self, cam_type) -> str:
+        """Translate cam_type into suffix used by butler
+        in command line instructions.
+
+        Parameters
+        ----------
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
+
+        Returns
+        -------
+        str
+            Suffix attached to "LSST" to specify instrument to butler.
+
+        Raises
+        ------
+        ValueError
+            CamType must be one of LsstCam, LsstFamCam, ComCam.
+        """
+
+        if cam_type in [CamType.LsstCam, CamType.LsstFamCam]:
+            butler_inst_name = "Cam"
+        elif cam_type == CamType.ComCam:
+            butler_inst_name = "ComCam"
+        else:
+            errMsg = f"CamType {cam_type} not one of LsstCam, LsstFamCam, ComCam."
+            raise ValueError(errMsg)
+
+        return butler_inst_name
+
     def run_wep(
         self,
         seq_num: int,
         butler_root_path: str,
-        inst_name: str,
+        cam_type: CamType,
         num_pro: int = 1,
         pipeline_file: str | None = None,
         filter_type_name: str = "",
@@ -820,8 +825,8 @@ class ClosedLoopTask:
             Observation id.
         butler_root_path : str
             Path to the butler gen3 repos.
-        inst_name : str
-            Instrument name.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
         num_pro : int, optional
             Number of processor to run DM pipeline. (the default is 1.)
         pipeline_file : str or None, optional
@@ -838,16 +843,11 @@ class ClosedLoopTask:
             estimation pipeline for each sensor.
         """
 
-        if inst_name in ["lsst", "lsstfam"]:
-            butler_inst_name = "Cam"
-        elif inst_name == "comcam":
-            butler_inst_name = "ComCam"
+        butler_inst_name = self._get_butler_inst_name(cam_type)
         if pipeline_file is None:
-            pipeline_yaml = f"{inst_name}Pipeline.yaml"
+            pipeline_yaml = f"{getCamNameFromCamType(cam_type)}Pipeline.yaml"
             pipeline_yaml_path = os.path.join(butler_root_path, pipeline_yaml)
-            self.write_wep_configuration(
-                inst_name, pipeline_yaml_path, filter_type_name
-            )
+            self.write_wep_configuration(cam_type, pipeline_yaml_path, filter_type_name)
         else:
             pipeline_yaml_path = pipeline_file
 
@@ -864,7 +864,7 @@ class ClosedLoopTask:
         # The limit for seq_num is 5 digits,
         # set by the expectation that no more than 100K images
         # could be taken in a single day (i.e. no more than 1/sec).
-        if inst_name == "lsst":
+        if cam_type == CamType.LsstCam:
             runProgram(
                 f"pipetask run -b {butler_root_path} "
                 f"-i refcats,LSST{butler_inst_name}/raw/all,LSST{butler_inst_name}/calib/unbounded "
@@ -872,15 +872,7 @@ class ClosedLoopTask:
                 f"--register-dataset-types --output-run ts_imsim_{seq_num} -p {pipeline_yaml_path} -d "
                 f'"visit.seq_num IN ({seq_num})" -j {num_pro}'
             )
-        elif inst_name == "lsstfam":
-            runProgram(
-                f"pipetask run -b {butler_root_path} "
-                f"-i refcats,LSST{butler_inst_name}/raw/all,LSST{butler_inst_name}/calib/unbounded "
-                f"--instrument lsst.obs.lsst.Lsst{butler_inst_name} "
-                f"--register-dataset-types --output-run ts_imsim_{seq_num} -p {pipeline_yaml_path} -d "
-                f'"visit.seq_num IN ({seq_num-1}, {seq_num})" -j {num_pro}'
-            )
-        elif inst_name == "comcam":
+        elif cam_type in (CamType.LsstFamCam, CamType.ComCam):
             runProgram(
                 f"pipetask run -b {butler_root_path} "
                 f"-i refcats,LSST{butler_inst_name}/raw/all,LSST{butler_inst_name}/calib/unbounded "
@@ -931,14 +923,14 @@ class ClosedLoopTask:
         return list_of_wf_err
 
     def write_wep_configuration(
-        self, inst_name: str, pipeline_yaml_path: str, filter_type_name: str
+        self, cam_type: CamType, pipeline_yaml_path: str, filter_type_name: str
     ) -> None:
         """Write wavefront estimation pipeline task configuration.
 
         Parameters
         ----------
-        inst_name : str
-            Name of the instrument this configuration is intended for.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
         pipeline_yaml_path : str
             Path where the pipeline task configuration yaml file
             should be saved.
@@ -946,10 +938,7 @@ class ClosedLoopTask:
             Filter type name: ref (or ''), u, g, r, i, z, or y.
         """
 
-        if inst_name in ["lsst", "lsstfam"]:
-            butler_inst_name = "Cam"
-        elif inst_name == "comcam":
-            butler_inst_name = "ComCam"
+        butler_inst_name = self._get_butler_inst_name(cam_type)
 
         # Remap reference filter
         filter_type_name = self.map_filter_ref_to_g(filter_type_name)
@@ -964,7 +953,7 @@ description: wep basic processing test pipeline
 instrument: lsst.obs.lsst.Lsst{butler_inst_name}
 # Use imported instrument configuration
 imports:
-  - location: {getWepConfigDir()}/cwfs/instData/{inst_name}/instParamPipeConfig.yaml
+  - location: {getWepConfigDir()}/cwfs/instData/{getCamNameFromCamType(cam_type)}/instParamPipeConfig.yaml
 # Then we can specify each task in our pipeline by a name
 # and then specify the class name corresponding to that task
 tasks:
@@ -1065,7 +1054,7 @@ tasks:
         raw_seeing : float
             Raw seeing in arcsec.
         """
-        cam_type, inst_name = self.get_cam_type_and_inst_name(inst)
+        cam_type = getCamType(inst)
         base_output_dir = self.check_and_create_base_output_dir(base_output_dir)
         if do_erase_dir_content:
             self.erase_directory_content(base_output_dir)
@@ -1090,9 +1079,9 @@ tasks:
 
         # Configure the components
         self.config_sky_sim(
-            inst_name, obs_metadata, path_sky_file=path_sky_file, star_mag=star_mag
+            cam_type, obs_metadata, path_sky_file=path_sky_file, star_mag=star_mag
         )
-        self.config_ofc_calc(inst_name)
+        self.config_ofc_calc(cam_type)
         self.imsim_cmpt = ImsimCmpt()
 
         # If path_sky_file using default OPD positions write this to disk
@@ -1106,7 +1095,7 @@ tasks:
         butler_root_path = os.path.join(base_output_dir, "imsimData")
 
         if self.use_ccd_img:
-            self.generate_butler(butler_root_path, inst_name)
+            self.generate_butler(butler_root_path, cam_type)
             self.generate_ref_catalog(
                 butler_root_path=butler_root_path,
                 path_sky_file=path_sky_file,
@@ -1115,7 +1104,6 @@ tasks:
 
         self._run_sim(
             cam_type,
-            inst_name,
             obs_metadata,
             base_output_dir,
             butler_root_path,
@@ -1129,25 +1117,24 @@ tasks:
             turn_off_atmosphere=turn_off_atmosphere,
         )
 
-    def generate_butler(self, butler_root_path: str, inst_name: str) -> None:
+    def generate_butler(self, butler_root_path: str, cam_type: CamType) -> None:
         """Generate butler gen3.
 
         Parameters
         ----------
         butler_root_path: `str`
             Path to where the butler repository should be created.
-        inst_name: `str`
-            Name of the instrument.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
         """
 
-        self.log.info(f"Generating butler gen3 in {butler_root_path} for {inst_name}")
+        self.log.info(
+            f"Generating butler gen3 in {butler_root_path} for {cam_type.name}"
+        )
 
         runProgram(f"butler create {butler_root_path}")
 
-        if inst_name in ["lsst", "lsstfam"]:
-            butler_inst_name = "Cam"
-        elif inst_name == "comcam":
-            butler_inst_name = "ComCam"
+        butler_inst_name = self._get_butler_inst_name(cam_type)
 
         self.log.debug(f"Registering Lsst{butler_inst_name}")
         runProgram(
@@ -1212,26 +1199,23 @@ config.dataset_config.ref_dataset_name='ref_cat'
             f"butler ingest-files -t direct {butler_root_path} cal_ref_cat refcats {sky_ecsv_file_name}"
         )
 
-    def ingest_data(self, butler_root_path: str, inst_name: str) -> None:
+    def ingest_data(self, butler_root_path: str, cam_type: CamType) -> None:
         """Ingest data into a gen3 data Butler.
 
         Parameters
         ----------
         butler_root_path : str
             Path to the butler repository.
-        inst_name : str
-            Instrument name.
+        cam_type : lsst.ts.wep.utils.CamType
+            Camera type.
         """
         output_img_dir = self.imsim_cmpt.output_img_dir
         files = " ".join(glob(os.path.join(output_img_dir, "amp*")))
 
-        if inst_name in ["lsst", "lsstfam", "comcam"]:
+        if cam_type in [CamType.LsstCam, CamType.LsstFamCam, CamType.ComCam]:
             runProgram(f"butler ingest-raws {butler_root_path} {files}")
 
-        if inst_name in ["lsst", "lsstfam"]:
-            butler_inst_name = "Cam"
-        elif inst_name == "comcam":
-            butler_inst_name = "ComCam"
+        butler_inst_name = self._get_butler_inst_name(cam_type)
 
         runProgram(
             f"butler define-visits {butler_root_path} lsst.obs.lsst.Lsst{butler_inst_name}"

@@ -34,6 +34,7 @@ from lsst.ts.imsim.utils import (
     get_module_path,
     get_zk_from_file,
 )
+from lsst.ts.wep.utils import CamType
 
 
 class TestImsimCmpt(unittest.TestCase):
@@ -83,7 +84,7 @@ class TestImsimCmpt(unittest.TestCase):
         shutil.rmtree(self.output_dir)
 
     def _map_sensor_name_and_id(self, sensor_name_list):
-        camera = get_camera("lsst")
+        camera = get_camera(CamType.LsstCam)
         return dict(
             [
                 (camera[detector].getName(), camera[detector].getId())
@@ -108,7 +109,9 @@ class TestImsimCmpt(unittest.TestCase):
 
     def test_assemble_config(self):
         full_config_yaml = self.imsim_cmpt.assemble_config_yaml(
-            self.obs_metadata_test, self.config_pointer_default_lsst_cam, "lsst"
+            self.obs_metadata_test,
+            self.config_pointer_default_lsst_cam,
+            CamType.LsstCam,
         )
         self.full_test_yaml["output"]["dir"] = self.imsim_cmpt.output_img_dir
         self.assertDictEqual(full_config_yaml, self.full_test_yaml)
@@ -124,7 +127,9 @@ class TestImsimCmpt(unittest.TestCase):
         self.assertDictEqual(yaml.safe_load(obs_variables_text), default_vars)
 
     def test_format_opd_text_lsst_cam(self):
-        opd_text = self.imsim_cmpt.format_opd_text(self.obs_metadata_test, "lsst")
+        opd_text = self.imsim_cmpt.format_opd_text(
+            self.obs_metadata_test, CamType.LsstCam
+        )
         self.assertTrue(opd_text.startswith("  opd:"))
         self.assertTrue(
             opd_text.endswith(
@@ -253,7 +258,7 @@ class TestImsimCmpt(unittest.TestCase):
             self.imsim_cmpt.output_img_dir,
         )
         self.imsim_cmpt.analyze_opd_data(
-            "lsst",
+            CamType.LsstCam,
             zk_file_name=self.zk_file_name,
             rot_opd_in_deg=rot_opd_in_deg,
             pssn_file_name=self.pssn_file_name,
@@ -343,7 +348,7 @@ class TestImsimCmpt(unittest.TestCase):
         sensor_id_list = list(map_sensor_name_and_id.values())
 
         zk_file_name = "testZk.zer"
-        camera = get_camera("lsst")
+        camera = get_camera(CamType.LsstCam)
         self.imsim_cmpt.reorder_and_save_wf_err_file(
             list_of_wf_err, ref_sensor_name_list, camera, zk_file_name=zk_file_name
         )
