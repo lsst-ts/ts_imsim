@@ -12,3 +12,10 @@ stamp:
       camera: "@output.camera"
       boresight: $boresight
       det_name: $det_name
+    -
+      type: RubinDiffractionOptics
+      det_name: "$det_name"
+      boresight: "$boresight"
+      camera: "@output.camera"
+      altitude: $alt
+      azimuth: $az

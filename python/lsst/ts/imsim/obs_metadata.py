@@ -43,6 +43,8 @@ class ObsMetadata:
     focus_z: float = 0.0  # Defocal distance in mm
     zenith: float = field(init=False)
     parallactic_angle: float = field(init=False)
+    alt: float = field(init=False)
+    az: float = field(init=False)
 
     def __post_init__(self) -> None:
         """Populate the zenith and parallactic angles
@@ -50,6 +52,7 @@ class ObsMetadata:
         """
         self.zenith = self.calc_zenith_angle()
         self.parallactic_angle = self.calc_parallactic_angle()
+        self.alt, self.az = self.calc_alt_az()
 
     def format_observation_info(self) -> (Observer, astropy.time, astropy.coordinates):
         """
@@ -121,3 +124,11 @@ class ObsMetadata:
         # To get zenith we need to convert to the angle down
         # from zenith so we subtract altitude from 90 degrees.
         return 90.0 - observer.altaz(time, boresight).alt.deg
+
+    def calc_alt_az(self) -> float:
+        observer, time, boresight = self.format_observation_info()
+
+        return (
+            observer.altaz(time, boresight).alt.deg,
+            observer.altaz(time, boresight).az.deg,
+        )

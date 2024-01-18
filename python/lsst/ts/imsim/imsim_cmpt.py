@@ -237,6 +237,8 @@ class ImsimCmpt:
         obs_variables_text += f"  frawSeeing: &rawSeeing {obs_metadata.raw_seeing}\n"
         obs_variables_text += f"  iseqnum: &seqnum {obs_metadata.seq_num}\n"
         obs_variables_text += f"  sobsid: &obsid {obs_metadata.obs_id}\n"
+        obs_variables_text += f"  aalt: &alt {obs_metadata.alt:.6f} deg\n"
+        obs_variables_text += f"  aaz: &az {obs_metadata.az:.6f} deg\n"
 
         return obs_variables_text
 
