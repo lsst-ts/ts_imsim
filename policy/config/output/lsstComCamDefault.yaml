@@ -44,3 +44,5 @@ output:
         - *band
         - $det_name
         - "@output.det_num"
+    added_keywords:
+      program: "CWFS"
