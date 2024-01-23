@@ -7,6 +7,12 @@ Version History
 ##################
 
 -------------
+1.0.1
+-------------
+
+* Add PROGRAM to default closed loop headers so that science_program is populated when ingesting raws into butler repository.
+
+-------------
 1.0.0
 -------------
 
