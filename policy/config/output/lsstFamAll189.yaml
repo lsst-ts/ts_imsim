@@ -1,7 +1,7 @@
 output:
   type: LSST_CCD
-  nproc: 8    # Change this to work on multiple CCDs at once.
-  nfiles: 8   # WFS files
+  nproc: 16    # Change this to work on multiple CCDs at once.
+  nfiles: 189  # science raft centers
 
   header:
     mjd: *mjd
@@ -14,8 +14,8 @@ output:
   cosmic_ray_rate: 0.0
 
   det_num:
-    type: List
-    items: [191, 192, 195, 196, 199, 200, 203, 204]  # WF sensors
+    type: Sequence
+    nitems: 189
 
   file_name:
     type: FormattedStr

@@ -331,7 +331,7 @@ class ImsimCmpt:
                 runProgram(f"galsim {config_file_path}")
             else:
                 runProgram(
-                    f"galsim {config_file_path} -l {os.path.join(self.output_dir, imsim_log_file)}"
+                    f"galsim {config_file_path} -l {os.path.join(self.output_dir, imsim_log_file)} -v 2"
                 )
 
     def write_yaml_and_run_imsim(

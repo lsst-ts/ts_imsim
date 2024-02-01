@@ -1,0 +1,14 @@
+stamp:
+  draw_method: phot
+  photon_ops:
+    -
+      type: PupilAnnulusSampler
+      R_inner: 2.55
+      R_outer: 4.18
+    -
+      type: TimeSampler
+    -
+      type: RubinOptics
+      camera: "@output.camera"
+      boresight: $boresight
+      det_name: $det_name
