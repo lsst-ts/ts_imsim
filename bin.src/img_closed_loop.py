@@ -61,4 +61,5 @@ if __name__ == "__main__":
         args.turn_off_wavefront_estimates,
         args.num_proc,
         args.raw_seeing,
+        args.imsim_log_file,
     )

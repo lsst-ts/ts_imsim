@@ -46,3 +46,5 @@ output:
         - "@output.det_num"
     added_keywords:
       program: "CWFS"
+
+  timeout: 1e6

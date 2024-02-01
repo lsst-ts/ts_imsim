@@ -307,7 +307,7 @@ class ImsimCmpt:
 
         return header_text
 
-    def run_imsim(self, config_file_path: str) -> None:
+    def run_imsim(self, config_file_path: str, imsim_log_file: str = "") -> None:
         """
         Run imSim with the given configuration file.
 
@@ -315,6 +315,10 @@ class ImsimCmpt:
         ----------
         config_file_path : str
             Path to the imSim configuration yaml file.
+        imsim_log_file : str, optional
+            Path to save imSim log output. If empty string then the
+            code will just default to sending it to stdout.
+            (The default is "".)
         """
         # For mysterious reasons, having the KMP_INIT_AT_FORK environment
         # variable set causes problems in the imSim subprocess.  It may be
@@ -323,10 +327,18 @@ class ImsimCmpt:
         # of ts_wep before ever getting to this method, so we can't just unset
         # it in the environment ahead of time.
         with ModifiedEnvironment(KMP_INIT_AT_FORK=None):
-            runProgram(f"galsim {config_file_path}")
+            if imsim_log_file == "":
+                runProgram(f"galsim {config_file_path}")
+            else:
+                runProgram(
+                    f"galsim {config_file_path} -l {os.path.join(self.output_dir, imsim_log_file)}"
+                )
 
     def write_yaml_and_run_imsim(
-        self, config_path: str, config_yaml: dict[str, Any]
+        self,
+        config_path: str,
+        config_yaml: dict[str, Any],
+        imsim_log_file: str = "",
     ) -> None:
         """Write yaml config file and run Imsim.
 
@@ -336,11 +348,15 @@ class ImsimCmpt:
             Path to write config yaml file.
         config_yaml : dict
             Dictionary that contains imsim config details to write to yaml.
+        imsim_log_file : str, optional
+            Path to save imSim log output. If empty string then the
+            code will just default to sending it to stdout.
+            (The default is "".)
         """
 
         with open(config_path, "w") as file:
             yaml.safe_dump(config_yaml, file)
-        self.run_imsim(config_path)
+        self.run_imsim(config_path, imsim_log_file=imsim_log_file)
 
     def add_sources_to_config(
         self, config_yaml: dict[str, Any], inst_cat_path: str, use_ccd_img: bool = True

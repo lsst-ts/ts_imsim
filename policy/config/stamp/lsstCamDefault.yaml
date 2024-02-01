@@ -7,11 +7,11 @@ stamp:
       R_outer: 4.18
     -
       type: TimeSampler
-    -
-      type: RubinOptics
-      camera: "@output.camera"
-      boresight: $boresight
-      det_name: $det_name
+    # -
+    #   type: RubinOptics
+    #   camera: "@output.camera"
+    #   boresight: $boresight
+    #   det_name: $det_name
     -
       type: RubinDiffractionOptics
       det_name: "$det_name"
