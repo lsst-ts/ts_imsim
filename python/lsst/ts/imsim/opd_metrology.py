@@ -25,14 +25,14 @@ import numpy as np
 import yaml
 from astropy.io import fits
 from lsst.afw.cameraGeom import FIELD_ANGLE
-from lsst.ts.imsim.utils import calc_pssn, get_camera
-from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
-from lsst.ts.wep.utils import (
+from lsst.ts.imsim.utils import (
     CamType,
-    ZernikeAnnularFit,
-    ZernikeEval,
-    getCamNameFromCamType,
+    calc_pssn,
+    get_camera,
+    zernike_annular_fit,
+    zernike_eval,
 )
+from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
 
 
 class OpdMetrology:
@@ -125,14 +125,9 @@ class OpdMetrology:
 
         Parameters
         ----------
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
             Valid CamTypes are LsstCam, LsstFamCam, ComCam.
-
-        Raises
-        ------
-        ValueError
-            The instrument is not supported.
         """
 
         # Set camera and field ids for given instrument
@@ -141,14 +136,7 @@ class OpdMetrology:
             return
 
         weight_dir_path = getConfigDirOfc() / "image_quality_weights"
-        path_wgt_file = (
-            weight_dir_path / f"{getCamNameFromCamType(cam_type)}_weights.yaml"
-        )
-
-        if not path_wgt_file.exists():
-            raise RuntimeError(
-                f"OFC instrument weights path does not exist: {weight_dir_path}"
-            )
+        path_wgt_file = weight_dir_path / f"{cam_type.value}_weights.yaml"
 
         # Set the weighting ratio
         with open(path_wgt_file, "r") as file:
@@ -162,8 +150,6 @@ class OpdMetrology:
             self.sensor_ids = np.arange(189)
         elif cam_type == CamType.ComCam:
             self.sensor_ids = np.arange(9)
-        else:
-            raise ValueError(f"CamType {cam_type} is not supported in OPD mode.")
 
         field_x = []
         field_y = []
@@ -234,7 +220,9 @@ class OpdMetrology:
 
         # Fit the OPD map with Zk and write into the file
         idx = ~np.isnan(opd)
-        zk = ZernikeAnnularFit(opd[idx], opd_x[idx], opd_y[idx], zk_terms, obscuration)
+        zk = zernike_annular_fit(
+            opd[idx], opd_x[idx], opd_y[idx], zk_terms, obscuration
+        )
 
         return zk, opd, opd_x, opd_y
 
@@ -273,7 +261,7 @@ class OpdMetrology:
         idx = ~np.isnan(opd)
 
         # Remove the PTT
-        opd[idx] -= ZernikeEval(zk, opd_x[idx], opd_y[idx])
+        opd[idx] -= zernike_eval(zk, opd_x[idx], opd_y[idx])
 
         return opd, opd_x, opd_y
 

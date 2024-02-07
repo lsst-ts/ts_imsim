@@ -25,8 +25,7 @@ import tempfile
 import unittest
 
 from lsst.ts.imsim import ClosedLoopTask, ObsMetadata
-from lsst.ts.imsim.utils.utility import get_module_path
-from lsst.ts.wep.utils import CamType, FilterType
+from lsst.ts.imsim.utils import CamType, get_module_path
 
 
 class TestclosedLoopTask(unittest.TestCase):
@@ -91,39 +90,6 @@ class TestclosedLoopTask(unittest.TestCase):
                 filter_type_name
             )
             self.assertEqual(mapped_filter_name, filter_type_name)
-
-    def test_get_filter_type_ref(self):
-        filter_type = self.closed_loop_task.get_filter_type("ref")
-        self.assertEqual(filter_type, FilterType.REF)
-
-    def test_get_filter_type_u(self):
-        filter_type = self.closed_loop_task.get_filter_type("u")
-        self.assertEqual(filter_type, FilterType.LSST_U)
-
-    def test_get_filter_type_g(self):
-        filter_type = self.closed_loop_task.get_filter_type("g")
-        self.assertEqual(filter_type, FilterType.LSST_G)
-
-    def test_get_filter_type_r(self):
-        filter_type = self.closed_loop_task.get_filter_type("r")
-        self.assertEqual(filter_type, FilterType.LSST_R)
-
-    def test_get_filter_type_i(self):
-        filter_type = self.closed_loop_task.get_filter_type("i")
-        self.assertEqual(filter_type, FilterType.LSST_I)
-
-    def test_get_filter_type_z(self):
-        filter_type = self.closed_loop_task.get_filter_type("z")
-        self.assertEqual(filter_type, FilterType.LSST_Z)
-
-    def test_get_filter_type_y(self):
-        filter_type = self.closed_loop_task.get_filter_type("y")
-        self.assertEqual(filter_type, FilterType.LSST_Y)
-
-    def test_get_filter_type_err(self):
-        self.assertRaises(
-            ValueError, self.closed_loop_task.get_filter_type, "noThisFilterType"
-        )
 
     def test_erase_directory_content(self):
         # Make the temporary directory
@@ -218,11 +184,3 @@ class TestclosedLoopTask(unittest.TestCase):
         self.assertEqual(lsstcam_str, "Cam")
         self.assertEqual(lsstfam_str, "Cam")
         self.assertEqual(comcam_str, "ComCam")
-
-    def test_get_butler_inst_name_raise_err(self):
-        with self.assertRaises(ValueError) as context:
-            self.closed_loop_task._get_butler_inst_name(CamType.AuxTel)
-        self.assertEqual(
-            str(context.exception),
-            f"CamType {CamType.AuxTel} not one of LsstCam, LsstFamCam, ComCam.",
-        )

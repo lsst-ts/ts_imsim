@@ -23,8 +23,7 @@ import os
 import unittest
 
 from lsst.ts.imsim import SkySim
-from lsst.ts.imsim.utils.utility import get_module_path
-from lsst.ts.wep.utils import CamType
+from lsst.ts.imsim.utils import CamType, get_module_path
 
 
 class TestSkySim(unittest.TestCase):

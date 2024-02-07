@@ -32,6 +32,7 @@ from lsst.ts.imsim.obs_metadata import ObsMetadata
 from lsst.ts.imsim.opd_metrology import OpdMetrology
 from lsst.ts.imsim.sky_sim import SkySim
 from lsst.ts.imsim.utils import (
+    CamType,
     ModifiedEnvironment,
     SensorWavefrontError,
     get_config_dir,
@@ -39,7 +40,7 @@ from lsst.ts.imsim.utils import (
     make_dir,
 )
 from lsst.ts.ofc.ofc_data.base_ofc_data import BaseOFCData
-from lsst.ts.wep.utils import CamType, runProgram
+from lsst.ts.wep.utils import runProgram
 from scipy.ndimage import rotate
 
 
@@ -142,7 +143,7 @@ class ImsimCmpt:
             The location of the config pointer file that specifies
             the location of configurations files for each imsim
             component.
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         required_modules_file : str or None
             Path to yaml file with required imsim modules. If None,
@@ -250,7 +251,7 @@ class ImsimCmpt:
         ----------
         obs_metadata : lsst.ts.imsim.ObsMetadata
             ObsMetadata dataclass object with observation information.
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
 
         Returns
@@ -543,7 +544,7 @@ class ImsimCmpt:
 
         Parameters
         ----------
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         zk_file_name : str, optional
             OPD in zk file name. (the default is "opd.zer".)

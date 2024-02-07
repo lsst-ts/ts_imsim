@@ -22,8 +22,7 @@
 __all__ = ["SkySim"]
 
 import numpy as np
-from lsst.ts.imsim.utils import get_camera
-from lsst.ts.wep.utils import CamType
+from lsst.ts.imsim.utils import CamType, get_camera
 
 
 class SkySim:
@@ -50,7 +49,7 @@ class SkySim:
 
         Parameters
         ----------
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         """
 

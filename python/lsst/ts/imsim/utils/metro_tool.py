@@ -55,7 +55,7 @@ def calc_pssn(
 
     Parameters
     ----------
-    array : numpy.ndarry
+    array : numpy.ndarray
         Array that contains either opd or pdf. opd need to be in microns.
     wl_um : float
         Wavelength in microns.
