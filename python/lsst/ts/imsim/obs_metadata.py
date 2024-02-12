@@ -126,6 +126,21 @@ class ObsMetadata:
         return 90.0 - observer.altaz(time, boresight).alt.deg
 
     def calc_alt_az(self) -> float:
+        """Calculate the alt and az angles so we can accurately
+        populate the imsim configuration.
+
+        Parameters
+        ----------
+        obs_metadata : lsst.ts.imsim.ObsMetadata
+            ObsMetadata dataclass object with observation information.
+
+        Returns
+        -------
+        float
+            Altitude Angle in degrees.
+        float
+            Azimuth Angle in degrees.
+        """
         observer, time, boresight = self.format_observation_info()
 
         return (

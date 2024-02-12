@@ -72,3 +72,14 @@ class TestObsMetadata(unittest.TestCase):
             obs_metadata.calc_zenith_angle(),
             90.0 - rubin.altaz(t, sirius).alt.deg,
         )
+
+    def test_calc_alt_az(self):
+        sirius = FixedTarget.from_name("sirius")
+        t = Time(59580.0, format="mjd")
+        obs_metadata = ObsMetadata(
+            ra=sirius.ra.deg, dec=sirius.dec.deg, band="r", mjd=59580.0
+        )
+        rubin = Observer.at_site("cerro pachon")
+        obs_alt, obs_az = obs_metadata.calc_alt_az()
+        self.assertAlmostEqual(obs_alt, rubin.altaz(t, sirius).alt.deg)
+        self.assertAlmostEqual(obs_az, rubin.altaz(t, sirius).az.deg)
