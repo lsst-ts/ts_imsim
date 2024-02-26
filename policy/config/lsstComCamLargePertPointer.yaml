@@ -7,6 +7,6 @@ input:
 gal: '{TS_IMSIM_DIR}/policy/config/gal/starDefault.yaml'
 image: '{TS_IMSIM_DIR}/policy/config/image/lsstCamDefault.yaml'
 psf: '{TS_IMSIM_DIR}/policy/config/psf/psfDefault.yaml'
-stamp: '{TS_IMSIM_DIR}/policy/config/stamp/lsstCamDefault.yaml'
+stamp: '{TS_IMSIM_DIR}/policy/config/stamp/lsstCamLsstSiliconWithDiffraction.yaml'
 output: '{TS_IMSIM_DIR}/policy/config/output/lsstComCamDefault.yaml'
 opd: '{TS_IMSIM_DIR}/policy/config/opd/lsstCamDefault.yaml'

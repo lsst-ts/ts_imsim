@@ -60,9 +60,11 @@ where the following minimal set of command line options are used:
   If it does not exist it will be made.
 * **iter_num**: Number of iterations for the closed loop.
 * **config_pointer_file**: The pointer file that contains the paths to all the individual configuration files for the simulation subsystems (input.telescope, output, stamp, etc.).
-  See next section for more information.
+  See the :ref:`next section<Changing_telescope_configuration>` for more information.
 * **turn_off_atmosphere**: Turn off the atmosphere in the images.
 * **turn_off_sky_background**: Turn off the sky background. Helps to speed up image generation at expense of a realistic background.
+
+.. _Changing_telescope_configuration:
 
 Changing the Initial Telescope Configuration
 --------------------------------------------

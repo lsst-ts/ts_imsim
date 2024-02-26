@@ -20,6 +20,10 @@ eval_variables:
   azenith: &zenith 41.407655 deg
   # Camera rotator angle.  AKA RotTelPos
   artp: &rtp 0.0 deg
+  # Altitude (Altitude + Zenith = 90 deg)
+  aalt: 48.592345 deg
+  # Azimuth angle
+  aaz: 311.662767 deg
 
   fexptime: &exptime 30.0  # seconds
   fmjd: &mjd 59580.0

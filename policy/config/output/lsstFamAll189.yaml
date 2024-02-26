@@ -1,22 +1,21 @@
 output:
   type: LSST_CCD
-  nproc: 9    # Change this to work on multiple CCDs at once.
-  nfiles: 9 # Comcam
+  nproc: 16    # Change this to work on multiple CCDs at once.
+  nfiles: 189  # science raft centers
 
   header:
     mjd: *mjd
     seqnum: *seqnum
 
-  camera: LsstComCam
+  camera: LsstCam
 
   exptime: $exptime
 
-  cosmic_ray_rate: 0.0 # The rate of cosmic rays per second in a sensor.
+  cosmic_ray_rate: 0.0
 
   det_num:
-    type: List
-    items: $list(range(9))
-
+    type: Sequence
+    nitems: 189
 
   file_name:
     type: FormattedStr

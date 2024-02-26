@@ -1,0 +1,20 @@
+stamp:
+  type: LSST_Silicon
+  det_name: "$det_name"
+  world_pos:
+    type: InstCatWorldPos
+  draw_method: phot
+  photon_ops:
+    -
+      type: PupilAnnulusSampler
+      R_inner: 2.55
+      R_outer: 4.18
+    -
+      type: TimeSampler
+    -
+      type: RubinDiffractionOptics
+      det_name: "$det_name"
+      boresight: "$boresight"
+      camera: "@output.camera"
+      altitude: $alt
+      azimuth: $az
