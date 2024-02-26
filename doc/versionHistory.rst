@@ -7,6 +7,15 @@ Version History
 ##################
 
 -------------
+1.1.0
+-------------
+
+* Add alt, az calculation to obs_metadata.
+* Change default imsim configuration to use LSST_Silicon stamp type and include RubinDiffractionOptics.
+* Add imsim_log_file option to capture imsim output in a log file instead of printing to STDOUT.
+* Add link to docs on README.md.
+
+-------------
 1.0.1
 -------------
 

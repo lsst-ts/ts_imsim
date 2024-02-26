@@ -1,10 +1,7 @@
 output:
   type: LSST_CCD
   nproc: 8    # Change this to work on multiple CCDs at once.
-  # nfiles: 1   # test
   nfiles: 8   # WFS files
-  # nfiles: 29   # WFS + raft centers
-  # nfiles: 197  # WFS + all science
 
   header:
     mjd: *mjd
@@ -19,7 +16,6 @@ output:
   det_num:
     type: List
     items: [191, 192, 195, 196, 199, 200, 203, 204]  # WF sensors
-    # items: [4, 13, 22, 31, 40, 49, 58, 67, 76, 85, 94, 103, 112, 121, 130, 139, 148, 157, 166, 175, 184, 191, 192, 195, 196, 199, 200, 203, 204]  # WF sensors + raft centers
 
   file_name:
     type: FormattedStr
@@ -49,3 +45,5 @@ output:
         - "@output.det_num"
     added_keywords:
       program: "CWFS"
+
+  timeout: 1e6

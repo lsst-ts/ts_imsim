@@ -1,3 +1,5 @@
+[![docs](https://img.shields.io/badge/docs-ts--imsim.lsst.io-brightgreen)](https://ts-imsim.lsst.io/)
+
 # ts_imsim
 Package to create Rubin AOS simulations with imSim
 
