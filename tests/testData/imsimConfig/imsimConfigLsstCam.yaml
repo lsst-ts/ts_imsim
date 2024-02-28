@@ -377,11 +377,11 @@ output:
       # Coordinates are parallel to the OCS (https://sitcomtn-003.lsst.io/#the-optical-coordinate-system)
       # when rotTelPos just above is set to zero, or parallel to the CCS when rotTelPos is set
       # to the camera rotator angle.
-    - thx: -1.1902777777777778 deg
-      thy: -1.1902777777777778 deg
-    - thx: -1.1902777777777778 deg
-      thy: 1.1902777777777778 deg
-    - thx: 1.1902777777777778 deg
-      thy: -1.1902777777777778 deg
-    - thx: 1.1902777777777778 deg
-      thy: 1.1902777777777778 deg
+    - thx: -1.1896972837632227 deg
+      thy: -1.1897000551156358 deg
+    - thx: -1.1897000551156358 deg
+      thy: 1.1896972837632227 deg
+    - thx: 1.1897000551156358 deg
+      thy: -1.1896972837632227 deg
+    - thx: 1.1896972837632227 deg
+      thy: 1.1897000551156358 deg

@@ -26,6 +26,7 @@ import unittest
 import galsim
 import numpy as np
 import yaml
+from lsst.afw.cameraGeom import FIELD_ANGLE
 from lsst.ts.imsim import ImsimCmpt, ObsMetadata, SkySim
 from lsst.ts.imsim.utils import (
     SensorWavefrontError,
@@ -80,14 +81,16 @@ class TestImsimCmpt(unittest.TestCase):
         # Create SkySim object
         self.sky_sim = SkySim()
 
+        # Store camera for tests
+        self.camera = get_camera(CamType.LsstCam)
+
     def tearDown(self):
         shutil.rmtree(self.output_dir)
 
     def _map_sensor_name_and_id(self, sensor_name_list):
-        camera = get_camera(CamType.LsstCam)
         return dict(
             [
-                (camera[detector].getName(), camera[detector].getId())
+                (self.camera[detector].getName(), self.camera[detector].getId())
                 for detector in sensor_name_list
             ]
         )
@@ -130,11 +133,16 @@ class TestImsimCmpt(unittest.TestCase):
         opd_text = self.imsim_cmpt.format_opd_text(
             self.obs_metadata_test, CamType.LsstCam
         )
+
+        # Should match values from obs_lsst
+        test_intra_location = self.camera[204].getCenter(FIELD_ANGLE)
+        test_extra_location = self.camera[203].getCenter(FIELD_ANGLE)
+        test_y = np.degrees(test_intra_location[0] + test_extra_location[0]) / 2
+        test_x = np.degrees(test_intra_location[1] + test_extra_location[1]) / 2
+
         self.assertTrue(opd_text.startswith("  opd:"))
         self.assertTrue(
-            opd_text.endswith(
-                "- {thx: 1.1902777777777778 deg, thy: 1.1902777777777778 deg}\n"
-            )
+            opd_text.endswith(f"- {{thx: {test_x} deg, thy: {test_y} deg}}\n")
         )
 
     def test_add_config_header(self):
@@ -348,9 +356,8 @@ class TestImsimCmpt(unittest.TestCase):
         sensor_id_list = list(map_sensor_name_and_id.values())
 
         zk_file_name = "testZk.zer"
-        camera = get_camera(CamType.LsstCam)
         self.imsim_cmpt.reorder_and_save_wf_err_file(
-            list_of_wf_err, ref_sensor_name_list, camera, zk_file_name=zk_file_name
+            list_of_wf_err, ref_sensor_name_list, self.camera, zk_file_name=zk_file_name
         )
 
         zk_file_path = os.path.join(self.imsim_cmpt.output_img_dir, zk_file_name)
