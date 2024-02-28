@@ -7,6 +7,12 @@ Version History
 ##################
 
 -------------
+1.1.1
+-------------
+
+* Update wavefront sensor locations in tests with updated info from obs_lsst.
+
+-------------
 1.1.0
 -------------
 
