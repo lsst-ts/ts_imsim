@@ -7,6 +7,13 @@ Version History
 ##################
 
 -------------
+1.2.0
+-------------
+
+* Update ts_wep API calls to run with ts_wep v9.0.
+* Add some methods from old version of ts_wep to preserve functionality.
+
+-------------
 1.1.1
 -------------
 

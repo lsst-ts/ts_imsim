@@ -25,6 +25,7 @@ import unittest
 from lsst.afw import cameraGeom
 from lsst.obs.lsst import LsstCam, LsstComCam
 from lsst.ts.imsim.utils import (
+    CamType,
     ModifiedEnvironment,
     get_camera,
     get_config_dir,
@@ -32,10 +33,14 @@ from lsst.ts.imsim.utils import (
     get_policy_path,
     get_zk_from_file,
 )
-from lsst.ts.wep.utils import CamType
 
 
 class TestUtility(unittest.TestCase):
+    def setUp(self) -> None:
+        self.test_data_dir = os.path.join(
+            get_module_path(), "tests", "testData", "utils"
+        )
+
     def test_get_module_path(self):
         self.assertEqual(os.environ["TS_IMSIM_DIR"], get_module_path())
 

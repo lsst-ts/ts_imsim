@@ -29,13 +29,13 @@ import yaml
 from lsst.afw.cameraGeom import FIELD_ANGLE
 from lsst.ts.imsim import ImsimCmpt, ObsMetadata, SkySim
 from lsst.ts.imsim.utils import (
+    CamType,
     SensorWavefrontError,
     get_camera,
     get_config_dir,
     get_module_path,
     get_zk_from_file,
 )
-from lsst.ts.wep.utils import CamType
 
 
 class TestImsimCmpt(unittest.TestCase):

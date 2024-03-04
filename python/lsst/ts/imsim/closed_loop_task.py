@@ -37,6 +37,7 @@ from lsst.ts.imsim.obs_metadata import ObsMetadata
 from lsst.ts.imsim.opd_metrology import OpdMetrology
 from lsst.ts.imsim.sky_sim import SkySim
 from lsst.ts.imsim.utils import (
+    CamType,
     SensorWavefrontError,
     get_camera,
     get_config_dir,
@@ -44,8 +45,6 @@ from lsst.ts.imsim.utils import (
     plot_fwhm_of_iters,
 )
 from lsst.ts.ofc import OFC, OFCData
-from lsst.ts.wep.utils import CamType, FilterType, getCamNameFromCamType, getCamType
-from lsst.ts.wep.utils import getConfigDir as getWepConfigDir
 from lsst.ts.wep.utils import rotMatrix, runProgram
 
 
@@ -89,7 +88,7 @@ class ClosedLoopTask:
 
         Parameters
         ----------
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         obs_metadata : lsst.ts.imsim.ObsMetadata
             Observation metadata.
@@ -126,7 +125,7 @@ class ClosedLoopTask:
 
         Parameters
         ----------
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         obs_metadata : lsst.ts.imsim.ObsMetadata object
             Observation metadata.
@@ -183,18 +182,18 @@ class ClosedLoopTask:
             )
             star_id += 1
 
-    def config_ofc_calc(self, cam_type: str) -> None:
+    def config_ofc_calc(self, cam_type: CamType) -> None:
         """Configure the OFC calculator.
 
         OFC: Optical feedback calculator.
 
         Parameters
         ----------
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         """
 
-        self.ofc_calc = OFC(OFCData(getCamNameFromCamType(cam_type)))
+        self.ofc_calc = OFC(OFCData(cam_type.value))
 
     def map_filter_ref_to_g(self, filter_type_name: str) -> str:
         """Map the reference filter to the G filter.
@@ -241,7 +240,7 @@ class ClosedLoopTask:
 
         Parameters
         ----------
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
 
         Returns
@@ -274,7 +273,7 @@ class ClosedLoopTask:
 
         Parameters
         ----------
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
 
         Returns
@@ -320,42 +319,6 @@ class ClosedLoopTask:
         make_dir(output_dir, exist_ok=True)
 
         return output_dir
-
-    def get_filter_type(self, filter_type_name: str) -> FilterType:
-        """Get the filter type.
-
-        Parameters
-        ----------
-        filter_type_name : str
-            Filter type name: ref, u, g, r, i, z, or y.
-
-        Returns
-        -------
-        lsst.ts.wep.utils.FilterType
-            Filter type.
-
-        Raises
-        ------
-        ValueError
-            This filter type is not supported.
-        """
-
-        if filter_type_name in {"", "ref"}:
-            return FilterType.REF
-        elif filter_type_name == "u":
-            return FilterType.LSST_U
-        elif filter_type_name == "g":
-            return FilterType.LSST_G
-        elif filter_type_name == "r":
-            return FilterType.LSST_R
-        elif filter_type_name == "i":
-            return FilterType.LSST_I
-        elif filter_type_name == "z":
-            return FilterType.LSST_Z
-        elif filter_type_name == "y":
-            return FilterType.LSST_Y
-        else:
-            raise ValueError(f"This filter type ({filter_type_name}) is not supported.")
 
     def _run_sim(
         self,
@@ -610,7 +573,7 @@ class ClosedLoopTask:
         ----------
         obs_metadata : lsst.ts.imsim.ObsMetadata object
             Observation metadata.
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         sky_seed : int, optional
             Random seed for the sky background.
@@ -763,7 +726,7 @@ class ClosedLoopTask:
             Observation metadata.
         butler_root_path : str
             Path to the butler repository.
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         num_pro : int, optional
             Number of processor to run DM pipeline. (the default is 1.)
@@ -794,33 +757,25 @@ class ClosedLoopTask:
 
         return list_of_wf_err
 
-    def _get_butler_inst_name(self, cam_type) -> str:
+    def _get_butler_inst_name(self, cam_type: CamType) -> str:
         """Translate cam_type into suffix used by butler
         in command line instructions.
 
         Parameters
         ----------
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
 
         Returns
         -------
         str
             Suffix attached to "LSST" to specify instrument to butler.
-
-        Raises
-        ------
-        ValueError
-            CamType must be one of LsstCam, LsstFamCam, ComCam.
         """
 
         if cam_type in [CamType.LsstCam, CamType.LsstFamCam]:
             butler_inst_name = "Cam"
         elif cam_type == CamType.ComCam:
             butler_inst_name = "ComCam"
-        else:
-            errMsg = f"CamType {cam_type} not one of LsstCam, LsstFamCam, ComCam."
-            raise ValueError(errMsg)
 
         return butler_inst_name
 
@@ -841,7 +796,7 @@ class ClosedLoopTask:
             Observation id.
         butler_root_path : str
             Path to the butler gen3 repos.
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         num_pro : int, optional
             Number of processor to run DM pipeline. (the default is 1.)
@@ -861,7 +816,7 @@ class ClosedLoopTask:
 
         butler_inst_name = self._get_butler_inst_name(cam_type)
         if pipeline_file is None:
-            pipeline_yaml = f"{getCamNameFromCamType(cam_type)}Pipeline.yaml"
+            pipeline_yaml = f"{cam_type.value}Pipeline.yaml"
             pipeline_yaml_path = os.path.join(butler_root_path, pipeline_yaml)
             self.write_wep_configuration(cam_type, pipeline_yaml_path, filter_type_name)
         else:
@@ -945,7 +900,7 @@ class ClosedLoopTask:
 
         Parameters
         ----------
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         pipeline_yaml_path : str
             Path where the pipeline task configuration yaml file
@@ -959,6 +914,15 @@ class ClosedLoopTask:
         # Remap reference filter
         filter_type_name = self.map_filter_ref_to_g(filter_type_name)
 
+        # Set defocal offset for camera
+        if cam_type in [CamType.LsstCam, CamType.LsstFamCam]:
+            if cam_type == CamType.LsstCam:
+                cut_out_task = "Cwfs"
+            else:
+                cut_out_task = "ScienceSensor"
+        elif cam_type in [CamType.ComCam]:
+            cut_out_task = "ScienceSensor"
+
         with open(pipeline_yaml_path, "w") as fp:
             fp.write(
                 f"""# This yaml file is used to define the tasks and configuration of
@@ -967,9 +931,6 @@ description: wep basic processing test pipeline
 # Here we specify the corresponding instrument for the data we
 # will be using.
 instrument: lsst.obs.lsst.Lsst{butler_inst_name}
-# Use imported instrument configuration
-imports:
-  - location: {getWepConfigDir()}/cwfs/instData/{getCamNameFromCamType(cam_type)}/instParamPipeConfig.yaml
 # Then we can specify each task in our pipeline by a name
 # and then specify the class name corresponding to that task
 tasks:
@@ -997,6 +958,10 @@ tasks:
       python: OverscanCorrectionTask.ConfigClass.fitType = 'MEDIAN'
   generateDonutCatalogWcsTask:
     class: lsst.ts.wep.task.generateDonutCatalogWcsTask.GenerateDonutCatalogWcsTask
+  cutOutDonuts{cut_out_task}Task:
+    class: lsst.ts.wep.task.cutOutDonuts{cut_out_task}Task.CutOutDonuts{cut_out_task}Task
+  calcZernikesTask:
+    class: lsst.ts.wep.task.calcZernikesTask.CalcZernikesTask
 """
             )
 
@@ -1073,7 +1038,7 @@ tasks:
         imsim_log_file : str
             Location to save imsim log output.
         """
-        cam_type = getCamType(inst)
+        cam_type = CamType(inst)
         base_output_dir = self.check_and_create_base_output_dir(base_output_dir)
         if do_erase_dir_content:
             self.erase_directory_content(base_output_dir)
@@ -1144,7 +1109,7 @@ tasks:
         ----------
         butler_root_path: `str`
             Path to where the butler repository should be created.
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         """
 
@@ -1226,7 +1191,7 @@ config.dataset_config.ref_dataset_name='ref_cat'
         ----------
         butler_root_path : str
             Path to the butler repository.
-        cam_type : lsst.ts.wep.utils.CamType
+        cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         """
         output_img_dir = self.imsim_cmpt.output_img_dir

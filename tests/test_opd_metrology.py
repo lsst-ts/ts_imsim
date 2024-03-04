@@ -27,8 +27,7 @@ import numpy as np
 from astropy.io import fits
 from lsst.afw.cameraGeom import FIELD_ANGLE
 from lsst.ts.imsim import OpdMetrology
-from lsst.ts.imsim.utils.utility import get_module_path, get_zk_from_file
-from lsst.ts.wep.utils import CamType
+from lsst.ts.imsim.utils import CamType, get_module_path, get_zk_from_file
 
 
 class TestOpdMetrology(unittest.TestCase):
@@ -67,11 +66,6 @@ class TestOpdMetrology(unittest.TestCase):
 
         wgt = self.metr.wt
         self.assertEqual(len(wgt), 9)
-
-    def test_set_wgt_and_field_xy_of_gq_err(self):
-        self.assertRaises(
-            ValueError, self.metr.set_wgt_and_field_xy_of_gq, "NoThisInstName"
-        )
 
     def test_set_default_lsst_wfs_gq(self):
         self.metr.set_default_lsst_wfs_gq()
