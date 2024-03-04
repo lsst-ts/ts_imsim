@@ -27,17 +27,28 @@ __all__ = [
     "make_dir",
     "get_zk_from_file",
     "ModifiedEnvironment",
+    "CamType",
 ]
 
 import os
+from enum import StrEnum
 
 import numpy as np
 import yaml
 from lsst.afw import cameraGeom
 from lsst.obs.lsst import LsstCam, LsstComCam
-from lsst.ts.wep.utils import CamType
 from lsst.utils import getPackageDir
 from numpy import ndarray
+
+
+class CamType(StrEnum):
+    """
+    Define allowed camera types.
+    """
+
+    LsstCam = "lsst"
+    LsstFamCam = "lsstfam"
+    ComCam = "comcam"
 
 
 def get_module_path() -> str:
@@ -81,7 +92,7 @@ def get_camera(cam_type: CamType) -> cameraGeom.Camera:
 
     Parameters
     ----------
-    cam_type : lsst.ts.wep.utils.CamType
+    cam_type : lsst.ts.imsim.utils.CamType
         Camera type.
 
     Returns
