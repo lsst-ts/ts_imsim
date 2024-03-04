@@ -28,9 +28,6 @@ __all__ = [
     "get_zk_from_file",
     "ModifiedEnvironment",
     "CamType",
-    "get_cam_type",
-    "zernike_annular_fit",
-    "zernike_eval",
 ]
 
 import os
@@ -38,7 +35,6 @@ from enum import StrEnum
 
 import numpy as np
 import yaml
-from galsim.zernike import Zernike as GSZernike
 from lsst.afw import cameraGeom
 from lsst.obs.lsst import LsstCam, LsstComCam
 from lsst.utils import getPackageDir
@@ -197,106 +193,3 @@ class ModifiedEnvironment:
                 os.environ[key] = self._originals[key]
             else:
                 del os.environ[key]
-
-
-def get_cam_type(inst_name: str) -> CamType:
-    """Get the camera type from instrument name.
-
-    Parameters
-    ----------
-    inst_name : str
-         Instrument name.
-
-    Returns
-    -------
-    enum 'CamType'
-        Camera type.
-
-    Raises
-    ------
-    ValueError
-        Instrument name is not supported.
-    """
-    if inst_name == "lsst":
-        return CamType.LsstCam
-    elif inst_name == "lsstfam":
-        return CamType.LsstFamCam
-    elif inst_name == "comcam":
-        return CamType.ComCam
-    else:
-        raise ValueError(f"Instrument name ({inst_name}) is not supported.")
-
-
-def zernike_annular_fit(
-    s: np.ndarray, x: np.ndarray, y: np.ndarray, numTerms: int, e: float
-) -> np.ndarray:
-    """Get the coefficients of annular Zernike polynomials by fitting the
-    wavefront surface.
-
-    Parameters
-    ----------
-    s : numpy.ndarray
-        Wavefront surface to be fitted.
-    x : numpy.ndarray
-        Normalized x coordinate between -1 and 1 (pupil coordinate).
-    y : numpy.ndarray
-        Normalized y coordinate between -1 and 1 (pupil coordinate).
-    numTerms : int
-        Number of annular Zernike terms used in the fit.
-    e : float
-        Obscuration ratio of annular Zernikes.
-
-    Returns
-    -------
-    numpy.ndarray
-        Coefficients of annular Zernike polynomials by the fitting.
-    """
-    # Check the dimensions of x and y are the same or not
-    if x.shape != y.shape:
-        print("x & y are not the same size")
-
-    # Get the value that is finite
-    sFinite = s[:].copy()
-    xFinite = x[:].copy()
-    yFinite = y[:].copy()
-
-    finiteIndex = np.isfinite(sFinite + xFinite + yFinite)
-
-    sFinite = sFinite[finiteIndex]
-    xFinite = xFinite[finiteIndex]
-    yFinite = yFinite[finiteIndex]
-
-    # Do the fitting
-    h = np.zeros([len(sFinite), numTerms])
-
-    for ii in range(numTerms):
-        z = np.zeros(numTerms)
-        z[ii] = 1
-        h[:, ii] = GSZernike(np.concatenate([[0], z]), R_inner=e)(xFinite, yFinite)
-
-    # Solve the equation: H*Z = S => Z = H^(-1)S
-    z = np.linalg.lstsq(h, sFinite, rcond=None)[0]
-
-    return z
-
-
-def zernike_eval(z: np.ndarray, x: np.ndarray, y: np.ndarray) -> np.ndarray:
-    """Calculate the wavefront surface in the basis of Zernike polynomial.
-
-    Parameters
-    ----------
-    z : numpy.ndarray
-        Coefficient of Zernike polynomials.
-    x : numpy.ndarray
-        X coordinate on pupil plane.
-    y : numpy.ndarray
-        Y coordinate on pupil plane.
-
-    Returns
-    -------
-    numpy.ndarray
-        Wavefront surface.
-    """
-    # Calculate the wavefront surface
-    # Use obscuration (e) = 0 for standard Zernike polynomials
-    return GSZernike(np.concatenate([[0], z]), R_inner=0)(x, y)

@@ -39,7 +39,6 @@ from lsst.ts.imsim.sky_sim import SkySim
 from lsst.ts.imsim.utils import (
     CamType,
     SensorWavefrontError,
-    get_cam_type,
     get_camera,
     get_config_dir,
     make_dir,
@@ -1039,7 +1038,7 @@ tasks:
         imsim_log_file : str
             Location to save imsim log output.
         """
-        cam_type = get_cam_type(inst)
+        cam_type = CamType(inst)
         base_output_dir = self.check_and_create_base_output_dir(base_output_dir)
         if do_erase_dir_content:
             self.erase_directory_content(base_output_dir)

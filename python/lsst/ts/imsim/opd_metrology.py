@@ -25,14 +25,9 @@ import numpy as np
 import yaml
 from astropy.io import fits
 from lsst.afw.cameraGeom import FIELD_ANGLE
-from lsst.ts.imsim.utils import (
-    CamType,
-    calc_pssn,
-    get_camera,
-    zernike_annular_fit,
-    zernike_eval,
-)
+from lsst.ts.imsim.utils import CamType, calc_pssn, get_camera
 from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
+from lsst.ts.wep.utils import zernikeEval, zernikeFit
 
 
 class OpdMetrology:
@@ -220,8 +215,13 @@ class OpdMetrology:
 
         # Fit the OPD map with Zk and write into the file
         idx = ~np.isnan(opd)
-        zk = zernike_annular_fit(
-            opd[idx], opd_x[idx], opd_y[idx], zk_terms, obscuration
+        zk = zernikeFit(
+            opd_x[idx],
+            opd_y[idx],
+            opd[idx],
+            jmin=1,
+            jmax=zk_terms,
+            obscuration=obscuration,
         )
 
         return zk, opd, opd_x, opd_y
@@ -261,7 +261,7 @@ class OpdMetrology:
         idx = ~np.isnan(opd)
 
         # Remove the PTT
-        opd[idx] -= zernike_eval(zk, opd_x[idx], opd_y[idx])
+        opd[idx] -= zernikeEval(opd_x[idx], opd_y[idx], zk, jmin=1, obscuration=0)
 
         return opd, opd_x, opd_y
 

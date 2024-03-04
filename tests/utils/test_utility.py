@@ -22,22 +22,16 @@
 import os
 import unittest
 
-import numpy as np
-from astropy.io import fits
-from galsim.zernike import zernikeBasis
 from lsst.afw import cameraGeom
 from lsst.obs.lsst import LsstCam, LsstComCam
 from lsst.ts.imsim.utils import (
     CamType,
     ModifiedEnvironment,
-    get_cam_type,
     get_camera,
     get_config_dir,
     get_module_path,
     get_policy_path,
     get_zk_from_file,
-    zernike_annular_fit,
-    zernike_eval,
 )
 
 
@@ -105,43 +99,3 @@ class TestUtility(unittest.TestCase):
 
         # Clean up
         del os.environ["TEST_AOS_ROCKS_57721"]
-
-    def test_get_cam_type(self):
-        self.assertEqual(get_cam_type("lsst"), CamType.LsstCam)
-        self.assertEqual(get_cam_type("lsstfam"), CamType.LsstFamCam)
-        self.assertEqual(get_cam_type("comcam"), CamType.ComCam)
-        instName = "telescope"
-        assertMsg = f"Instrument name ({instName}) is not supported."
-        with self.assertRaises(ValueError) as context:
-            get_cam_type(instName)
-        self.assertTrue(assertMsg in str(context.exception))
-
-    def test_zernike_annular_fit(self):
-        opdFitsFile = os.path.join(self.test_data_dir, "sim6_iter0_opd0.fits.gz")
-        opd = fits.getdata(opdFitsFile)
-
-        # x-, y-coordinate in the OPD image
-        opdSize = opd.shape[0]
-        opdGrid1d = np.linspace(-1, 1, opdSize)
-        opdx, opdy = np.meshgrid(opdGrid1d, opdGrid1d)
-
-        idx = opd != 0
-        coef = zernike_annular_fit(opd[idx], opdx[idx], opdy[idx], 22, 0.61)
-
-        ansOpdFileName = "sim6_iter0_opd.zer"
-        ansOpdFilePath = os.path.join(self.test_data_dir, ansOpdFileName)
-        allOpdAns = np.loadtxt(ansOpdFilePath)
-        self.assertLess(np.sum(np.abs(coef - allOpdAns[0, :])), 1e-10)
-
-    def test_zernike_eval(self):
-        # Create a Zernike basis
-        grid = np.linspace(-1, 1, 200)
-        uGrid, vGrid = np.meshgrid(grid, grid)
-        zkBasis = zernikeBasis(22, uGrid, vGrid, R_inner=0.61)[4:]
-
-        # Evaluate each Zernike polynomial and compare to basis
-        for i in range(len(zkBasis)):
-            coeff = np.zeros(i + 1)
-            coeff[-1] = 1
-            z_eval = zernike_eval(coeff, uGrid, vGrid)
-            np.allclose(z_eval, zkBasis[i])
