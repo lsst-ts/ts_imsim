@@ -106,14 +106,14 @@ class TestOpdMetrology(unittest.TestCase):
 
     def test_get_zk_from_opd(self):
         opd_dir = self._get_opd_dir()
-        zk = self.metr.get_zk_from_opd(opd_fits_file=os.path.join(opd_dir, "opd.fits"))[
-            0
-        ]
+        zk = self.metr.get_zk_from_opd(
+            opd_fits_file=os.path.join(opd_dir, "opd.fits"), zk_terms=28
+        )[0]
 
         ans_opd_file_name = "opd.zer"
         ans_opd_file_path = os.path.join(opd_dir, ans_opd_file_name)
         all_opd_ans = get_zk_from_file(ans_opd_file_path)
-        self.assertLess(np.sum(np.abs(zk[3:] - all_opd_ans[191])), 1e-5)
+        self.assertLess(np.sum(np.abs(zk[3:22] - all_opd_ans[191])), 1e-5)
 
     def test_rm_piston_tip_tilt_from_opd(self):
         """Test removal of piston (z1), x-tilt (z2), and y-tilt (z3)
@@ -126,7 +126,7 @@ class TestOpdMetrology(unittest.TestCase):
         )
 
         # Flip OPD because it will be flipped inside get_zk_from_opd
-        zk_rm_ptt = self.metr.get_zk_from_opd(opd_map=opd_rm_ptt)[0]
+        zk_rm_ptt = self.metr.get_zk_from_opd(opd_map=opd_rm_ptt, zk_terms=28)[0]
         zk_rm_ptt_in_um = np.sum(np.abs(zk_rm_ptt[0:3])) / 1e3
         self.assertLess(zk_rm_ptt_in_um, 9e-2)
 
