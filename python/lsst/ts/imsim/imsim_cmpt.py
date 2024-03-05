@@ -644,8 +644,10 @@ class ImsimCmpt:
             else:
                 opd_rot = opd
 
-            # z1 to z22 (22 terms)
-            zk = self.opd_metr.get_zk_from_opd(opd_map=opd_rot)[0]
+            # z1 to z28 (28 terms)
+            # this is to match imSim output that
+            # also fits up to zk28 by default
+            zk = self.opd_metr.get_zk_from_opd(opd_map=opd_rot, zk_terms=28)[0]
 
             # Only need to collect z4 to z22
             init_idx = 3
