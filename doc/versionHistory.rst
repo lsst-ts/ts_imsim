@@ -6,7 +6,12 @@
 Version History
 ##################
 
+=======
+1.2.1
 -------------
+
+* Update KMP_INIT_FORK to start only on darwin.
+
 1.2.0
 -------------
 
