@@ -7,6 +7,12 @@ Version History
 ##################
 
 -------------
+1.3.1
+-------------
+
+* Change imSim camera name LsstComCam to LsstComCamSim.
+
+-------------
 1.3.0
 -------------
 
