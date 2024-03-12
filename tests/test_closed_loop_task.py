@@ -183,4 +183,4 @@ class TestclosedLoopTask(unittest.TestCase):
 
         self.assertEqual(lsstcam_str, "Cam")
         self.assertEqual(lsstfam_str, "Cam")
-        self.assertEqual(comcam_str, "ComCam")
+        self.assertEqual(comcam_str, "ComCamSim")
