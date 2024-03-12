@@ -274,6 +274,7 @@ psf:
 
 
 stamp:
+  size: 500
   type: LSST_Silicon
   det_name: "$det_name"
   world_pos:
