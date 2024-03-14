@@ -775,7 +775,7 @@ class ClosedLoopTask:
         if cam_type in [CamType.LsstCam, CamType.LsstFamCam]:
             butler_inst_name = "Cam"
         elif cam_type == CamType.ComCam:
-            butler_inst_name = "ComCam"
+            butler_inst_name = "ComCamSim"
 
         return butler_inst_name
 

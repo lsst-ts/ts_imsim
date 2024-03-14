@@ -7,6 +7,13 @@ Version History
 ##################
 
 -------------
+1.3.1
+-------------
+
+* Change imSim camera name LsstComCam to LsstComCamSim.
+* Fix stamp size when using LSST_Silicon.
+
+-------------
 1.3.0
 -------------
 
