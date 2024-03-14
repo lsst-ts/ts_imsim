@@ -62,4 +62,5 @@ if __name__ == "__main__":
         args.num_proc,
         args.raw_seeing,
         args.imsim_log_file,
+        args.wep_estimator,
     )

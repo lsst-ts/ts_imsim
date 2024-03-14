@@ -133,6 +133,23 @@ class TestclosedLoopTask(unittest.TestCase):
         self.assertEqual(args.pipeline_file, "")
         self.assertEqual(args.sky_seed, 42)
         self.assertEqual(args.pert_seed, 11)
+        self.assertEqual(args.wep_estimator, "tie")
+
+    def test_wep_estimator_args(self):
+        parser = argparse.ArgumentParser()
+        parser = ClosedLoopTask.set_default_parser(parser)
+
+        test_tie_arg = ["--wep_estimator", "tie"]
+        args = parser.parse_known_args(args=test_tie_arg)[0]
+        self.assertEqual(args.wep_estimator, "tie")
+
+        test_danish_arg = ["--wep_estimator", "danish"]
+        args = parser.parse_known_args(args=test_danish_arg)[0]
+        self.assertEqual(args.wep_estimator, "danish")
+
+        test_invalid_arg = ["--wep_estimator", "wrong"]
+        with self.assertRaises(SystemExit):
+            parser.parse_known_args(args=test_invalid_arg)
 
     def test_set_img_parser(self):
         parser = argparse.ArgumentParser()

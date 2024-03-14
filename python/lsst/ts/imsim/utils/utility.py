@@ -28,6 +28,7 @@ __all__ = [
     "get_zk_from_file",
     "ModifiedEnvironment",
     "CamType",
+    "WepEstimator",
 ]
 
 import os
@@ -49,6 +50,15 @@ class CamType(StrEnum):
     LsstCam = "lsst"
     LsstFamCam = "lsstfam"
     ComCam = "comcam"
+
+
+class WepEstimator(StrEnum):
+    """
+    Define allowed WEP Zernike estimator methods.
+    """
+
+    Tie = "tie"
+    Danish = "danish"
 
 
 def get_module_path() -> str:
