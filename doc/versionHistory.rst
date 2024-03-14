@@ -7,6 +7,25 @@ Version History
 ##################
 
 -------------
+1.3.1
+-------------
+
+* Change imSim camera name LsstComCam to LsstComCamSim.
+* Fix stamp size when using LSST_Silicon.
+
+-------------
+1.3.0
+-------------
+
+* Update to fit OPD up to zk28 like imsim.
+
+-------------
+1.2.1
+-------------
+
+* Update KMP_INIT_FORK to start only on darwin.
+
+-------------
 1.2.0
 -------------
 

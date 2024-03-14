@@ -22,6 +22,7 @@
 __all__ = ["ImsimCmpt"]
 
 import os
+import sys
 from typing import Any
 
 import numpy as np
@@ -327,13 +328,20 @@ class ImsimCmpt:
         # this variable gets set when sklearn is imported, which happens inside
         # of ts_wep before ever getting to this method, so we can't just unset
         # it in the environment ahead of time.
-        with ModifiedEnvironment(KMP_INIT_AT_FORK=None):
-            if imsim_log_file == "":
-                runProgram(f"galsim {config_file_path}")
-            else:
-                runProgram(
-                    f"galsim {config_file_path} -l {os.path.join(self.output_dir, imsim_log_file)} -v 2"
-                )
+        if imsim_log_file == "":
+            cmd = f"galsim {config_file_path}"
+        else:
+            cmd = f"galsim {config_file_path} -l {os.path.join(self.output_dir, imsim_log_file)} -v 2"
+        # Disabling the KMP_INIT_AT_FORK env variable only for OSX.
+        # This line checks whether the platform identifies itself as OSX.
+        # For all other environments (eg. linux) this is not needed;
+        # and indeed was found to cause issues for mag=12 and brighter
+        # source on USDF.
+        if sys.platform.startswith("darwin"):
+            with ModifiedEnvironment(KMP_INIT_AT_FORK=None):
+                runProgram(cmd)
+        else:
+            runProgram(cmd)
 
     def write_yaml_and_run_imsim(
         self,
@@ -636,8 +644,10 @@ class ImsimCmpt:
             else:
                 opd_rot = opd
 
-            # z1 to z22 (22 terms)
-            zk = self.opd_metr.get_zk_from_opd(opd_map=opd_rot)[0]
+            # z1 to z28 (28 terms)
+            # this is to match imSim output that
+            # also fits up to zk28 by default
+            zk = self.opd_metr.get_zk_from_opd(opd_map=opd_rot, zk_terms=28)[0]
 
             # Only need to collect z4 to z22
             init_idx = 3

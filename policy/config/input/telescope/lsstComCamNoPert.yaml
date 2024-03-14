@@ -1,5 +1,5 @@
 telescope:
-  camera: LsstComCam
+  camera: LsstComCamSim
   file_name:
     type: FormattedStr
     format: ComCam_%s.yaml
