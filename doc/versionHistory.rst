@@ -7,6 +7,13 @@ Version History
 ##################
 
 -------------
+1.4.0
+-------------
+
+* Add WepEstimator enum class to utility.py.
+* Add wep_estimator option to img_closed_loop to enable switching between tie and danish in WEP.
+
+-------------
 1.3.1
 -------------
 

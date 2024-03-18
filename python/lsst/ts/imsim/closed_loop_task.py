@@ -39,6 +39,7 @@ from lsst.ts.imsim.sky_sim import SkySim
 from lsst.ts.imsim.utils import (
     CamType,
     SensorWavefrontError,
+    WepEstimator,
     get_camera,
     get_config_dir,
     make_dir,
@@ -324,6 +325,7 @@ class ClosedLoopTask:
         self,
         cam_type: CamType,
         obs_metadata: ObsMetadata,
+        wep_estimator: WepEstimator,
         base_output_dir: str,
         butler_root_path: str,
         sky_seed: int,
@@ -344,6 +346,8 @@ class ClosedLoopTask:
             Camera type.
         obs_metadata : lsst.ts.imsim.ObsMetadata object
             Observation metadata.
+        wep_estimator : enum 'WepEstimator' in lsst.ts.wep.utility
+            Specify the method used to calculate Zernikes in ts_wep.
         base_output_dir : str
             Base output directory.
         butler_root_path : str
@@ -477,6 +481,7 @@ class ClosedLoopTask:
                         obs_metadata,
                         butler_root_path=butler_root_path,
                         cam_type=cam_type,
+                        wep_estimator=wep_estimator,
                         num_pro=num_pro,
                         pipeline_file=pipeline_file,
                     )
@@ -714,6 +719,7 @@ class ClosedLoopTask:
         obs_metadata: ObsMetadata,
         butler_root_path: str,
         cam_type: CamType,
+        wep_estimator: WepEstimator,
         num_pro: int = 1,
         pipeline_file: str | None = None,
         filter_type_name: str = "",
@@ -728,6 +734,8 @@ class ClosedLoopTask:
             Path to the butler repository.
         cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
+        wep_estimator : enum 'WepEstimator' in lsst.ts.wep.utility
+            Specify the method used to calculate Zernikes in ts_wep.
         num_pro : int, optional
             Number of processor to run DM pipeline. (the default is 1.)
         pipeline_file : str or None, optional
@@ -750,6 +758,7 @@ class ClosedLoopTask:
             obs_metadata.seq_num,
             butler_root_path,
             cam_type,
+            wep_estimator,
             num_pro=num_pro,
             pipeline_file=pipeline_file,
             filter_type_name=filter_type_name,
@@ -784,6 +793,7 @@ class ClosedLoopTask:
         seq_num: int,
         butler_root_path: str,
         cam_type: CamType,
+        wep_estimator: WepEstimator,
         num_pro: int = 1,
         pipeline_file: str | None = None,
         filter_type_name: str = "",
@@ -798,6 +808,8 @@ class ClosedLoopTask:
             Path to the butler gen3 repos.
         cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
+        wep_estimator : enum 'WepEstimator' in lsst.ts.wep.utility
+            Specify the method used to calculate Zernikes in ts_wep.
         num_pro : int, optional
             Number of processor to run DM pipeline. (the default is 1.)
         pipeline_file : str or None, optional
@@ -818,7 +830,9 @@ class ClosedLoopTask:
         if pipeline_file is None:
             pipeline_yaml = f"{cam_type.value}Pipeline.yaml"
             pipeline_yaml_path = os.path.join(butler_root_path, pipeline_yaml)
-            self.write_wep_configuration(cam_type, pipeline_yaml_path, filter_type_name)
+            self.write_wep_configuration(
+                cam_type, pipeline_yaml_path, filter_type_name, wep_estimator
+            )
         else:
             pipeline_yaml_path = pipeline_file
 
@@ -894,7 +908,11 @@ class ClosedLoopTask:
         return list_of_wf_err
 
     def write_wep_configuration(
-        self, cam_type: CamType, pipeline_yaml_path: str, filter_type_name: str
+        self,
+        cam_type: CamType,
+        pipeline_yaml_path: str,
+        filter_type_name: str,
+        wep_estimator: WepEstimator,
     ) -> None:
         """Write wavefront estimation pipeline task configuration.
 
@@ -907,6 +925,8 @@ class ClosedLoopTask:
             should be saved.
         filter_type_name : str
             Filter type name: ref (or ''), u, g, r, i, z, or y.
+        wep_estimator : enum 'WepEstimator' in lsst.ts.wep.utility
+            Specify the method used to calculate Zernikes in ts_wep.
         """
 
         butler_inst_name = self._get_butler_inst_name(cam_type)
@@ -962,6 +982,10 @@ tasks:
     class: lsst.ts.wep.task.cutOutDonuts{cut_out_task}Task.CutOutDonuts{cut_out_task}Task
   calcZernikesTask:
     class: lsst.ts.wep.task.calcZernikesTask.CalcZernikesTask
+    config:
+      python: |
+        from lsst.ts.wep.task import EstimateZernikesTieTask, EstimateZernikesDanishTask
+        config.estimateZernikes.retarget(EstimateZernikes{wep_estimator.value.title()}Task)
 """
             )
 
@@ -987,6 +1011,7 @@ tasks:
         num_pro: int,
         raw_seeing: float,
         imsim_log_file: str,
+        wep_estimator_method: str,
     ) -> None:
         """Run the simulation of images.
 
@@ -1037,8 +1062,12 @@ tasks:
             Raw seeing in arcsec.
         imsim_log_file : str
             Location to save imsim log output.
+        wep_estimator_method : str
+            Specify the method used to calculate Zernikes in ts_wep.
+            Options are "tie" or "danish".
         """
         cam_type = CamType(inst)
+        wep_estimator = WepEstimator(wep_estimator_method)
         base_output_dir = self.check_and_create_base_output_dir(base_output_dir)
         if do_erase_dir_content:
             self.erase_directory_content(base_output_dir)
@@ -1089,6 +1118,7 @@ tasks:
         self._run_sim(
             cam_type,
             obs_metadata,
+            wep_estimator,
             base_output_dir,
             butler_root_path,
             sky_seed,
@@ -1324,6 +1354,18 @@ config.dataset_config.ref_dataset_name='ref_cat'
             type=int,
             default=1,
             help="Number of processor to run imSim and DM pipeline. (default: 1)",
+        )
+
+        parser.add_argument(
+            "--wep_estimator",
+            type=str,
+            default="tie",
+            choices=["tie", "danish"],
+            help="""
+            Method to use within Wavefront Estimation Pipeline to perform
+            the estimateZernikes task. Options are "tie" and "danish".
+            (default: "tie")
+            """,
         )
 
         return parser
