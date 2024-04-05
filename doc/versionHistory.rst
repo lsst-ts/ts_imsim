@@ -7,6 +7,12 @@ Version History
 ##################
 
 -------------
+1.4.1
+-------------
+
+* Add pyproject.toml and update formatting to comply with new ruff version.
+
+-------------
 1.4.0
 -------------
 
