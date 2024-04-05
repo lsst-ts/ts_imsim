@@ -57,8 +57,7 @@ class TestImsimCmpt(unittest.TestCase):
                 "testData",
                 "imsimConfig",
                 "imsimConfigLsstCam.yaml",
-            ),
-            "r",
+            )
         ) as test_file:
             self.full_test_yaml = yaml.safe_load(test_file)
         self.imsim_cmpt = ImsimCmpt()
@@ -123,9 +122,7 @@ class TestImsimCmpt(unittest.TestCase):
         obs_variables_text = self.imsim_cmpt.convert_obs_metadata_to_text(
             self.obs_metadata_test
         )
-        with open(
-            os.path.join(get_config_dir(), "obsVariablesDefault.yaml"), "r"
-        ) as file:
+        with open(os.path.join(get_config_dir(), "obsVariablesDefault.yaml")) as file:
             default_vars = yaml.safe_load(file)
         self.assertDictEqual(yaml.safe_load(obs_variables_text), default_vars)
 

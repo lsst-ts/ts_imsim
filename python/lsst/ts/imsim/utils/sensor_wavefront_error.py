@@ -24,18 +24,17 @@ __all__ = ["SensorWavefrontError"]
 import numpy as np
 
 
-class SensorWavefrontError(object):
+class SensorWavefrontError:
     """Contains the wavefront errors for a single sensor."""
 
     def __init__(self, num_of_zk: int = 19) -> None:
-        """Constructs a sensor wavefront error.
+        """Construct a sensor wavefront error.
 
         Parameters
         ----------
         num_of_zk : int, optional
             Number of annular Zernike polynomials. (the default is 19.)
         """
-
         # Sensor Id
         self._sensor_id = 999
 
@@ -66,7 +65,6 @@ class SensorWavefrontError(object):
         ValueError
             sensor_id must be >= 0.
         """
-
         if new_sensor_id < 0:
             raise ValueError("sensor_id must be >= 0.")
         self._sensor_id = int(new_sensor_id)
@@ -89,7 +87,6 @@ class SensorWavefrontError(object):
         ValueError
             annular_zernike_poly must be an array of self.num_of_zk floats.
         """
-
         if len(new_annular_zernike_poly) != self.num_of_zk:
             raise ValueError(
                 "annular_zernike_poly must be an array of %d floats." % self.num_of_zk

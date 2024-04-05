@@ -36,6 +36,8 @@ from lsst.ts.imsim.utils import (
 
 
 class TestUtility(unittest.TestCase):
+    """Test the utility functions."""
+
     def setUp(self) -> None:
         self.test_data_dir = os.path.join(
             get_module_path(), "tests", "testData", "utils"

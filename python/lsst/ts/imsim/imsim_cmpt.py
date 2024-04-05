@@ -151,7 +151,6 @@ class ImsimCmpt:
             then will use policy/requiredModulesDefault.yaml.
             (The default is None.)
         """
-
         if required_modules_file is None:
             required_modules_file = os.path.join(
                 get_config_dir(), "requiredModulesDefault.yaml"
@@ -161,11 +160,11 @@ class ImsimCmpt:
 
         config_sections = ["input", "gal", "image", "psf", "stamp", "output"]
 
-        with open(config_pointer_file, "r") as f:
+        with open(config_pointer_file) as f:
             file_pointer_info = yaml.safe_load(f)
         self._verify_pointer_file(file_pointer_info, config_sections)
 
-        with open(required_modules_file, "r") as required_modules:
+        with open(required_modules_file) as required_modules:
             required_modules_text = required_modules.read()
 
         # Assemble full configuration as text because of the
@@ -179,7 +178,7 @@ class ImsimCmpt:
         input_section_text = "input:\n"
         for sub_section in ["atm_psf", "sky_model", "telescope", "vignetting"]:
             with open(
-                file_pointer_info["input"][sub_section].format(**os.environ), "r"
+                file_pointer_info["input"][sub_section].format(**os.environ)
             ) as sub_file:
                 for line in sub_file.readlines():
                     input_section_text += "  " + line
@@ -190,7 +189,7 @@ class ImsimCmpt:
                 continue
             else:
                 with open(
-                    file_pointer_info[section_name].format(**os.environ), "r"
+                    file_pointer_info[section_name].format(**os.environ)
                 ) as section_file:
                     full_config_text += section_file.read() + "\n"
             # Handle output specially since we need to add header info and OPD
@@ -362,7 +361,6 @@ class ImsimCmpt:
             code will just default to sending it to stdout.
             (The default is "".)
         """
-
         with open(config_path, "w") as file:
             yaml.safe_dump(config_yaml, file)
         self.run_imsim(config_path, imsim_log_file=imsim_log_file)
@@ -391,7 +389,6 @@ class ImsimCmpt:
         dict
             Updated yaml configuration.
         """
-
         if use_ccd_img:
             config_yaml["image"].pop("nobjects")
             config_yaml["image"]["world_pos"] = {"type": "InstCatWorldPos"}
@@ -422,7 +419,6 @@ class ImsimCmpt:
         str
             Text to write to instance catalog file.
         """
-
         content = ""
         content += self.gen_inst_cat_stars(sky_sim)
         return content
@@ -515,7 +511,6 @@ class ImsimCmpt:
         str
             Instance catalog entry for star.
         """
-
         content = "object %2d\t%9.6f\t%9.6f %9.6f %s " % (
             star_id,
             ra,
@@ -523,7 +518,7 @@ class ImsimCmpt:
             mag_norm,
             sed_name,
         )
-        content += "%.1f %.1f %.1f %.1f %.1f %.1f %s none none \n" % (
+        content += "{:.1f} {:.1f} {:.1f} {:.1f} {:.1f} {:.1f} {} none none \n".format(
             redshift,
             gamma_1,
             gamma_2,
@@ -562,7 +557,6 @@ class ImsimCmpt:
         pssn_file_name : str, optional
             PSSN file name. (the default is "PSSN.txt".)
         """
-
         # Set the weighting ratio and field positions of OPD
         if cam_type == CamType.LsstCam:
             self.opd_metr.set_default_lsst_wfs_gq()
@@ -590,7 +584,6 @@ class ImsimCmpt:
         num_opd : int
             Number of OPD positions calculated.
         """
-
         file_path = os.path.join(self.output_img_dir, zk_file_name)
         opd_data = self._map_opd_to_zk(rot_opd_in_deg, num_opd)
         file_txt = (
@@ -622,7 +615,6 @@ class ImsimCmpt:
             the column is z4 to z22 in um. The order of OPD index is based on
             the file name.
         """
-
         # Map the OPD to the Zk basis and do the collection
         # Get the number of OPD locations by looking at length of fieldX
         opd_data = np.zeros((num_opd, self.num_of_zk))
@@ -668,7 +660,6 @@ class ImsimCmpt:
         num_opd : int
             Number of OPD positions calculated.
         """
-
         # Calculate the PSSN
         pssn_list, gq_eff_pssn = self._calc_pssn_opd(num_opd)
 
@@ -706,7 +697,6 @@ class ImsimCmpt:
         float
             GQ effective PSSN.
         """
-
         pssn_list = []
         for idx in range(num_opd):
             wavelength_in_um = fits.getheader(self.opd_file_path, idx)["WAVELEN"] * 1e-3
@@ -740,7 +730,6 @@ class ImsimCmpt:
         float
             GQ effective FWHM.
         """
-
         # Calculate the list of effective FWHM
         eff_fwhm_list = []
         for pssn in pssn_list:
@@ -776,7 +765,6 @@ class ImsimCmpt:
         list [lsst.ts.wep.ctrlIntf.SensorWavefrontError]
             List of SensorWavefrontError object.
         """
-
         opd_zk = get_zk_from_file(os.path.join(self.output_img_dir, opd_zk_file_name))
 
         list_of_wf_err = []
@@ -809,7 +797,6 @@ class ImsimCmpt:
         float
             OPD GQ effective FWHM.
         """
-
         data = self._get_data_of_pssn_file(pssn_file_name)
         gq_eff_fwhm = data[1, -1]
 
@@ -838,7 +825,6 @@ class ImsimCmpt:
             data type is `object` because each element may have different
             number of elements.
         """
-
         # Get the FWHM data from the PSSN file
         # The first row is the PSSN and the second one is the FWHM
         # The final element in each row is the GQ value
@@ -867,7 +853,6 @@ class ImsimCmpt:
         numpy.ndarray
             PSSN.
         """
-
         data = self._get_data_of_pssn_file(pssn_file_name)
         pssn = data[0, :-1]
 
@@ -888,7 +873,6 @@ class ImsimCmpt:
         numpy.ndarray
             Data of the PSSN file.
         """
-
         file_path = os.path.join(self.output_img_dir, pssn_file_name)
         data = np.loadtxt(file_path)
 
@@ -918,7 +902,6 @@ class ImsimCmpt:
         zk_file_name : str, optional
             Wavefront error file name. (the default is "wfs.zer".)
         """
-
         # Get the sensor name that in the wavefront error map
         wf_err_map = self._trans_list_of_wf_err_to_map(list_of_wf_err, camera)
         name_list_in_wf_err_map = list(wf_err_map.keys())
@@ -961,7 +944,6 @@ class ImsimCmpt:
             abbreviated sensor name (e.g. R22_S11). The dictionary item
             [numpy.ndarray] is the averaged wavefront error (z4-z22) in um.
         """
-
         map_sensor_name_and_id = dict(
             [(detector.getId(), detector.getName()) for detector in camera]
         )
@@ -996,7 +978,6 @@ class ImsimCmpt:
             is the individual sensor. The order is the same as the input of
             wfErrMap.
         """
-
         value_matrix = np.empty((0, self.num_of_zk))
         for wf_err in wf_err_map.values():
             value_matrix = np.vstack((value_matrix, wf_err))
@@ -1016,7 +997,6 @@ class ImsimCmpt:
             File name to save the DOF in um. (the default is
             "dofPertInNextIter.mat".)
         """
-
         file_path = os.path.join(self.output_dir, dof_in_um_file_name)
         header = "The followings are the DOF in um:"
         np.savetxt(file_path, np.transpose(self.dof_in_um), header=header)

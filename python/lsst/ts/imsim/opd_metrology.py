@@ -60,7 +60,6 @@ class OpdMetrology:
         ValueError
             All weighting ratios should be >=0.
         """
-
         wt_arr = np.array(new_wt, dtype=float)
         if np.all(wt_arr >= 0):
             self._wt = wt_arr / np.sum(wt_arr)
@@ -71,7 +70,6 @@ class OpdMetrology:
         """Set default values for LSST WFS field X, Y
         and weighting ratio.
         """
-
         # Set equal full weights for each of the
         # four corner wavefront sensor pairs.
         self.wt = np.array([1.0, 1.0, 1.0, 1.0])
@@ -94,7 +92,6 @@ class OpdMetrology:
         list
             Detector IDs of extra-focal sensor in raft.
         """
-
         # Field x, y for 4 WFS in the Camera Coordinate System (CCS)
         # These will be chosen at the center of the extra-intra
         # focal pairs of wavefront sensors.
@@ -124,7 +121,6 @@ class OpdMetrology:
             Camera type.
             Valid CamTypes are LsstCam, LsstFamCam, ComCam.
         """
-
         # Set camera and field ids for given instrument
         if cam_type == CamType.LsstCam:
             self.set_default_lsst_wfs_gq()
@@ -134,7 +130,7 @@ class OpdMetrology:
         path_wgt_file = weight_dir_path / f"{cam_type.value}_weights.yaml"
 
         # Set the weighting ratio
-        with open(path_wgt_file, "r") as file:
+        with open(path_wgt_file) as file:
             wgt = yaml.safe_load(file)
         wgt_values = np.array(list(wgt.values()), dtype=float)
         # Normalize weights
@@ -197,7 +193,6 @@ class OpdMetrology:
         ValueError
             The x, y dimensions of OPD are different.
         """
-
         # Get the OPD data (imSim OPD unit: nm)
         if opd_fits_file is not None:
             opd = fits.getdata(opd_fits_file)
@@ -250,7 +245,6 @@ class OpdMetrology:
         numpy.ndarray
             Meshgrid y in OPD map.
         """
-
         # Do the spherical Zernike fitting for the OPD map
         # Only fit the first three terms (z1-z3): piston, x-tilt, y-tilt
         zk, opd, opd_x, opd_y = self.get_zk_from_opd(
@@ -297,7 +291,6 @@ class OpdMetrology:
         float
             Calculated PSSN.
         """
-
         # Before calc_pssn,
         # (1) Remove PTT (piston, x-tilt, y-tilt),
         # (2) Make sure outside of pupil are all zeros
@@ -356,7 +349,6 @@ class OpdMetrology:
         float
             Effective FWHM.
         """
-
         # FWHMeff_sys = FWHMeff_atm * sqrt(1/PSSN - 1).
         # FWHMeff_atm = 0.6 arcsec.
         # Another correction factor (eta = 1.086) is used to account for the

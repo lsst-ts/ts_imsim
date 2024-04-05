@@ -40,7 +40,6 @@ def _save_fig(
     dpi : int, optional
         The resolution in dots per inch. (the default is None.)
     """
-
     if save_to_file_path is not None:
         plt.savefig(save_to_file_path, dpi=dpi)
         plt.close()
@@ -66,7 +65,6 @@ def plot_fwhm_of_iters(
     dpi : int, optional
         The resolution in dots per inch. (the default is None.)
     """
-
     # Collect the FWHM data. The row is the FWHM for each field. The final row
     # is the GQ FWHM. The column is the iterations.
     num_of_iter = len(pssn_files)

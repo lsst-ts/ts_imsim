@@ -27,6 +27,8 @@ from lsst.ts.imsim.utils import CamType, get_module_path
 
 
 class TestSkySim(unittest.TestCase):
+    """Test the SkySim class."""
+
     def setUp(self):
         self.sky_sim = SkySim()
 

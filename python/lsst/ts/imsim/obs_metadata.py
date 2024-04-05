@@ -74,7 +74,6 @@ class ObsMetadata:
         astropy.coordinates
             Observation boresight
         """
-
         # Observer located at Rubin
         rubin_observer = Observer.at_site("cerro pachon")
         time = astropy.time.Time(self.mjd, format="mjd")
@@ -98,7 +97,6 @@ class ObsMetadata:
         float
             Parallactic Angle in degrees.
         """
-
         observer, time, boresight = self.format_observation_info()
 
         return observer.parallactic_angle(time, boresight).deg
@@ -117,7 +115,6 @@ class ObsMetadata:
         float
             Zenith Angle in degrees.
         """
-
         observer, time, boresight = self.format_observation_info()
 
         # Altitude refers to elevation angle up from horizon.

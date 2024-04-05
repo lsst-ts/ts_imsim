@@ -69,7 +69,6 @@ def get_module_path() -> str:
     str
         Directory path of module.
     """
-
     return getPackageDir("ts_imsim")
 
 
@@ -81,7 +80,6 @@ def get_policy_path() -> str:
     str
         Directory of policy files.
     """
-
     return os.path.join(get_module_path(), "policy")
 
 
@@ -93,12 +91,11 @@ def get_config_dir() -> str:
     str
         Directory of configuration files.
     """
-
     return os.path.join(get_policy_path(), "config")
 
 
 def get_camera(cam_type: CamType) -> cameraGeom.Camera:
-    """Returns a lsst instrument for a given instrument name.
+    """Return a lsst instrument for a given instrument name.
 
     Parameters
     ----------
@@ -141,7 +138,6 @@ def make_dir(new_dir: str, exist_ok: bool = True) -> None:
         exist_ok is False. Otherwise no exception is raised. (the default
         is True.)
     """
-
     os.makedirs(new_dir, exist_ok=exist_ok)
 
 
@@ -158,8 +154,7 @@ def get_zk_from_file(zk_file_path: str) -> dict[int, ndarray]:
     numpy.ndarray
         zk matrix. The colunm is z4-z22. The raw is each data point.
     """
-
-    with open(zk_file_path, "r") as file:
+    with open(zk_file_path) as file:
         zk = yaml.safe_load(file)
     for key, val in zk.items():
         zk[key] = np.fromstring(val[0], sep=" ")

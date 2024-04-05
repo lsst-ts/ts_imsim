@@ -117,7 +117,8 @@ class TestOpdMetrology(unittest.TestCase):
 
     def test_rm_piston_tip_tilt_from_opd(self):
         """Test removal of piston (z1), x-tilt (z2), and y-tilt (z3)
-        from the OPD map."""
+        from the OPD map.
+        """
         opd_dir = self._get_opd_dir()
         opd_file_path = os.path.join(opd_dir, "opd.fits")
         opd_map = fits.getdata(opd_file_path, 1)

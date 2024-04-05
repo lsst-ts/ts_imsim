@@ -51,7 +51,8 @@ from lsst.ts.wep.utils import rotMatrix, runProgram
 
 class ClosedLoopTask:
     """Initialization of the closed loop task class to
-    run the simulation with imSim."""
+    run the simulation with imSim.
+    """
 
     def __init__(self) -> None:
         self.log = logging.getLogger(type(self).__name__)
@@ -105,7 +106,6 @@ class ClosedLoopTask:
         ValueError
             This instrument name is not supported.
         """
-
         self.sky_sim = SkySim()
         self.sky_sim.set_camera(cam_type)
         if path_sky_file == "":
@@ -139,7 +139,6 @@ class ClosedLoopTask:
         ValueError
             This instrument name is not supported.
         """
-
         self.log.info(
             "Use the default OPD field positions to be star positions. "
             f"The star magnitude is chosen to be {star_mag}."
@@ -193,7 +192,6 @@ class ClosedLoopTask:
         cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         """
-
         self.ofc_calc = OFC(OFCData(cam_type.value))
 
     def map_filter_ref_to_g(self, filter_type_name: str) -> str:
@@ -226,7 +224,6 @@ class ClosedLoopTask:
         ValueError
             The declination (Dec) should be in [-90, 90].
         """
-
         ra, dec = boresight
         if ra < 0 or ra > 360:
             raise ValueError("The right ascension (RA) should be in [0, 360].")
@@ -254,7 +251,6 @@ class ClosedLoopTask:
         ValueError
             This instrument name is not supported.
         """
-
         camera = get_camera(cam_type)
         detector_type = (
             DetectorType.WAVEFRONT
@@ -287,7 +283,6 @@ class ClosedLoopTask:
         ValueError
             This instrument name is not supported.
         """
-
         camera = get_camera(cam_type)
 
         detector_type = (
@@ -603,7 +598,6 @@ class ClosedLoopTask:
             code will just default to sending it to stdout.
             (The default is "".)
         """
-
         # Generate the images
         if imsim_config_pointer_file is None:
             if cam_type == CamType.LsstCam:
@@ -750,7 +744,6 @@ class ClosedLoopTask:
         list[lsst.ts.imsim.utils.SensorWavefrontError]
             List of SensorWavefrontError object.
         """
-
         # Ingest images into butler gen3
         self.ingest_data(butler_root_path=butler_root_path, cam_type=cam_type)
 
@@ -780,7 +773,6 @@ class ClosedLoopTask:
         str
             Suffix attached to "LSST" to specify instrument to butler.
         """
-
         if cam_type in [CamType.LsstCam, CamType.LsstFamCam]:
             butler_inst_name = "Cam"
         elif cam_type == CamType.ComCam:
@@ -825,7 +817,6 @@ class ClosedLoopTask:
             List of SensorWavefrontError with the results of the wavefront
             estimation pipeline for each sensor.
         """
-
         butler_inst_name = self._get_butler_inst_name(cam_type)
         if pipeline_file is None:
             pipeline_yaml = f"{cam_type.value}Pipeline.yaml"
@@ -928,7 +919,6 @@ class ClosedLoopTask:
         wep_estimator : enum 'WepEstimator' in lsst.ts.wep.utility
             Specify the method used to calculate Zernikes in ts_wep.
         """
-
         butler_inst_name = self._get_butler_inst_name(cam_type)
 
         # Remap reference filter
@@ -1142,7 +1132,6 @@ tasks:
         cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         """
-
         self.log.info(
             f"Generating butler gen3 in {butler_root_path} for {cam_type.name}"
         )
@@ -1244,7 +1233,6 @@ config.dataset_config.ref_dataset_name='ref_cat'
         target_dir : str
             Target directory.
         """
-
         for file_on in os.listdir(target_dir):
             file_path = os.path.join(target_dir, file_on)
             if os.path.isfile(file_path):
@@ -1266,7 +1254,6 @@ config.dataset_config.ref_dataset_name='ref_cat'
         argparse.ArgumentParser
             Updated parser.
         """
-
         parser.add_argument(
             "--inst",
             type=str,
@@ -1384,7 +1371,6 @@ config.dataset_config.ref_dataset_name='ref_cat'
         argparse.ArgumentParser
             Updated parser.
         """
-
         parser.add_argument(
             "--boresight_deg",
             type=float,

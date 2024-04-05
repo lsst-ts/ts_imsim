@@ -86,7 +86,6 @@ def calc_pssn(
     float
         PSSN value.
     """
-
     # Only needed for psf: pmask, imagedelta, fno
 
     # THE INTERNAL RESOLUTION THAT FFTS OPERATE ON IS VERY IMPORTANT
@@ -105,7 +104,7 @@ def calc_pssn(
 
     # Check the type is "OPD" or "PSF"
     if input_data_type not in ("opd", "psf"):
-        raise ValueError("The input data type of %s is not allowed." % input_data_type)
+        raise ValueError(f"The input data type of {input_data_type} is not allowed.")
 
     # Squeeze the array if necessary
     if array.ndim == 3:
@@ -229,7 +228,7 @@ def calc_pssn(
     pssn = pss / pssa
 
     if debug_level >= 3:
-        print("pssn = %10.8e/%10.8e = %6.4f." % (pss, pssa, pssn))
+        print(f"pssn = {pss:10.8e}/{pssa:10.8e} = {pssn:6.4f}.")
 
     return pssn
 
@@ -269,7 +268,6 @@ def create_mtf_atm(
     numpy.ndarray
         MTF at specific atmosphere model.
     """
-
     # Get the atmosphere phase structure function
     sfa = atm_sf(D, m, wl_um, zen, r0_in_m_ref, model)
 
@@ -316,7 +314,6 @@ def atm_sf(
     ValueError
         The model type is not supported.
     """
-
     # Check the model
     if model not in ("Kolm", "vonK"):
         raise ValueError("Does not support %s atmosphere model." % model)
@@ -394,7 +391,6 @@ def r0_wl_zen(r0_in_m_ref: float, zen: int, wl_um: float) -> float:
     float
         Atomosphere reference r0 in meter.
     """
-
     # Telescope zenith angle, change the unit from degree to radian
     zen = zen * np.pi / 180
 
@@ -462,7 +458,6 @@ def psf_to_ellip_atm_weighted(
     numpy.ndarray
         Correlation function (XY).
     """
-
     # Unlike calc_pssn(), here imagedelta needs to be provided for type='opd'
     # because the ellipticity calculation operates on psf.
 
@@ -543,7 +538,6 @@ def psf_to_ellip_weighted(
     numpy.ndarray
         Correlation function (XY).
     """
-
     # x, y positions
     x, y = np.meshgrid(np.arange(1, psf.shape[0] + 1), np.arange(1, psf.shape[1] + 1))
 
@@ -553,7 +547,7 @@ def psf_to_ellip_weighted(
 
     # Show the averaged x and y
     if debug_level >= 3:
-        print("xbar=%6.3f, ybar=%6.3f" % (x_bar, y_bar))
+        print(f"xbar={x_bar:6.3f}, ybar={y_bar:6.3f}")
 
     # Distance^2 to center
     r2 = (x - x_bar) ** 2 + (y - y_bar) ** 2
@@ -629,7 +623,6 @@ def create_atm(
     numpy.ndarray
         Weighting function of atmosphere.
     """
-
     # Get the weighting function
 
     # Distance^2 to center
@@ -720,7 +713,6 @@ def opd_to_psf(
     ValueError
         Padding value is less than 1.
     """
-
     # Make sure all NaN in OPD to be 0
     opd[np.isnan(opd)] = 0
 
@@ -802,7 +794,6 @@ def psf_to_otf(psf: np.ndarray) -> np.ndarray:
     numpy.ndarray
         Optacal transfer function.
     """
-
     otf = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(psf), s=psf.shape))
 
     return otf
@@ -821,7 +812,6 @@ def otf_to_psf(otf: np.ndarray) -> np.ndarray:
     numpy.ndarray
         Point spread function.
     """
-
     psf = np.absolute(np.fft.fftshift(np.fft.ifft2(np.fft.fftshift(otf), s=otf.shape)))
 
     return psf

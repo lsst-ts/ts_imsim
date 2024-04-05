@@ -52,7 +52,6 @@ class SkySim:
         cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
         """
-
         self._camera = get_camera(cam_type)
 
     def add_star_by_ra_dec_in_deg(
@@ -75,7 +74,6 @@ class SkySim:
         mag : float, list, or numpy.ndarray
             Star magnitude.
         """
-
         # Check the inputs are list or not, and change the type if necessary
         star_id_list = self._change_to_list_if_necessary(star_id)
         ra_in_deg_list = self._change_to_list_if_necessary(ra_in_deg)
@@ -106,8 +104,7 @@ class SkySim:
         list
             Variable as the list.
         """
-
-        if isinstance(variable, (int, float)):
+        if isinstance(variable, int | float):
             return [variable]
         else:
             return variable
@@ -125,7 +122,6 @@ class SkySim:
         bool
             True if the unique Id.
         """
-
         if star_id in self.star_id:
             is_unique = False
             print("StarId=%d is not unique." % star_id)
@@ -144,7 +140,6 @@ class SkySim:
         skip_rows : int, optional
             Skip the first "skiprows" lines. (the default is 0.)
         """
-
         data = np.loadtxt(read_file_path, skiprows=skip_rows)
 
         # Only consider the non-empty data
@@ -164,7 +159,6 @@ class SkySim:
         output_file_path : str
             Output file path.
         """
-
         # Add the header (star ID, ra, dec, magnitude)
         content = "# Id\t Ra\t\t Dec\t\t Mag\n"
 
