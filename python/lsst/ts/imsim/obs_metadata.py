@@ -39,7 +39,9 @@ class ObsMetadata:
     mjd: float = 60115.33
     seq_num: int = 1
     raw_seeing: int = 0.5
-    obs_id: str = """$f"IM_P_{astropy.time.Time(mjd, format='mjd').strftime('%Y%m%d')}_{seqnum:06d}" """
+    obs_id: str = (
+        """$f"IM_P_{astropy.time.Time(mjd, format='mjd').strftime('%Y%m%d')}_{seqnum:06d}" """
+    )
     focus_z: float = 0.0  # Defocal distance in mm
     zenith: float = field(init=False)
     parallactic_angle: float = field(init=False)
