@@ -69,6 +69,7 @@ class TestclosedLoopTask(unittest.TestCase):
 
     def test_config_ofc_calc(self):
         cam_type = CamType.LsstCam
+        self.closed_loop_task.max_noll_index = 28
         self.closed_loop_task.config_ofc_calc(cam_type)
 
         ofc_calc = self.closed_loop_task.ofc_calc
@@ -133,6 +134,7 @@ class TestclosedLoopTask(unittest.TestCase):
         self.assertEqual(args.pipeline_file, "")
         self.assertEqual(args.sky_seed, 42)
         self.assertEqual(args.pert_seed, 11)
+        self.assertEqual(args.max_noll_index, 28)
         self.assertEqual(args.wep_estimator, "tie")
 
     def test_wep_estimator_args(self):

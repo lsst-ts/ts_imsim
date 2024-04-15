@@ -7,6 +7,12 @@ Version History
 ##################
 
 -------------
+1.5.0
+-------------
+
+* Add max_noll_index argument to control number of Zernikes used.
+
+-------------
 1.4.0
 -------------
 
