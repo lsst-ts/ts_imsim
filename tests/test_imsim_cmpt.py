@@ -61,7 +61,7 @@ class TestImsimCmpt(unittest.TestCase):
             "r",
         ) as test_file:
             self.full_test_yaml = yaml.safe_load(test_file)
-        self.imsim_cmpt = ImsimCmpt()
+        self.imsim_cmpt = ImsimCmpt(num_of_zk=19)
 
         # Set the output directories
         self.output_dir = os.path.join(get_module_path(), "tests", "tmp")

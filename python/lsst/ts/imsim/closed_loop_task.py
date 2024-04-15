@@ -65,6 +65,9 @@ class ClosedLoopTask:
         # imSim Component
         self.imsim_cmpt = None
 
+        # Maximum Noll index
+        self.max_noll_index = None
+
         # Ra/Dec/RotAng coordinates used in the simulation.
         self.boresight_ra = None
         self.boresight_dec = None
@@ -195,6 +198,10 @@ class ClosedLoopTask:
         """
 
         self.ofc_calc = OFC(OFCData(cam_type.value))
+        self.ofc_calc.ofc_data.znmin = 3
+        self.ofc_calc.ofc_data.zn_selected = np.arange(
+            self.ofc_calc.ofc_data.znmin, self.max_noll_index
+        )
 
     def map_filter_ref_to_g(self, filter_type_name: str) -> str:
         """Map the reference filter to the G filter.
@@ -897,7 +904,9 @@ class ClosedLoopTask:
                 collections=[f"ts_imsim_{seq_num}"],
             )
 
-            sensor_wavefront_data = SensorWavefrontError()
+            sensor_wavefront_data = SensorWavefrontError(
+                num_of_zk=self.max_noll_index - self.ofc_calc.ofc_data.znmin + 1
+            )
             sensor_name = det_id_map[dataset.dataId["detector"]].getName()
             sensor_wavefront_data.sensor_name = sensor_name
             sensor_wavefront_data.sensor_id = det_name_map[sensor_name].getId()
@@ -983,6 +992,7 @@ tasks:
   calcZernikesTask:
     class: lsst.ts.wep.task.calcZernikesTask.CalcZernikesTask
     config:
+      estimateZernikes.maxNollIndex: {self.max_noll_index}
       python: |
         from lsst.ts.wep.task import EstimateZernikesTieTask, EstimateZernikesDanishTask
         config.estimateZernikes.retarget(EstimateZernikes{wep_estimator.value.title()}Task)
@@ -1012,6 +1022,7 @@ tasks:
         raw_seeing: float,
         imsim_log_file: str,
         wep_estimator_method: str,
+        max_noll_index: int,
     ) -> None:
         """Run the simulation of images.
 
@@ -1065,6 +1076,8 @@ tasks:
         wep_estimator_method : str
             Specify the method used to calculate Zernikes in ts_wep.
             Options are "tie" or "danish".
+        max_noll_index : int
+            Maximum Noll index to calculate Zernikes.
         """
         cam_type = CamType(inst)
         wep_estimator = WepEstimator(wep_estimator_method)
@@ -1075,6 +1088,7 @@ tasks:
         self.boresight_ra = boresight[0]
         self.boresight_dec = boresight[1]
         self.boresight_rot_ang = rot_cam_in_deg
+        self.max_noll_index = max_noll_index
         # Remap the reference filter to g
         filter_type_name = self.map_filter_ref_to_g(filter_type_name)
 
@@ -1095,7 +1109,9 @@ tasks:
             cam_type, obs_metadata, path_sky_file=path_sky_file, star_mag=star_mag
         )
         self.config_ofc_calc(cam_type)
-        self.imsim_cmpt = ImsimCmpt()
+        self.imsim_cmpt = ImsimCmpt(
+            num_of_zk=self.max_noll_index - self.ofc_calc.ofc_data.znmin + 1
+        )
 
         # If path_sky_file using default OPD positions write this to disk
         # so that the Butler can load it later
@@ -1354,6 +1370,13 @@ config.dataset_config.ref_dataset_name='ref_cat'
             type=int,
             default=1,
             help="Number of processor to run imSim and DM pipeline. (default: 1)",
+        )
+
+        parser.add_argument(
+            "--max_noll_index",
+            type=int,
+            default=28,
+            help="Maximum Noll index to calculate Zernikes. (default: 22)",
         )
 
         parser.add_argument(
