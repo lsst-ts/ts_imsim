@@ -7,6 +7,18 @@ Version History
 ##################
 
 -------------
+1.5.1
+-------------
+
+* Update pre-commit versions to be in line with ts_pre_commit_conf v0.9.9.
+
+-------------
+1.5.0
+-------------
+
+* Add max_noll_index argument to control number of Zernikes used.
+
+-------------
 1.4.0
 -------------
 

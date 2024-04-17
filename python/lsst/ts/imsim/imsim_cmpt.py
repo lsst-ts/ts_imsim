@@ -48,9 +48,34 @@ from scipy.ndimage import rotate
 class ImsimCmpt:
     """Class to take configurations for each imsim component and
     generate full imsim configuration files.
+
+
+    Attributes
+    ----------
+    _output_dir : str
+        Output directory.
+    _output_img_dir : str
+        Output image directory.
+    opd_file_path : str
+        OPD file path.
+    opd_metr : lsst.ts.imsim.OpdMetrology
+        OPD metrology.
+    num_of_zk : int
+        Number of Zernikes.
+    num_of_dof : int
+        Number of degrees of freedom.
+    dof_in_um : numpy.ndarray
+        Degrees of freedom in microns.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, num_of_zk: int) -> None:
+        """Initialize the ImsimCmpt class.
+
+        Parameters
+        ----------
+        num_of_zk : int
+            Number of Zernikes.
+        """
         # Output directories
         self._output_dir = None
         self._output_img_dir = None
@@ -60,7 +85,7 @@ class ImsimCmpt:
         self.opd_metr = OpdMetrology()
 
         # Specify number of Zernikes
-        self.num_of_zk = 19
+        self.num_of_zk = num_of_zk
 
         # AOS Degrees of Freedom
         self.num_of_dof = 50
@@ -523,7 +548,7 @@ class ImsimCmpt:
             mag_norm,
             sed_name,
         )
-        content += "%.1f %.1f %.1f %.1f %.1f %.1f %s none none \n" % (
+        content += "{:.1f} {:.1f} {:.1f} {:.1f} {:.1f} {:.1f} {} none none \n".format(
             redshift,
             gamma_1,
             gamma_2,
@@ -649,7 +674,7 @@ class ImsimCmpt:
             # also fits up to zk28 by default
             zk = self.opd_metr.get_zk_from_opd(opd_map=opd_rot, zk_terms=28)[0]
 
-            # Only need to collect z4 to z22
+            # Only need to collect z4 to num_of_zk
             init_idx = 3
             opd_data[idx, :] = zk[init_idx : init_idx + self.num_of_zk]
 
