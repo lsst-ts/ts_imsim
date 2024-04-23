@@ -198,9 +198,9 @@ class ClosedLoopTask:
         """
 
         self.ofc_calc = OFC(OFCData(cam_type.value))
-        self.ofc_calc.ofc_data.znmin = 3
+        self.ofc_calc.ofc_data.znmin = 4
         self.ofc_calc.ofc_data.zn_selected = np.arange(
-            self.ofc_calc.ofc_data.znmin, self.max_noll_index
+            self.ofc_calc.ofc_data.znmin, self.max_noll_index + 1
         )
 
     def map_filter_ref_to_g(self, filter_type_name: str) -> str:
@@ -1376,7 +1376,7 @@ config.dataset_config.ref_dataset_name='ref_cat'
             "--max_noll_index",
             type=int,
             default=28,
-            help="Maximum Noll index to calculate Zernikes. (default: 22)",
+            help="Maximum Noll index to calculate Zernikes. (default: 28)",
         )
 
         parser.add_argument(

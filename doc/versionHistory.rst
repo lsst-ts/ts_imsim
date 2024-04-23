@@ -7,6 +7,12 @@ Version History
 ##################
 
 -------------
+1.5.2
+-------------
+
+* Fix ofc_data zmin variable in closed_loop_task.
+
+-------------
 1.5.1
 -------------
 
