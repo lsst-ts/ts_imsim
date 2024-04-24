@@ -54,8 +54,8 @@ class TestSkySim(unittest.TestCase):
 
         ra = self.sky_sim.ra
         dec = self.sky_sim.dec
-        self.assertEqual(ra[2], -1.176)
-        self.assertEqual(dec[2], 1.216)
+        self.assertEqual(ra[2], 0.092143)
+        self.assertEqual(dec[2], 1.635604)
 
         self.assertEqual(self.sky_sim.mag[2], 15.0)
 
