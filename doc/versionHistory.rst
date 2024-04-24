@@ -7,6 +7,12 @@ Version History
 ##################
 
 -------------
+1.5.3
+-------------
+
+* Fix wfs test file source positions, column names, sky_file kwarg.
+
+-------------
 1.5.2
 -------------
 
