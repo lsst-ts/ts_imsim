@@ -616,9 +616,9 @@ class ClosedLoopTask:
             if cam_type == CamType.LsstCam:
                 default_pointer = "lsstCamDefaultPointer.yaml"
             elif cam_type == CamType.LsstFamCam:
-                default_pointer = "lsstFamCamDefaultPointer.yaml"
+                default_pointer = "lsstFamNoPertPointer.yaml"
             elif cam_type == CamType.ComCam:
-                default_pointer = "lsstComCamDefaultPointer.yaml"
+                default_pointer = "lsstComCamNoPertPointer.yaml"
             imsim_config_pointer_file = os.path.join(get_config_dir(), default_pointer)
 
         base_config_yaml = self.imsim_cmpt.assemble_config_yaml(
