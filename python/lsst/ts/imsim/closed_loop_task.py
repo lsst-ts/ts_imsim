@@ -1423,7 +1423,8 @@ config.dataset_config.ref_dataset_name='ref_cat'
             help="""
                  Text file contains the star Id, ra, dec, and magnitude.
                  The default is to use the OPD field positions with boresight
-                 [ra, dec] = [0, 0].
+                 [ra, dec] = [0, 0]. The file header must include column names
+                 Id, Ra, Dec, Mag. For example, see tests/testData/sky/wfsStar.txt.
                  """,
         )
 
