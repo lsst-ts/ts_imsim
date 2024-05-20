@@ -6,6 +6,12 @@
 Version History
 ##################
 -------------
+1.5.5
+-------------
+
+* Move class diagrams to mermaid from plantUML.
+
+-------------
 1.5.4
 -------------
 

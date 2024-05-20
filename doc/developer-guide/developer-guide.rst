@@ -27,7 +27,7 @@ imsim
 
 This module contains the closed loop methods.
 
-.. uml:: ../uml/imsimClass.uml
+.. mermaid:: ../uml/imsimClass.mmd
     :caption: Class diagram of ts_imsim.
 
 * **ClosedLoopTask**: Run the imSim based closed loop for AOS.
