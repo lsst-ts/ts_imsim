@@ -1,5 +1,5 @@
-@startuml
-package "ts_ofc" #DDDDDD {
+classDiagram
+namespace ts_ofc {
   class OFCCalculation
 }
 
@@ -10,4 +10,3 @@ CloseLoopTask o-- OpdMetrology
 CloseLoopTask *-- ObsMetadata
 ImsimCmpt *-- ObsMetadata
 ImsimCmpt o-- OpdMetrology
-@enduml
