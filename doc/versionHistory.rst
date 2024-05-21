@@ -5,6 +5,23 @@
 ##################
 Version History
 ##################
+-------------
+1.5.5
+-------------
+
+* Move class diagrams to mermaid from plantUML.
+
+-------------
+1.5.4
+-------------
+
+* Fix default pointer names in _generate_images.
+
+-------------
+1.5.3
+-------------
+
+* Fix wfs test file source positions, column names, sky_file kwarg.
 
 -------------
 1.5.2
