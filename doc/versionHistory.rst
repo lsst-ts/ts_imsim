@@ -6,6 +6,12 @@
 Version History
 ##################
 -------------
+1.5.6
+-------------
+
+* Update to use ts_jenkins_shared_library.
+
+-------------
 1.5.5
 -------------
 
