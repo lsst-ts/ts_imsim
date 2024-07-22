@@ -27,6 +27,7 @@ import shutil
 from argparse import ArgumentParser
 from copy import deepcopy
 from glob import glob
+from pathlib import Path
 
 import astropy
 import numpy as np
@@ -186,7 +187,7 @@ class ClosedLoopTask:
             )
             star_id += 1
 
-    def config_ofc_calc(self, cam_type: CamType) -> None:
+    def config_ofc_calc(self, cam_type: CamType, controller_config_file: str) -> None:
         """Configure the OFC calculator.
 
         OFC: Optical feedback calculator.
@@ -195,9 +196,15 @@ class ClosedLoopTask:
         ----------
         cam_type : lsst.ts.imsim.utils.CamType
             Camera type.
+        controller_config_file : str
+            Controller configuration file.
         """
 
-        self.ofc_calc = OFC(OFCData(cam_type.value))
+        ofc_data = OFCData(cam_type.value)
+        ofc_data.controller_filename = (
+            Path(get_config_dir()) / "controllers" / controller_config_file
+        )
+        self.ofc_calc = OFC(ofc_data)
         self.ofc_calc.ofc_data.znmin = 4
         self.ofc_calc.ofc_data.zn_selected = np.arange(
             self.ofc_calc.ofc_data.znmin, self.max_noll_index + 1
@@ -387,7 +394,7 @@ class ClosedLoopTask:
             code will just default to sending it to stdout.
             (The default is "".)
         """
-        state_0 = self.ofc_calc.ofc_controller.aggregated_state
+        state_0 = self.ofc_calc.controller.aggregated_state
         self.imsim_cmpt.dof_in_um = state_0
 
         # If using wavefront sensors we measure one per pair
@@ -541,12 +548,11 @@ class ClosedLoopTask:
                 wfe=wfe,
                 sensor_names=sensor_names,
                 filter_name=obs_metadata.band.upper(),
-                gain=-1,
                 rotation_angle=obs_metadata.rotator_angle,
             )
 
             # Set the new aggregated DOF to phosimCmpt
-            dof_in_um = self.ofc_calc.ofc_controller.aggregated_state
+            dof_in_um = self.ofc_calc.controller.aggregated_state
             self.imsim_cmpt.dof_in_um = dof_in_um
 
             # Save the DOF file
@@ -1015,6 +1021,7 @@ tasks:
         iter_num: int,
         pipeline_file: str,
         imsim_config_pointer_file: str,
+        controller_config_file: str,
         turn_off_sky_background: bool,
         turn_off_atmosphere: bool,
         turn_off_wavefront_estimates: bool,
@@ -1059,6 +1066,8 @@ tasks:
             Path to pointer file with locations of yaml configuration
             files for imsim submodules. If empty string then the code
             will use the default in policy/config for the given inst.
+        controller_config_file : str
+            Path to the controller configuration file.
         turn_off_sky_background : bool
             If set to True then the closed loop will simulate images
             without sky background.
@@ -1108,7 +1117,7 @@ tasks:
         self.config_sky_sim(
             cam_type, obs_metadata, path_sky_file=path_sky_file, star_mag=star_mag
         )
-        self.config_ofc_calc(cam_type)
+        self.config_ofc_calc(cam_type, controller_config_file)
         self.imsim_cmpt = ImsimCmpt(
             num_of_zk=self.max_noll_index - self.ofc_calc.ofc_data.znmin + 1
         )
@@ -1330,6 +1339,13 @@ config.dataset_config.ref_dataset_name='ref_cat'
             type=str,
             default="",
             help="Imsim Configuration Pointer File.",
+        )
+
+        parser.add_argument(
+            "--controller_config_file",
+            type=str,
+            default="oic_controller.yaml",
+            help="Path to the controller configuration file.",
         )
 
         parser.add_argument(

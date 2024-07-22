@@ -56,6 +56,7 @@ if __name__ == "__main__":
         args.iter_num,
         args.pipeline_file,
         args.config_pointer_file,
+        args.controller_config_file,
         args.turn_off_sky_background,
         args.turn_off_atmosphere,
         args.turn_off_wavefront_estimates,
