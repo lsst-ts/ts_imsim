@@ -529,24 +529,22 @@ class ClosedLoopTask:
                 [sensor_wfe.annular_zernike_poly for sensor_wfe in list_of_wf_err]
             )
 
-            sensor_names = np.array(
-                [sensor_wfe.sensor_name for sensor_wfe in list_of_wf_err]
+            sensor_ids = np.array(
+                [sensor_wfe.sensor_id for sensor_wfe in list_of_wf_err]
             )
 
             # Only include the fwhm data from sensor we are simulating
             # (e.g. only raft centers instead of full FAM).
             if self.use_ccd_img:
-                fwhm_idx = [
-                    ref_sensor_name_list.index(sens_name) for sens_name in sensor_names
-                ]
+                fwhm_idx = [ref_sensor_id_list.index(sens_id) for sens_id in sensor_ids]
                 fwhm = fwhm[fwhm_idx]
 
             # Pass data to OFC
-            self.ofc_calc.set_fwhm_data(fwhm, sensor_names)
+            self.ofc_calc.set_fwhm_data(fwhm, sensor_ids)
 
             self.ofc_calc.calculate_corrections(
                 wfe=wfe,
-                sensor_names=sensor_names,
+                sensor_ids=sensor_ids,
                 filter_name=obs_metadata.band.upper(),
                 rotation_angle=obs_metadata.rotator_angle,
             )

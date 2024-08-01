@@ -6,6 +6,12 @@
 Version History
 ##################
 -------------
+1.6.1
+-------------
+
+* Update to send sensor_ids instead of sensor_names to ts_ofc
+
+-------------
 1.6.0
 -------------
 
