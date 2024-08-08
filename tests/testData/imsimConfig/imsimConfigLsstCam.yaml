@@ -312,6 +312,7 @@ output:
     rotTelPos: 0.0
     seqnum: 1
     seeing: *rawSeeing
+    group: 1
 
   camera: LsstCam
 
