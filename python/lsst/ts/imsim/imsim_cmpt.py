@@ -331,6 +331,7 @@ class ImsimCmpt:
         )
         header_text += f"    focusZ: {obs_metadata.focus_z}\n"
         header_text += f"    seeing: {obs_metadata.raw_seeing}\n"
+        header_text += f"    group: {obs_metadata.group_id}"
 
         return header_text
 

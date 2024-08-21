@@ -6,6 +6,13 @@
 Version History
 ##################
 -------------
+1.6.2
+-------------
+
+* Set group for images.
+* Use group pairer for science images.
+
+-------------
 1.6.1
 -------------
 

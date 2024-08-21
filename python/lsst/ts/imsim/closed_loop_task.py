@@ -453,6 +453,7 @@ class ClosedLoopTask:
             self.imsim_cmpt.output_img_dir = output_img_dir
 
             # Generate the sky images and calculate the wavefront error
+            obs_metadata.group_id = str(obs_metadata.seq_num)
             if cam_type == CamType.LsstCam:
                 self._generate_images(
                     obs_metadata,
@@ -639,6 +640,9 @@ class ClosedLoopTask:
         base_config_yaml["output"]["nproc"] = num_pro
         base_config_yaml["image"]["random_seed"] = sky_seed
         base_config_yaml["input"]["telescope"]["fea"]["m1m3_lut"]["seed"] = pert_seed
+        base_config_yaml["output"]["readout"]["added_keywords"][
+            "GROUPID"
+        ] = obs_metadata.group_id
         if turn_off_sky_background:
             base_config_yaml["image"]["sky_level"] = 0
         if turn_off_atmosphere:
@@ -948,13 +952,24 @@ class ClosedLoopTask:
         filter_type_name = self.map_filter_ref_to_g(filter_type_name)
 
         # Set defocal offset for camera
+        science_cutout_config = """config:
+      maxRecenterDistance: 100
+      python: |
+        from lsst.ts.wep.task.pairTask import GroupPairer
+        config.pairer.retarget(GroupPairer)
+        """
         if cam_type in [CamType.LsstCam, CamType.LsstFamCam]:
             if cam_type == CamType.LsstCam:
                 cut_out_task = "Cwfs"
+                cut_out_config = """config:
+      maxRecenterDistance: 100
+"""
             else:
                 cut_out_task = "ScienceSensor"
+                cut_out_config = science_cutout_config
         elif cam_type in [CamType.ComCam]:
             cut_out_task = "ScienceSensor"
+            cut_out_config = science_cutout_config
 
         with open(pipeline_yaml_path, "w") as fp:
             fp.write(
@@ -993,6 +1008,7 @@ tasks:
     class: lsst.ts.wep.task.generateDonutCatalogWcsTask.GenerateDonutCatalogWcsTask
   cutOutDonuts{cut_out_task}Task:
     class: lsst.ts.wep.task.cutOutDonuts{cut_out_task}Task.CutOutDonuts{cut_out_task}Task
+    {cut_out_config}
   calcZernikesTask:
     class: lsst.ts.wep.task.calcZernikesTask.CalcZernikesTask
     config:
