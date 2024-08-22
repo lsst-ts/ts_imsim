@@ -47,6 +47,7 @@ class ObsMetadata:
     parallactic_angle: float = field(init=False)
     alt: float = field(init=False)
     az: float = field(init=False)
+    group_id: str = "1"
 
     def __post_init__(self) -> None:
         """Populate the zenith and parallactic angles

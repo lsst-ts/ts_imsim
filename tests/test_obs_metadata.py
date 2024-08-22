@@ -48,6 +48,7 @@ class TestObsMetadata(unittest.TestCase):
         self.assertEqual(self.obs_meta_test.focus_z, 0.0)
         self.assertAlmostEqual(self.obs_meta_test.zenith, 51.63121964610822)
         self.assertAlmostEqual(self.obs_meta_test.parallactic_angle, -130.1781932025212)
+        self.assertEqual(self.obs_meta_test.group_id, "1")
 
     def test_calc_parallactic_angle(self):
         sirius = FixedTarget.from_name("sirius")

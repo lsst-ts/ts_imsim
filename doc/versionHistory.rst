@@ -6,6 +6,25 @@
 Version History
 ##################
 -------------
+1.6.2
+-------------
+
+* Set group for images.
+* Use group pairer for science images.
+
+-------------
+1.6.1
+-------------
+
+* Update to send sensor_ids instead of sensor_names to ts_ofc
+
+-------------
+1.6.0
+-------------
+
+* Update to use ts_ofc version 3.2.0.
+
+-------------
 1.5.6
 -------------
 
