@@ -918,7 +918,7 @@ class ClosedLoopTask:
             sensor_name = det_id_map[dataset.dataId["detector"]].getName()
             sensor_wavefront_data.sensor_name = sensor_name
             sensor_wavefront_data.sensor_id = det_name_map[sensor_name].getId()
-            sensor_wavefront_data.annular_zernike_poly = zer_coeff
+            sensor_wavefront_data.annular_zernike_poly = zer_coeff[0]
 
             list_of_wf_err.append(sensor_wavefront_data)
 
