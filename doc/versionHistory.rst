@@ -6,6 +6,12 @@
 Version History
 ##################
 -------------
+1.6.3
+-------------
+
+* Fix zernike average output after change to v11.2.0 in ts_wep.
+
+-------------
 1.6.2
 -------------
 
