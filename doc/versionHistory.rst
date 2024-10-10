@@ -6,6 +6,12 @@
 Version History
 ##################
 -------------
+1.6.4
+-------------
+
+* Fix ofc configuration to include normalization_weights_filename.
+
+-------------
 1.6.3
 -------------
 
