@@ -6,6 +6,12 @@
 Version History
 ##################
 -------------
+1.6.5
+-------------
+
+* Fix write-curated-calibrations to explicitly define collection name.
+
+-------------
 1.6.4
 -------------
 
