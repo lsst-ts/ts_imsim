@@ -857,7 +857,8 @@ class ClosedLoopTask:
             self.log.info("Ingesting curated calibrations.")
 
             runProgram(
-                f"butler write-curated-calibrations {butler_root_path} lsst.obs.lsst.Lsst{butler_inst_name}"
+                f"butler write-curated-calibrations {butler_root_path} lsst.obs.lsst.Lsst{butler_inst_name} "
+                f"--collection LSST{butler_inst_name}/calib"
             )
         # Sequence number or seq_num is an integer number
         # associated with each image taken in a single day.
