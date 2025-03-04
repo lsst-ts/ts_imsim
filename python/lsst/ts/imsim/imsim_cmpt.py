@@ -60,21 +60,21 @@ class ImsimCmpt:
         OPD file path.
     opd_metr : lsst.ts.imsim.OpdMetrology
         OPD metrology.
-    num_of_zk : int
-        Number of Zernikes.
+    noll_indices : list
+        Noll indices of used Zernikes.
     num_of_dof : int
         Number of degrees of freedom.
     dof_in_um : numpy.ndarray
         Degrees of freedom in microns.
     """
 
-    def __init__(self, num_of_zk: int) -> None:
+    def __init__(self, noll_indices: list) -> None:
         """Initialize the ImsimCmpt class.
 
         Parameters
         ----------
-        num_of_zk : int
-            Number of Zernikes.
+        noll_indices : list
+            Noll indices of used Zernikes.
         """
         # Output directories
         self._output_dir = None
@@ -84,8 +84,8 @@ class ImsimCmpt:
         self.opd_file_path = None
         self.opd_metr = OpdMetrology()
 
-        # Specify number of Zernikes
-        self.num_of_zk = num_of_zk
+        # Specify Noll indices of Zernikes
+        self.noll_indices = noll_indices
 
         # AOS Degrees of Freedom
         self.num_of_dof = 50
@@ -619,10 +619,8 @@ class ImsimCmpt:
 
         file_path = os.path.join(self.output_img_dir, zk_file_name)
         opd_data = self._map_opd_to_zk(rot_opd_in_deg, num_opd)
-        file_txt = (
-            "# The followings are OPD in rotation angle of %.2f degree in nm from z4 to z22:\n"
-            % rot_opd_in_deg
-        )
+        file_txt = f"# The following are OPD in rotation angle of {rot_opd_in_deg:.2f} degrees in nm,\
+\n# for Noll indices {self.noll_indices}:\n"
         for sensor_id, opd_zk in zip(self.opd_metr.sensor_ids, opd_data):
             zk_str = f"{sensor_id}: {opd_zk}\n"
             file_txt += zk_str
@@ -651,7 +649,7 @@ class ImsimCmpt:
 
         # Map the OPD to the Zk basis and do the collection
         # Get the number of OPD locations by looking at length of fieldX
-        opd_data = np.zeros((num_opd, self.num_of_zk))
+        opd_data = np.zeros((num_opd, len(self.noll_indices)))
         for idx in range(num_opd):
             opd = fits.getdata(self.opd_file_path, idx)
 
@@ -675,9 +673,11 @@ class ImsimCmpt:
             # also fits up to zk28 by default
             zk = self.opd_metr.get_zk_from_opd(opd_map=opd_rot, zk_terms=28)[0]
 
-            # Only need to collect z4 to num_of_zk
-            init_idx = 3
-            opd_data[idx, :] = zk[init_idx : init_idx + self.num_of_zk]
+            # Only need to collect noll indices
+            # noll_indices starts from 1,
+            # whereas zk from 0
+            opd_idx = np.array(self.noll_indices) - 1
+            opd_data[idx, :] = zk[opd_idx]
 
         return opd_data
 
@@ -710,7 +710,7 @@ class ImsimCmpt:
 
         # Write to file
         file_path = os.path.join(self.output_img_dir, pssn_file_name)
-        header = "The followings are PSSN and FWHM (in arcsec) data. The final number is the GQ value."
+        header = "The following are PSSN and FWHM (in arcsec) data. The final number is the GQ value."
         np.savetxt(file_path, data, header=header)
 
     def _calc_pssn_opd(self, num_opd: int) -> tuple[list[float], float]:
@@ -807,7 +807,7 @@ class ImsimCmpt:
 
         list_of_wf_err = []
         for sensor_id, sensor_name in zip(sensor_id_list, sensor_name_list):
-            sensor_wavefront_data = SensorWavefrontError(num_of_zk=self.num_of_zk)
+            sensor_wavefront_data = SensorWavefrontError(noll_indices=self.noll_indices)
             sensor_wavefront_data.sensor_id = sensor_id
             sensor_wavefront_data.sensor_name = sensor_name
             # imSim outputs OPD in nanometers so need to change to microns
@@ -956,12 +956,14 @@ class ImsimCmpt:
             if sensor_name in name_list_in_wf_err_map:
                 wf_err = wf_err_map[sensor_name]
             else:
-                wf_err = np.zeros(self.num_of_zk)
+                wf_err = np.zeros(len(self.noll_indices))
             reordered_wf_err_map[sensor_name] = wf_err
 
         # Save the file
         file_path = os.path.join(self.output_img_dir, zk_file_name)
-        file_txt = "# The followings are ZK in um from z4 to z22:\n"
+        file_txt = (
+            f"# The following are ZK in um, \n# for Noll indices {self.noll_indices}:\n"
+        )
         for key, val in reordered_wf_err_map.items():
             zk_str = f"{camera[key].getId()}: {val}\n"
             file_txt += zk_str
@@ -1013,17 +1015,18 @@ class ImsimCmpt:
         wf_err_map : dict
             Calculated wavefront error. The dictionary key [str] is the
             abbreviated sensor name (e.g. R22_S11). The dictionary item
-            [numpy.ndarray] is the averaged wavefront error (z4-z22) in um.
+            [numpy.ndarray] is the averaged wavefront error for
+            chosen noll indices in um.
 
         Returns
         -------
         numpy.ndarray
-            Wavefront errors as a matrix. The column is z4-z22 in um. The row
-            is the individual sensor. The order is the same as the input of
-            wfErrMap.
+            Wavefront errors as a matrix. The column corresponds to
+            chosen noll indices in um. Each row is an individual sensor.
+            The order is the same as the input of wfErrMap.
         """
 
-        value_matrix = np.empty((0, self.num_of_zk))
+        value_matrix = np.empty((0, len(self.noll_indices)))
         for wf_err in wf_err_map.values():
             value_matrix = np.vstack((value_matrix, wf_err))
 
@@ -1044,5 +1047,5 @@ class ImsimCmpt:
         """
 
         file_path = os.path.join(self.output_dir, dof_in_um_file_name)
-        header = "The followings are the DOF in um:"
+        header = "The following are the DOF in um:"
         np.savetxt(file_path, np.transpose(self.dof_in_um), header=header)
