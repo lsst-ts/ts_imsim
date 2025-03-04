@@ -29,14 +29,36 @@ class TestSensorWavefrontError(unittest.TestCase):
     """Test the SensorWavefrontError class."""
 
     def setUp(self):
-        self.num_of_zk = 19
-        self.sensor_wavefront_error = SensorWavefrontError(num_of_zk=self.num_of_zk)
+        self.noll_indices = [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            20,
+            21,
+            22,
+            27,
+            28,
+        ]
+        self.sensor_wavefront_error = SensorWavefrontError(
+            noll_indices=self.noll_indices
+        )
 
         self.sensor_id = 999
         self.sensor_name = "R99_S99"
 
-    def test_get_num_of_zk(self):
-        self.assertEqual(self.sensor_wavefront_error.num_of_zk, self.num_of_zk)
+    def test_get_noll_indices(self):
+        np.testing.assert_array_equal(
+            self.sensor_wavefront_error.noll_indices, self.noll_indices
+        )
 
     def test_get_sensor_id(self):
         sensor_id = self.sensor_wavefront_error.sensor_id
@@ -78,14 +100,14 @@ class TestSensorWavefrontError(unittest.TestCase):
     def test_get_annulary_zernike_poly(self):
         annular_zernike_poly = self.sensor_wavefront_error.annular_zernike_poly
 
-        self.assertEqual(len(annular_zernike_poly), self.num_of_zk)
+        self.assertEqual(len(annular_zernike_poly), len(self.noll_indices))
         self.assertTrue(isinstance(annular_zernike_poly, np.ndarray))
 
         delta = np.sum(np.abs(annular_zernike_poly))
         self.assertEqual(delta, 0)
 
     def test_set_annular_zernike_poly(self):
-        rand_value = np.random.rand(self.num_of_zk)
+        rand_value = np.random.rand(len(self.noll_indices))
         self.sensor_wavefront_error.annular_zernike_poly = rand_value
 
         value_in_obj = self.sensor_wavefront_error.annular_zernike_poly
@@ -94,19 +116,19 @@ class TestSensorWavefrontError(unittest.TestCase):
         self.assertEqual(delta, 0)
 
     def test_set_annular_zernike_poly_with_list_input(self):
-        list_value = [1] * self.num_of_zk
+        list_value = [1] * len(self.noll_indices)
         self.sensor_wavefront_error.annular_zernike_poly = list_value
 
         value_in_obj = self.sensor_wavefront_error.annular_zernike_poly
-        self.assertEqual(np.sum(value_in_obj), self.num_of_zk)
+        self.assertEqual(np.sum(value_in_obj), len(self.noll_indices))
 
     def test_set_annular_zernike_poly_with_wrong_length(self):
-        wrong_value = np.ones(self.num_of_zk + 1)
+        wrong_value = np.ones(len(self.noll_indices) + 1)
         with self.assertRaises(ValueError) as context:
             self.sensor_wavefront_error.annular_zernike_poly = wrong_value
         self.assertEqual(
             str(context.exception),
-            f"annular_zernike_poly must be an array of {self.num_of_zk} floats.",
+            f"annular_zernike_poly must be an array of {len(self.noll_indices)} floats.",
         )
 
 
