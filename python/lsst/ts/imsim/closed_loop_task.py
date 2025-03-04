@@ -47,7 +47,7 @@ from lsst.ts.imsim.utils import (
     plot_fwhm_of_iters,
 )
 from lsst.ts.ofc import OFC, OFCData
-from lsst.ts.wep.utils import rotMatrix, runProgram
+from lsst.ts.wep.utils import rotMatrix, runProgram, makeDense
 
 
 class ClosedLoopTask:
@@ -66,8 +66,8 @@ class ClosedLoopTask:
         # imSim Component
         self.imsim_cmpt = None
 
-        # Maximum Noll index
-        self.max_noll_index = None
+        # Noll Zernike indices
+        self.noll_indices = None
 
         # Ra/Dec/RotAng coordinates used in the simulation.
         self.boresight_ra = None
@@ -205,10 +205,8 @@ class ClosedLoopTask:
             Path(get_config_dir()) / "controllers" / controller_config_file
         )
         self.ofc_calc = OFC(ofc_data)
-        self.ofc_calc.ofc_data.znmin = 4
-        self.ofc_calc.ofc_data.zn_selected = np.arange(
-            self.ofc_calc.ofc_data.znmin, self.max_noll_index + 1
-        )
+        self.ofc_calc.ofc_data.znmin = min(self.noll_indices)
+        self.ofc_calc.ofc_data.zn_selected = np.array(self.noll_indices)
 
     def map_filter_ref_to_g(self, filter_type_name: str) -> str:
         """Map the reference filter to the G filter.
@@ -525,9 +523,14 @@ class ClosedLoopTask:
                 zk_file_name=wfs_zk_file_name,
             )
 
-            # Calculate the DOF
+            # Calculate the DOF.
+            # Need to switch to dense representation
+            # before passing on to OFC
             wfe = np.array(
-                [sensor_wfe.annular_zernike_poly for sensor_wfe in list_of_wf_err]
+                [
+                    makeDense(sensor_wfe.annular_zernike_poly, self.noll_indices)
+                    for sensor_wfe in list_of_wf_err
+                ]
             )
 
             sensor_ids = np.array(
@@ -886,7 +889,7 @@ class ClosedLoopTask:
         butler = dafButler.Butler(butler_root_path)
 
         dataset_refs = butler.registry.queryDatasets(
-            datasetType="zernikeEstimateAvg", collections=[f"ts_imsim_{seq_num}"]
+            datasetType="zernikes", collections=[f"ts_imsim_{seq_num}"]
         )
 
         # Get the map for detector Id to detector name
@@ -907,19 +910,26 @@ class ClosedLoopTask:
                 "visit": dataset.dataId["visit"],
             }
 
-            zer_coeff = butler.get(
-                "zernikeEstimateAvg",
+            zernikes = butler.get(
+                "zernikes",
                 dataId=data_id,
                 collections=[f"ts_imsim_{seq_num}"],
             )
-
-            sensor_wavefront_data = SensorWavefrontError(
-                num_of_zk=self.max_noll_index - self.ofc_calc.ofc_data.znmin + 1
+            # Read off which columns contain Zk values
+            zk_cols = [col for col in zernikes.columns if col.startswith("Z")]
+            # This is equivalent to self.noll_indices
+            noll_indices = [int(col[1:]) for col in zk_cols]
+            # The first row contains the detector average
+            zk_avg_row = zernikes[zernikes["label"] == "average"]
+            # Each QTable column contains units, hence we convert with astropo
+            zk_avg_microns = np.array(
+                [zk_avg_row[col].to(astropy.units.micron).value[0] for col in zk_cols]
             )
+            sensor_wavefront_data = SensorWavefrontError(noll_indices=noll_indices)
             sensor_name = det_id_map[dataset.dataId["detector"]].getName()
             sensor_wavefront_data.sensor_name = sensor_name
             sensor_wavefront_data.sensor_id = det_name_map[sensor_name].getId()
-            sensor_wavefront_data.annular_zernike_poly = zer_coeff[0]
+            sensor_wavefront_data.annular_zernike_poly = zk_avg_microns
 
             list_of_wf_err.append(sensor_wavefront_data)
 
@@ -1013,7 +1023,7 @@ tasks:
   calcZernikesTask:
     class: lsst.ts.wep.task.calcZernikesTask.CalcZernikesTask
     config:
-      estimateZernikes.maxNollIndex: {self.max_noll_index}
+      estimateZernikes.nollIndices: {self.noll_indices}
       python: |
         from lsst.ts.wep.task import EstimateZernikesTieTask, EstimateZernikesDanishTask
         config.estimateZernikes.retarget(EstimateZernikes{wep_estimator.value.title()}Task)
@@ -1044,7 +1054,7 @@ tasks:
         raw_seeing: float,
         imsim_log_file: str,
         wep_estimator_method: str,
-        max_noll_index: int,
+        noll_indices: int,
     ) -> None:
         """Run the simulation of images.
 
@@ -1100,8 +1110,8 @@ tasks:
         wep_estimator_method : str
             Specify the method used to calculate Zernikes in ts_wep.
             Options are "tie" or "danish".
-        max_noll_index : int
-            Maximum Noll index to calculate Zernikes.
+        noll_indices : list
+            Noll indices used in Zernike estimation.
         """
         cam_type = CamType(inst)
         wep_estimator = WepEstimator(wep_estimator_method)
@@ -1112,7 +1122,7 @@ tasks:
         self.boresight_ra = boresight[0]
         self.boresight_dec = boresight[1]
         self.boresight_rot_ang = rot_cam_in_deg
-        self.max_noll_index = max_noll_index
+        self.noll_indices = noll_indices
         # Remap the reference filter to g
         filter_type_name = self.map_filter_ref_to_g(filter_type_name)
 
@@ -1133,9 +1143,7 @@ tasks:
             cam_type, obs_metadata, path_sky_file=path_sky_file, star_mag=star_mag
         )
         self.config_ofc_calc(cam_type, controller_config_file)
-        self.imsim_cmpt = ImsimCmpt(
-            num_of_zk=self.max_noll_index - self.ofc_calc.ofc_data.znmin + 1
-        )
+        self.imsim_cmpt = ImsimCmpt(noll_indices=self.noll_indices)
 
         # If path_sky_file using default OPD positions write this to disk
         # so that the Butler can load it later
@@ -1402,12 +1410,13 @@ config.dataset_config.ref_dataset_name='ref_cat'
             default=1,
             help="Number of processor to run imSim and DM pipeline. (default: 1)",
         )
-
         parser.add_argument(
-            "--max_noll_index",
+            "--noll_indices",
             type=int,
-            default=28,
-            help="Maximum Noll index to calculate Zernikes. (default: 28)",
+            nargs="+",
+            default=[4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 21, 22, 27, 28],
+            help="List of Noll Zernike indices used in the simulation.\
+            (default: sparse selection as in ts_wep defaults, i.e. 4-16, 20-22, 27-28)",
         )
 
         parser.add_argument(
