@@ -146,7 +146,7 @@ def make_dir(new_dir: str, exist_ok: bool = True) -> None:
 
 
 def get_zk_from_file(zk_file_path: str) -> dict[int, ndarray]:
-    """Get the zk (z4-z22) from file.
+    """Get the zk from file.
 
     Parameters
     ----------
@@ -156,7 +156,7 @@ def get_zk_from_file(zk_file_path: str) -> dict[int, ndarray]:
     Returns
     -------
     numpy.ndarray
-        zk matrix. The colunm is z4-z22. The raw is each data point.
+        zk matrix. The columns are stored Zernikes. The raw is each data point.
     """
 
     with open(zk_file_path, "r") as file:
