@@ -20,6 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import argparse
+import numpy as np
 import os
 import tempfile
 import unittest
@@ -69,7 +70,25 @@ class TestclosedLoopTask(unittest.TestCase):
 
     def test_config_ofc_calc(self):
         cam_type = CamType.LsstCam
-        self.closed_loop_task.max_noll_index = 28
+        self.closed_loop_task.noll_indices = [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            20,
+            21,
+            22,
+            27,
+            28,
+        ]
         self.closed_loop_task.config_ofc_calc(cam_type, "oic_controller.yaml")
 
         ofc_calc = self.closed_loop_task.ofc_calc
@@ -135,7 +154,26 @@ class TestclosedLoopTask(unittest.TestCase):
         self.assertEqual(args.pipeline_file, "")
         self.assertEqual(args.sky_seed, 42)
         self.assertEqual(args.pert_seed, 11)
-        self.assertEqual(args.max_noll_index, 28)
+        default_noll_indices = [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            20,
+            21,
+            22,
+            27,
+            28,
+        ]
+        np.testing.assert_array_equal(args.noll_indices, default_noll_indices)
         self.assertEqual(args.wep_estimator, "tie")
 
     def test_wep_estimator_args(self):
