@@ -5,6 +5,13 @@
 ##################
 Version History
 ##################
+
+-------------
+1.7.0
+-------------
+
+* Implement sparse Zernike mode, supersede max_noll_index with noll_indices.
+
 -------------
 1.6.5
 -------------

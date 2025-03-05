@@ -27,13 +27,14 @@ import numpy as np
 class SensorWavefrontError(object):
     """Contains the wavefront errors for a single sensor."""
 
-    def __init__(self, num_of_zk: int = 19) -> None:
+    def __init__(self, noll_indices: list = range(4, 23)) -> None:
         """Constructs a sensor wavefront error.
 
         Parameters
         ----------
-        num_of_zk : int, optional
-            Number of annular Zernike polynomials. (the default is 19.)
+        noll_indices : int, optional
+            Noll indices of annular Zernike polynomials.
+            (the default is a contiguous space from 4 to 22.)
         """
 
         # Sensor Id
@@ -42,11 +43,11 @@ class SensorWavefrontError(object):
         # Sensor Name
         self.sensor_name = "R99_S99"
 
-        # Number of zk
-        self.num_of_zk = int(num_of_zk)
+        # Noll indices of stored Zernike polynomials
+        self.noll_indices = noll_indices
 
         # Annular Zernike polynomials (zk)
-        self._annular_zernike_poly = np.zeros(self.num_of_zk)
+        self._annular_zernike_poly = np.zeros_like(self.noll_indices)
 
     @property
     def sensor_id(self) -> int:
@@ -90,9 +91,10 @@ class SensorWavefrontError(object):
             annular_zernike_poly must be an array of self.num_of_zk floats.
         """
 
-        if len(new_annular_zernike_poly) != self.num_of_zk:
+        if len(new_annular_zernike_poly) != len(self.noll_indices):
             raise ValueError(
-                "annular_zernike_poly must be an array of %d floats." % self.num_of_zk
+                "annular_zernike_poly must be an array of %d floats."
+                % len(self.noll_indices)
             )
         self._annular_zernike_poly = np.array(new_annular_zernike_poly)
 

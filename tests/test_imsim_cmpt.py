@@ -61,7 +61,7 @@ class TestImsimCmpt(unittest.TestCase):
             "r",
         ) as test_file:
             self.full_test_yaml = yaml.safe_load(test_file)
-        self.imsim_cmpt = ImsimCmpt(num_of_zk=19)
+        self.imsim_cmpt = ImsimCmpt(noll_indices=range(4, 23))
 
         # Set the output directories
         self.output_dir = os.path.join(get_module_path(), "tests", "tmp")
@@ -363,11 +363,11 @@ class TestImsimCmpt(unittest.TestCase):
         zk_file_path = os.path.join(self.imsim_cmpt.output_img_dir, zk_file_name)
         zk_in_file = get_zk_from_file(zk_file_path)
 
-        num_of_zk = self.imsim_cmpt.num_of_zk
+        noll_indices = self.imsim_cmpt.noll_indices
         self.assertEqual(len(zk_in_file), len(ref_sensor_name_list))
         self.assertEqual(
             len(zk_in_file[sensor_id_list[0]]),
-            num_of_zk,
+            len(noll_indices),
         )
 
         self.assertEqual(np.sum(zk_in_file[191]), 0)
@@ -380,7 +380,7 @@ class TestImsimCmpt(unittest.TestCase):
         self.assertLess(delta, 1e-7)
 
     def _prepare_list_of_wf_err(self):
-        num_of_zk = self.imsim_cmpt.num_of_zk
+        noll_indices = self.imsim_cmpt.noll_indices
 
         sensor_id_list = [195, 199]
         list_of_wf_err = []
@@ -388,7 +388,7 @@ class TestImsimCmpt(unittest.TestCase):
             sensor_wavefront_data = SensorWavefrontError()
             sensor_wavefront_data.sensor_id = sensor_id
 
-            wf_err = np.random.rand(num_of_zk)
+            wf_err = np.random.rand(len(noll_indices))
             sensor_wavefront_data.annular_zernike_poly = wf_err
 
             list_of_wf_err.append(sensor_wavefront_data)
