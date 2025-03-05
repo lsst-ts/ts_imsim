@@ -47,7 +47,7 @@ from lsst.ts.imsim.utils import (
     plot_fwhm_of_iters,
 )
 from lsst.ts.ofc import OFC, OFCData
-from lsst.ts.wep.utils import rotMatrix, runProgram, makeDense
+from lsst.ts.wep.utils import makeDense, rotMatrix, runProgram
 
 
 class ClosedLoopTask:
