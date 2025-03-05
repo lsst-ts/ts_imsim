@@ -20,11 +20,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import argparse
-import numpy as np
 import os
 import tempfile
 import unittest
 
+import numpy as np
 from lsst.ts.imsim import ClosedLoopTask, ObsMetadata
 from lsst.ts.imsim.utils import CamType, get_module_path
 
