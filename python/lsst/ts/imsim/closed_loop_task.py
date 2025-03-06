@@ -1010,10 +1010,13 @@ tasks:
   cutOutDonuts{cut_out_task}Task:
     class: lsst.ts.wep.task.cutOutDonuts{cut_out_task}Task.CutOutDonuts{cut_out_task}Task
     {cut_out_config}
+  reassignCwfsCutoutsTask:
+    class: lsst.ts.wep.task.reassignCwfsCutoutsTask.ReassignCwfsCutoutsTask
   calcZernikesTask:
     class: lsst.ts.wep.task.calcZernikesTask.CalcZernikesTask
     config:
-      estimateZernikes.maxNollIndex: {self.max_noll_index}
+      doDonutStampSelector: False
+      estimateZernikes.nollIndices: {list(range(4,self.max_noll_index+1))}
       python: |
         from lsst.ts.wep.task import EstimateZernikesTieTask, EstimateZernikesDanishTask
         config.estimateZernikes.retarget(EstimateZernikes{wep_estimator.value.title()}Task)
