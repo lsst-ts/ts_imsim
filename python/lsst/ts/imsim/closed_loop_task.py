@@ -1023,7 +1023,7 @@ tasks:
     class: lsst.ts.wep.task.calcZernikesTask.CalcZernikesTask
     config:
       doDonutStampSelector: False
-      estimateZernikes.nollIndices: {list(range(4,self.max_noll_index+1))}
+      estimateZernikes.nollIndices: {list(range(4, self.max_noll_index+1))}
       python: |
         from lsst.ts.wep.task import EstimateZernikesTieTask, EstimateZernikesDanishTask
         config.estimateZernikes.retarget(EstimateZernikes{wep_estimator.value.title()}Task)
