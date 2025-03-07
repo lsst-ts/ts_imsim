@@ -972,6 +972,14 @@ class ClosedLoopTask:
             cut_out_task = "ScienceSensor"
             cut_out_config = science_cutout_config
 
+        # Add reassignCwfs task following the cutouts only
+        # If running for corner sensors
+        reassign_task = (
+            """reassignCwfsCutoutsTask:
+    class: lsst.ts.wep.task.reassignCwfsCutoutsTask.ReassignCwfsCutoutsTask"""
+            if cam_type == CamType.LsstCam
+            else ""
+        )
         with open(pipeline_yaml_path, "w") as fp:
             fp.write(
                 f"""# This yaml file is used to define the tasks and configuration of
@@ -1010,10 +1018,12 @@ tasks:
   cutOutDonuts{cut_out_task}Task:
     class: lsst.ts.wep.task.cutOutDonuts{cut_out_task}Task.CutOutDonuts{cut_out_task}Task
     {cut_out_config}
+  {reassign_task}
   calcZernikesTask:
     class: lsst.ts.wep.task.calcZernikesTask.CalcZernikesTask
     config:
-      estimateZernikes.maxNollIndex: {self.max_noll_index}
+      doDonutStampSelector: False
+      estimateZernikes.nollIndices: {list(range(4, self.max_noll_index+1))}
       python: |
         from lsst.ts.wep.task import EstimateZernikesTieTask, EstimateZernikesDanishTask
         config.estimateZernikes.retarget(EstimateZernikes{wep_estimator.value.title()}Task)

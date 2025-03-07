@@ -6,6 +6,12 @@
 Version History
 ##################
 -------------
+1.7.0
+-------------
+
+* Add reassignCwfsCutoutsTask to default wep config after v14.0.0 in ts_wep 
+
+-------------
 1.6.5
 -------------
 
